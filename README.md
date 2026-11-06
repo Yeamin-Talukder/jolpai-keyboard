@@ -106,8 +106,9 @@ English↔Bangla translation run **offline**.
 > daily on a Pixel 7 Pro (Android 17); testing on more phones is ongoing. See the [roadmap](docs/ROADMAP.md)
 > for exactly what works and what is pending.
 
-**APK downloads** will be published on the [Releases page](https://github.com/Yeamin-Talukder/jolpai-keyboard/releases).
-Until then, [build it from source](#-build-from-source) (about 5 minutes with Android Studio).
+**[⬇️ Download the latest APK](https://github.com/Yeamin-Talukder/jolpai-keyboard/releases/latest)** from the Releases page.
+Most phones need the **`arm64-v8a`** file; older 32-bit phones need `armeabi-v7a`. Android 8.0 or newer.
+Or [build it from source](#-build-from-source) (about 5 minutes with Android Studio).
 
 **Turn it on after installing:**
 1. Open **Jolpai Keyboard**.
