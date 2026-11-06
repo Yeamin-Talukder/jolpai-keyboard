@@ -137,3 +137,10 @@ Each folder holds the licence text and a NOTICE with the exact source and commit
 - **Emoji data**: `emoji-engine/src/main/resources/emoji/`, Unicode Emoji 17.0 and CLDR 49 annotations (Unicode License V3).
 
 MPL applies to those files only; the rest of the app is not affected.
+
+## License
+Copyright 2026 Md Yeamin Talukder
+
+Jolpai Keyboard is licensed under the [Apache License, Version 2.0](LICENSE). The third-party
+data files listed above keep their own licences (MPL-2.0, MIT, Apache-2.0, Unicode License V3),
+as stated in the NOTICE file in each folder.
