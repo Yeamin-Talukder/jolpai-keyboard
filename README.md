@@ -1,47 +1,214 @@
-# Jolpai Keyboard (জলপাই)
+<div align="center">
 
-_Formerly "Lipi Keyboard"; the code and package id (`com.yeamin.lipi`) still use that name._
+<img src="docs/images/banner.png" alt="Jolpai Keyboard (জলপাই কিবোর্ড): open-source privacy-first Bangla and English keyboard for Android with Avro phonetic and National (Jatiya) layouts" width="100%">
 
-A privacy-first Android keyboard with English (QWERTY), Avro phonetic Bangla and the National
-(জাতীয়) Bangla layout, aiming for Gboard-level speed and features.
+# Jolpai Keyboard (জলপাই কিবোর্ড): Bangla & English Keyboard for Android
 
-Package id: `com.yeamin.lipi`
+**A free, open-source, privacy-first Bangla (Bengali) keyboard for Android with Avro phonetic typing,
+the National (জাতীয়) layout, English QWERTY, smart suggestions, offline English↔Bangla translation,
+voice typing, a clipboard manager and 64 themes. No ads, no tracking, and nothing you type leaves your phone.**
 
-**Status:** All seven phases are built and the unit tests pass,
-but the keyboard has **not been tested on a phone yet**. See [the roadmap](docs/ROADMAP.md) for
-exactly what works and what is pending.
+[![Downloads](https://img.shields.io/github/downloads/Yeamin-Talukder/jolpai-keyboard/total?label=downloads&color=6E8A2C&logo=android&logoColor=white)](https://github.com/Yeamin-Talukder/jolpai-keyboard/releases)
+[![Views](https://hits.sh/github.com/Yeamin-Talukder/jolpai-keyboard.svg?label=views&color=6E8A2C)](https://hits.sh/github.com/Yeamin-Talukder/jolpai-keyboard/)
+[![Stars](https://img.shields.io/github/stars/Yeamin-Talukder/jolpai-keyboard?style=flat&color=B5C94A&logo=github)](https://github.com/Yeamin-Talukder/jolpai-keyboard/stargazers)
+[![Version](https://img.shields.io/badge/version-0.7.0--beta-B5C94A)](docs/ROADMAP.md)
+[![License: Apache-2.0](https://img.shields.io/github/license/Yeamin-Talukder/jolpai-keyboard?color=4E6120)](LICENSE)
+<br>
+[![Android 8.0+](https://img.shields.io/badge/Android-8.0%2B%20(API%2026)-3DDC84?logo=android&logoColor=white)](#requirements)
+[![Kotlin](https://img.shields.io/badge/Kotlin-2.3-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org)
+[![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-Material%203-4285F4?logo=jetpackcompose&logoColor=white)](https://developer.android.com/compose)
+[![Tests](https://img.shields.io/badge/unit%20tests-230%2B-6E8A2C)](#testing)
+[![Last commit](https://img.shields.io/github/last-commit/Yeamin-Talukder/jolpai-keyboard?color=4E6120)](https://github.com/Yeamin-Talukder/jolpai-keyboard/commits/main)
+[![Made in Bangladesh](https://img.shields.io/badge/Made%20in-Bangladesh-006A4E)](#)
 
-## Documents
-- [Architecture](docs/ARCHITECTURE.md): module structure, typing pipeline, Bangla engines, privacy model, Android limits
-- [Roadmap](docs/ROADMAP.md): phases, feature checklist, open questions
-- [Privacy policy](docs/PRIVACY.md)
-- [`jatiya-keyboard-demo.html`](jatiya-keyboard-demo.html): browser demo of the National layout (reference for key positions)
+[Features](#-features) · [Screenshots](#-screenshots) · [Download](#-download--install) · [Architecture](#-architecture) · [Build](#-build-from-source) · [FAQ](#-faq) · [বাংলা](#-বাংলায়-জলপাই-কিবোর্ড)
 
-## Project layout
+</div>
+
+---
+
+## What is Jolpai Keyboard?
+
+**Jolpai Keyboard** (Bangla: **জলপাই কিবোর্ড**, "olive keyboard") is an open-source Android keyboard
+(IME) built for people who write in **Bangla (Bengali) and English**. You can type Bangla **phonetically
+with Avro** (`ami` → আমি), use the fixed **National (জাতীয়) layout**, or switch to **English QWERTY**,
+all in one keyboard that works in every app: WhatsApp, Messenger, Facebook, Gmail, Chrome and more.
+
+It aims for Gboard-level speed and features while keeping your data on your device:
+**no account, no ads, no analytics, and no cloud.** Suggestions, learning, clipboard history and even
+English↔Bangla translation run **offline**.
+
+> **Also known as:** Jolpai Bangla Keyboard · Jalpai Keyboard · জলপাই বাংলা কিবোর্ড · Jolpai Avro Keyboard
+> (package `com.yeamin.lipi`; the project was first called *Lipi Keyboard*).
+
+## ✨ Features
+
+### ⌨️ Bangla and English typing
+| | |
+|---|---|
+| **Avro Phonetic (অভ্র)** | Type how a word sounds in English letters: `ami banglay likhi` → আমি বাংলায় লিখি. Dictionary candidates, remembers your picks, reph with `rr` (`korrm` → কর্ম). Checked against a 413-case Avro test corpus. |
+| **National (জাতীয়) layout** | The Bangladesh national standard layout, arranged like Ridmik Keyboard. Hold a key for the letter in its corner (ু → উ, ত → ৎ); reph is Shift + ্. |
+| **English QWERTY** | Autocorrect with undo on Backspace, word completion, accents on long-press. |
+| **One-tap switching** | Switch English ↔ বাংলা (অভ্র) ↔ বাংলা (জাতীয়) from the top bar; choose which layouts are on. |
+| **Bangla digits & punctuation** | Hold a digit for ০–৯; two spaces type `।` in Bangla and `. ` in English. |
+
+### 🧠 Smart suggestions (on-device)
+- Word completion and autocorrect for **English and Bangla**.
+- **Next-word prediction** learned from your own typing.
+- **Personal dictionary**: add words so they are never "corrected".
+- **Emoji suggestions** for the word you type, in English and Bangla.
+- **Predictive touch**: likely next keys get a slightly larger tap area (invisible), and it learns where you tap.
+- **Inline calculator**: type `250*4` and tap `= 1000`.
+
+### 🌐 Offline translation, voice and more
+- **English ↔ Bangla translation inside the keyboard.** Download a ~30 MB pack once; after that it works with **no internet**.
+- **Voice typing** in Bangla or English, with spoken punctuation ("comma", "দাঁড়ি", "নতুন লাইন"), a voice bar, and a floating mic pill.
+- **Emoji, kaomoji, stickers and GIFs**: emoji search in English *and* Bangla, skin tones, recents, favourites, your own stickers, and GIF search with your own GIPHY key.
+
+### 📋 Clipboard and productivity
+- **Clipboard history** (text and images), with pins, folders and **automatic categories** (links, emails, OTP codes, phone numbers, addresses, code).
+- **Snippets / text expansion**: type `@addr` + space to insert your address.
+- **Editing panel**: select, cut/copy/paste, arrow keys, word delete, undo/redo, date & time.
+- **Space-bar trackpad** (iPhone-style) to move the cursor, plus **Backspace swipe** to delete whole words.
+- **Custom gestures**: assign swipes, holds and double-taps to actions, or to insert your own text.
+- **Smart field handling**: calculator number pad, phone dial pad, and Send/Search/Go Enter keys.
+
+### 🎨 Themes and customisation
+- **64 built-in themes**: Material You (default; follows your wallpaper, light and dark), soft pastels, jewel tones, gradients, AMOLED black, High contrast, and soft dark themes like *Olive night*, *Misty blue* and *Moonlight*.
+- **Theme editor**: your own colours, gradients or a background photo. Share themes as text.
+- Keyboard **height** (portrait/landscape), **number row**, **one-handed** mode, **floating** keyboard.
+- Key **sound and vibration** strength, long-press delay, and soft key-press animations.
+
+### 🔒 Privacy and security
+- **Everything stays on your phone**: no account, analytics, crash SDK or ads.
+- Learned words and clipboard live in an **encrypted database** (SQLCipher, key in the Android Keystore), excluded from cloud backups.
+- **Password and incognito fields**: no suggestions, no learning, no clipboard capture (🔒 shown).
+- Internet is used **only** for features you turn on (GIF search, downloading the translation pack).
+- Backup and restore to a file **you** choose. Read the [privacy policy](docs/PRIVACY.md).
+
+## 📸 Screenshots
+
+<div align="center">
+
+<img src="docs/images/layouts.png" alt="Jolpai Keyboard layouts: English QWERTY, Avro phonetic Bangla and National (Jatiya) Bangla keyboard on Android" width="100%">
+
+*English QWERTY · Avro phonetic (ami → আমি) · National (জাতীয়) layout, shown in the Olive night theme*
+
+<img src="docs/images/themes.png" alt="Jolpai Keyboard themes: Material You, light pastel themes and soft dark themes for the Android Bangla keyboard" width="100%">
+
+*20 of the 64 built-in themes. Material You follows your wallpaper colours.*
+
+</div>
+
+## 📥 Download & install
+
+> **Status: beta (v0.7.0).** All seven development phases are built and 230+ unit tests pass. The app runs
+> daily on a Pixel 7 Pro (Android 17); testing on more phones is ongoing. See the [roadmap](docs/ROADMAP.md)
+> for exactly what works and what is pending.
+
+**APK downloads** will be published on the [Releases page](https://github.com/Yeamin-Talukder/jolpai-keyboard/releases).
+Until then, [build it from source](#-build-from-source) (about 5 minutes with Android Studio).
+
+**Turn it on after installing:**
+1. Open **Jolpai Keyboard**.
+2. Step 1: switch on **Jolpai Keyboard** in Android's keyboard list. Android warns that keyboards can see what you type; Jolpai keeps everything on your phone.
+3. Step 2: choose **Jolpai Keyboard** as your current keyboard.
+4. Try it in the app's test fields (text, email, password, number, phone, multi-line).
+
+## 🏗️ Architecture
+
+Jolpai is a native Android **`InputMethodService`** written in **Kotlin**, split into 11 Gradle modules.
+The hardest logic (the Bangla engines and suggestions) is **plain Kotlin with no Android dependency**,
+so it is fast to unit-test on a PC.
+
+```mermaid
+flowchart TD
+    APP["app-shell<br/>Settings app (Compose), setup, backup"]
+    UI["keyboard-ui<br/>LipiImeService · Canvas key grid · panels"]
+    CORE["keyboard-core<br/>KeyboardController state machine · layouts · EditorSession"]
+    BN["bangla-engine (JVM)<br/>Avro phonetic · National composer"]
+    SG["suggestion-engine (JVM)<br/>dictionaries · autocorrect · next-word"]
+    EM["emoji-engine (JVM)<br/>emoji + EN/BN keywords"]
+    TH["theme-engine (JVM)<br/>64 themes · import/export"]
+    CB["clipboard-manager<br/>history · snippets · categories"]
+    VO["voice-input<br/>speech · spoken punctuation"]
+    ME["media<br/>GIFs · stickers"]
+    DATA["core-data<br/>Room + SQLCipher · DataStore"]
+
+    APP --> UI
+    APP --> DATA
+    UI --> CORE
+    UI --> CB
+    UI --> VO
+    UI --> ME
+    UI --> EM
+    CORE --> BN
+    CORE --> SG
+    CORE --> TH
+    CB --> DATA
+    SG -.learning.-> DATA
+```
+
+**The typing path** is built for speed: a key press reaches the app in well under one frame (16 ms).
+
+```mermaid
+flowchart LR
+    T["Touch"] --> KV["KeyboardView<br/>(Canvas hit-test)"]
+    KV --> KA["KeyAction"]
+    KA --> P{"Input processor"}
+    P -->|English| E["EnglishProcessor"]
+    P -->|অভ্র| A["AvroProcessor"]
+    P -->|জাতীয়| N["NationalProcessor"]
+    E & A & N --> ES["EditorSession<br/>(InputConnection, batched)"]
+    ES --> APPX["Your app's text field"]
+    ES -. async, cancelled per key .-> S["SuggestionEngine"]
+    S --> STRIP["Suggestion strip"]
+```
+
+| Area | Choice and why |
+|---|---|
+| **Key grid** | A custom `View` drawn on a `Canvas` (not Compose) for the lowest per-key latency and full multi-touch control |
+| **Panels and settings** | Jetpack Compose + Material 3 (emoji, clipboard, voice, editing, translate, settings app) |
+| **Text editing** | `EditorSession` wraps `InputConnection`, batches edits and tracks the cursor itself (fast even in WebView) |
+| **Bangla engines** | Avro phonetic transliterator and National-layout composer in pure Kotlin |
+| **Suggestions** | Dictionary trie, autocorrect, bigram next-word model, Avro dictionary candidates, on-device learning |
+| **Storage** | Room on **SQLCipher** (encrypted), key in Android Keystore; DataStore for settings |
+| **DI and async** | Hilt, Kotlin coroutines and Flow; suggestions run off the main thread and are cancelled per keystroke |
+| **Translation** | Google ML Kit on-device translation (English ↔ Bangla), pack downloaded on request |
+| **Voice** | Android `SpeechRecognizer` (on-device where the phone supports it) |
+| **Build** | AGP 9.4, Gradle 9.6, Kotlin 2.3, KSP, compile/target SDK 37, min SDK 26, R8 for release |
+
+Full design notes, platform limits and the privacy model: **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**.
+
+<details>
+<summary><b>📁 Project layout (modules)</b></summary>
+
 | Module | What it holds |
 |---|---|
 | `bangla-engine` | Plain Kotlin (no Android). National-layout composer, Avro phonetic engine and its rule table |
 | `suggestion-engine` | Plain Kotlin. English and Bangla word lists, completion, autocorrect, Avro dictionary candidates, learning model |
-| `core-data` | Room database: learned words, word pairs, Avro picks, personal dictionary, clipboard history, snippets |
+| `core-data` | Encrypted Room database: learned words, word pairs, Avro picks, personal dictionary, clipboard history, snippets |
 | `clipboard-manager` | Clipboard capture and history, private image copies, snippets, the 📋 panel shown in the keyboard |
 | `emoji-engine` | Plain Kotlin. Unicode emoji with English and Bangla keywords, skin tones, kaomoji |
 | `voice-input` | Voice typing with Android's speech service, spoken punctuation, offline status |
 | `media` | GIF search (GIPHY, with your key) and your own stickers |
-| `theme-engine` | Plain Kotlin. Theme model, 57 built-in themes, theme import/export |
+| `theme-engine` | Plain Kotlin. Theme model, 64 built-in themes, theme import/export |
 | `keyboard-core` | Keyboard state machine, layouts, field detection, text editing over `InputConnection`, suggestion strip logic, editing commands, calculator, settings |
-| `keyboard-ui` | The keyboard service (`LipiImeService`), the Canvas key grid, key popups, suggestion strip, swipe gestures, ✎ editing panel |
-| `app-shell` | The app you open: setup, test fields, settings, personal dictionary, clipboard manager, snippets |
-| `tools/prepare-dictionaries.pl` | Regenerates the word-list files from the upstream sources |
+| `keyboard-ui` | The keyboard service (`LipiImeService`), the Canvas key grid, key popups, suggestion strip, gestures, panels, translation |
+| `app-shell` | The app you open: setup, test fields, settings, personal dictionary, clipboard manager, snippets, themes, backup |
+| `tools/` | Perl scripts that regenerate dictionaries, emoji data and icons from upstream sources |
 
-## Requirements
+</details>
+
+## 🛠️ Build from source
+
+### Requirements
 - Android Studio 2026.1 or newer, using its bundled JDK
 - Android SDK Platform 37 and Build Tools 36.0.0
-- A real Android phone (Android 8.0 or newer) with USB debugging turned on
+- An Android phone with **Android 8.0 (API 26) or newer** and USB debugging on
 
-## Build
-From Android Studio: open this folder and run the `app-shell` configuration.
-
-From a terminal (Git Bash), using Studio's JDK:
+### Build and install
+Open the folder in Android Studio and run the `app-shell` configuration, or use a terminal (Git Bash on Windows):
 
 ```bash
 export JAVA_HOME="/c/Program Files/Android/Android Studio/jbr"
@@ -51,96 +218,175 @@ export JAVA_HOME="/c/Program Files/Android/Android Studio/jbr"
 ./gradlew :app-shell:assembleDebug
 ```
 
-The APK is written to `app-shell/build/outputs/apk/debug/app-shell-debug.apk`.
+The build makes one APK per processor type (the offline translator's native library is large).
+Most phones need `arm64-v8a`; older ones `armeabi-v7a`:
 
-Run the unit tests:
+```bash
+adb install -r app-shell/build/outputs/apk/debug/app-shell-arm64-v8a-debug.apk
+```
 
+### Testing
 ```bash
 ./gradlew test
 ```
+230+ JVM unit tests cover the Avro engine (including a 413-case reference corpus), the National
+composer, suggestions, gestures, themes (including label contrast checks), clipboard and more.
 
-### Release builds
-Release build (shrunk with R8, not debuggable: other tools can't read its private files over
-USB). To sign it for publishing, create `keystore.properties` in the project root (git-ignored)
-with `storeFile`, `storePassword`, `keyAlias` and `keyPassword`. Without it, the release APK is
-signed with this PC's debug key, so it can update a test install in place and keep its data.
-Switching a phone to a store-signed build later needs an uninstall (back up in the app first):
+<details>
+<summary><b>Release builds and signing</b></summary>
+
+The release build is shrunk with R8 and not debuggable. To sign it for publishing, create
+`keystore.properties` in the project root (git-ignored) with `storeFile`, `storePassword`,
+`keyAlias` and `keyPassword`. Without it, the release APK is signed with your PC's debug key, so it
+can update a test install in place and keep its data. Moving a phone to a store-signed build later
+needs an uninstall (back up in the app first).
 
 ```bash
 ./gradlew :app-shell:assembleRelease
 ```
 
-## Install and turn on the keyboard
-1. On the phone, turn on **Developer options → USB debugging** and connect it by USB.
-2. Install the app:
-   ```bash
-   "$LOCALAPPDATA/Android/Sdk/platform-tools/adb.exe" install -r app-shell/build/outputs/apk/debug/app-shell-debug.apk
-   ```
-3. Open **Lipi Keyboard** on the phone and follow the two setup steps:
-   switch it on in the keyboard list, then choose it as the current keyboard.
-4. Use the **Try it** fields in the app to test each field type (text, email, password, number, phone, multi-line).
+</details>
 
-## Using the keyboard
+## 📖 How to use
+
+<details>
+<summary><b>Typing, layouts and suggestions</b></summary>
+
 - **Language button (top bar, right):** tap to switch between English, বাংলা (অভ্র) and বাংলা (জাতীয়). Hold it for Android's keyboard chooser. Choose which layouts are on in the app.
-- **Space bar:** slide along it to move the cursor. Hold it still for a moment and the keyboard becomes a trackpad (like an iPhone): move your finger to place the cursor exactly, up and down to change line.
-- **জাতীয়:** Ridmik's National layout. Hold a key to type the small letter in its corner (ু → উ, ত → ৎ). ্র is ্ then র (or hold র); reph is Shift + ্.
-- **😊 key:** emoji, kaomoji, stickers and GIFs (hidden in password fields).
-- **Avro:** type how a word sounds (`ami` → আমি). The underlined word is the best dictionary match; the strip above the keys shows the other candidates, with your English spelling last. Tap one to use it. Lipi remembers your pick for that spelling next time. Case matters (`t` ত, `T` ট); reph is `rr` (`korrm` → কর্ম).
-- **Suggestions:** the strip shows what you typed, the best suggestion and one more. If the middle one is highlighted, space will autocorrect to it; press Backspace right after to undo. Tap your own word to keep it as typed, then "Add to dictionary" to stop it being corrected.
+- **Avro:** type how a word sounds (`ami` → আমি). The underlined word is the best dictionary match; the strip shows the other candidates, with your English spelling last. Tap one to use it, and Jolpai remembers your pick for that spelling. Case matters (`t` ত, `T` ট); reph is `rr` (`korrm` → কর্ম).
+- **জাতীয়:** Ridmik-style National layout. Hold a key to type the small letter in its corner (ু → উ, ত → ৎ). ্র is ্ then র (or hold র); reph is Shift + ্.
+- **Suggestions:** the strip shows what you typed, the best suggestion and one more. If the middle one is highlighted, space autocorrects to it; press Backspace right after to undo. Tap your own word to keep it, then "Add to dictionary".
 - **Next word:** after a space, the strip suggests words you often type next.
-- **📋 Clipboard:** your recent copies (text and images), pinned items, folders and snippets. Tap to paste; long-press for more. Only copies made while Lipi is your keyboard are saved, and never from password fields or apps that mark a copy sensitive.
-- **Snippets:** save text with a shortcut in the app (e.g. `@addr`); type the shortcut and press space to insert it.
-- **Cut, copy, paste:** hold x to cut, c to copy, v to paste (English and Avro).
-- **Number fields:** a calculator-style number pad; phone fields get a dial pad. Hold a digit for its Bangla form (hold 0 on the dial pad for +).
-- **Panels:** tap a toolbar icon to open its panel and tap it again to go back to the keys.
-- **Custom gestures:** swipe up on the space bar for emoji, down for the clipboard. Assign your own (swipes, holds, double-taps on Space, comma, full stop, Shift, Backspace or the top bar) in Lipi → Custom gestures, including inserting your own text such as @gmail.com.
-- **Voice typing:** tap the mic and speak; the top bar shows the words as you talk and the keys stay usable (typing ends dictation). Hold the mic for the full voice panel. While dictating, swipe down on the voice bar (or tap ⌄) to hide the keys, up to bring them back, and left or right to turn it into a small floating pill. Drag the pill by any part; drop it against the left or right edge to make it tall, drag it back towards the middle to make it wide (or tap the turn button). ⌫ in the pill deletes a mistake, and ⤢ brings the keyboard back. The first time, Android asks for the microphone over your app.
-- **Clipboard categories:** copies are sorted automatically into links, emails, codes, phone numbers, addresses and code; tap a category in the clipboard panel to filter. Snippets have categories and ready-made templates too.
-- **✎ Editing tools:** select, copy, cut, paste, cursor keys, word selection and deletion, undo/redo (where the app supports it), date and time.
-- **Backspace swipe:** slide left from ⌫ to select words, back right to select fewer, and let go to delete them (slide all the way back to cancel).
-- **Predictive touch:** Lipi guesses the next letter as you type a word (lik → e) and gives likely keys a little more room near their edges; it also learns where you tap each key. The keys look the same, and a tap in the middle of a key always types it. Turn it off or reset what it learned in Typing & gestures.
-- **Calculator:** type a sum like `250*4` and tap `= 1000` in the strip to replace it with the answer (or type `12*3+4=` to add the answer after "=").
-- **😊 Emoji:** categories, recents, favourites, skin tones (long-press), search in English or Bangla (🔍, then type), kaomoji, your stickers and GIFs. Emoji are also suggested for the word you type.
-- **🎤 Voice typing:** Bangla or English, tap to stop, switch language in the panel. Say "comma", "full stop", "new line" (or "কমা", "দাঁড়ি", "নতুন লাইন"). Allow the microphone in the app first. Whether it works offline depends on your phone; the Voice screen shows what it supports.
-- **GIFs:** need a free GIPHY API key, entered in the app (Google closed Tenor's API in 2026).
-- **Toolbar:** choose and order 😊 📋 🎤 ✎ in the app.
-- **Themes:** 57 built-in themes (including Material You; soft pastels like Cloud, Peach, Sky, Pistachio and Sakura; bright ones like Tangerine, Lemonade, Bubblegum, Azure and Cotton candy; jewel-toned darks like Grape, Emerald, Sapphire, Ruby and Teal; Mango tango, Cosmic, Aurora, Neon and High contrast), or make your own with colours, a gradient or a picture. Pick one straight from the app's home page or the Themes screen; changes show on the keyboard immediately. Share a theme by copying it as text.
-- **Feel:** keys sink, darken and spring back softly when you press them, and the letter bubble pops up and fades out.
-- **Size & layout:** keyboard height (separately for portrait and landscape), number row, one-handed (left/right) and a floating keyboard you can drag around.
-- **Sound & vibration:** vibration strength, key sounds and volume.
-- **Shift:** tap for one capital letter; double-tap for caps lock.
-- **Hold a key** for more characters (accents, digits, the shifted Bangla letter, ৎ ঃ ঁ). Set how long to hold (150–800 ms, presets Quick 200 / Normal 350 / Relaxed 500) in Typing & gestures → Hold for more characters.
-- **Two spaces** type `. ` in English and `। ` in Bangla.
-- **Hold backspace** to keep deleting.
+- **Shift:** tap for one capital; double-tap for caps lock. **Two spaces** type `. ` (English) or `। ` (Bangla).
+- **Hold a key** for more characters (accents, digits, the shifted Bangla letter, ৎ ঃ ঁ). Set the hold time (150–800 ms) in Typing & gestures.
+- **Number fields** get a calculator-style pad, phone fields a dial pad. Hold a digit for its Bangla form (hold 0 on the dial pad for +).
+- **Calculator:** type `250*4` and tap `= 1000` in the strip (or type `12*3+4=` to add the answer after "=").
+- **Predictive touch:** likely next keys get a little more room near their edges; a tap in the middle of a key always types it. Turn it off or reset it in Typing & gestures.
 - In password and private fields, a 🔒 label shows that nothing is saved.
 
-## Privacy
-Everything you type stays on the phone. Lipi has no account, analytics or ads. To improve
-suggestions it remembers words you type (in a local database excluded from cloud backups),
-except in password, private/incognito and no-suggestion fields. Turn learning off or clear it
-in the app. The internet is used only for GIF search with your own GIPHY key; voice typing uses
-the phone's speech service. Full details: [docs/PRIVACY.md](docs/PRIVACY.md).
+</details>
 
-**Backup & restore** in the app saves your settings, personal dictionary, snippets and custom
-themes to a file you choose (learned words only if you tick the box).
+<details>
+<summary><b>Cursor, editing and gestures</b></summary>
 
-## Third-party data
+- **Space bar:** slide along it to move the cursor. Hold it still and it becomes a trackpad: move to place the cursor exactly, up and down to change line.
+- **Backspace swipe:** slide left from ⌫ to select words, back right to select fewer, and let go to delete (slide all the way back to cancel). Hold ⌫ to keep deleting.
+- **Cut, copy, paste:** hold x, c or v (English and Avro).
+- **✎ Editing tools:** select, copy, cut, paste, cursor keys, word selection and deletion, undo/redo (where the app supports it), date and time.
+- **Custom gestures:** swipe up on space for emoji, down for the clipboard. Assign your own swipes, holds and double-taps on Space, comma, full stop, Shift, Backspace or the top bar, including inserting your own text such as `@gmail.com`.
+- **Toolbar:** choose and order 😊 📋 🎤 ✎ in the app. Tap a toolbar icon to open its panel, and tap it again to go back to the keys.
+
+</details>
+
+<details>
+<summary><b>Clipboard and snippets</b></summary>
+
+- **📋 Clipboard:** your recent copies (text and images), pinned items, folders and snippets. Tap to paste; long-press for more. Only copies made while Jolpai is your keyboard are saved, never from password fields or copies an app marks sensitive.
+- **Categories:** copies are sorted automatically into links, emails, codes, phone numbers, addresses and code; tap a category to filter.
+- **Snippets:** save text with a shortcut (e.g. `@addr`), then type the shortcut and press space to insert it. Snippets have categories and ready-made templates.
+
+</details>
+
+<details>
+<summary><b>Translate, voice, emoji and GIFs</b></summary>
+
+- **🌐 Translate (offline):** tap Translate in the top bar and a box opens above the keys. Type English and the Bangla translation appears as you type; tap ➤ or Enter to insert it. ⇄ turns it round (Bangla → English). Download the Bangla pack once (about 30 MB); after that it works without internet and the text never leaves the phone.
+- **🎤 Voice typing:** tap the mic and speak; words appear in the top bar and the keys stay usable. Hold the mic for the full voice panel. Swipe the voice bar down to hide the keys, or left/right to turn it into a floating pill you can drag. Say "comma", "full stop", "new line" (or "কমা", "দাঁড়ি", "নতুন লাইন"). Offline support depends on your phone; the Voice screen shows what it supports.
+- **😊 Emoji:** categories, recents, favourites, skin tones (long-press), search in English or Bangla, kaomoji, your stickers and GIFs.
+- **GIFs** need a free GIPHY API key entered in the app (Google closed Tenor's API in 2026).
+
+</details>
+
+<details>
+<summary><b>Themes, size and feel</b></summary>
+
+- **Themes:** 64 built-in themes or your own (colours, gradient or a picture). Pick one from the app's home page or the Themes screen; changes show immediately. Share a theme by copying it as text.
+- **Size & layout:** keyboard height (portrait and landscape separately), number row, one-handed (left/right) and a floating keyboard you can drag.
+- **Sound & vibration:** vibration strength, key sounds and volume.
+- **Feel:** keys sink and spring back softly, and the letter bubble pops up and fades.
+- **Backup & restore:** save settings, personal dictionary, snippets and custom themes to a file you choose (learned words only if you tick the box).
+
+</details>
+
+## ❓ FAQ
+
+**How do I type Bangla on Android with Jolpai Keyboard?**
+Install Jolpai, turn it on in the app's two setup steps, then tap the 🌐 language button to choose
+বাংলা (অভ্র) for phonetic typing (`ami` → আমি) or বাংলা (জাতীয়) for the National layout.
+
+**Does Jolpai Keyboard support Avro phonetic typing?**
+Yes. It has a built-in Avro phonetic engine using the open Avro rule table from OpenBangla, with
+dictionary candidates and learning of your choices. It works fully offline.
+
+**Does it have the National (জাতীয়) / Jatiya layout? What about Bijoy?**
+Yes, the Bangladesh National layout is built in, arranged like Ridmik Keyboard. The Bijoy layout is
+not included.
+
+**Is Jolpai Keyboard safe? Does it collect what I type?**
+No. It has no account, analytics, ads or crash-reporting SDK, and stores learned words and clipboard
+history only on your phone, in an encrypted database. Password and incognito fields are never learned.
+The code is open source, so you can check this yourself.
+
+**Does Jolpai Keyboard work offline?**
+Yes. Typing, suggestions, Avro, the clipboard and themes need no internet. Translation works offline
+after a one-time pack download. Only GIF search needs the internet.
+
+**Can I translate English to Bangla inside the keyboard?**
+Yes. The 🌐 Translate box translates English → Bangla (and back) as you type, on your device.
+
+**Which Android versions are supported?**
+Android 8.0 (Oreo, API 26) and newer. Material You colours need Android 12 or newer.
+
+**Is it free?**
+Yes. It is free and open source under the Apache License 2.0, with no ads and no in-app purchases.
+
+**How is it different from Gboard or Ridmik Keyboard?**
+Jolpai combines Avro phonetic, the National layout and English in one open-source keyboard that keeps
+everything on your device, with offline translation, a full clipboard manager and 64 themes.
+
+## 🇧🇩 বাংলায়: জলপাই কিবোর্ড
+
+**জলপাই কিবোর্ড** অ্যান্ড্রয়েডের জন্য একটি ফ্রি ও ওপেন-সোর্স **বাংলা কিবোর্ড**।
+এতে আছে **অভ্র ফোনেটিক** (`ami` → আমি), **জাতীয় কিবোর্ড লেআউট**, ইংরেজি QWERTY, স্মার্ট সাজেশন,
+**অফলাইন ইংরেজি↔বাংলা অনুবাদ**, ভয়েস টাইপিং, ক্লিপবোর্ড ম্যানেজার এবং ৬৪টি থিম।
+
+- 🔒 **প্রাইভেসি আগে:** কোনো অ্যাকাউন্ট, বিজ্ঞাপন বা ট্র্যাকিং নেই। আপনি যা লেখেন তা আপনার ফোনেই থাকে, এনক্রিপ্টেড অবস্থায়।
+- ⚡ **দ্রুত:** প্রতিটি কী-চাপ এক ফ্রেমেরও কম সময়ে লেখা হয়।
+- 📴 **অফলাইন:** টাইপিং, সাজেশন ও অনুবাদ ইন্টারনেট ছাড়াই চলে।
+- 🎨 **Material You:** আপনার ওয়ালপেপারের রঙে কিবোর্ড সাজে, সাথে সফট ডার্ক থিম।
+
+## 🤝 Contributing
+
+Bug reports, Bangla word-list fixes, new themes and pull requests are welcome.
+Please open an [issue](https://github.com/Yeamin-Talukder/jolpai-keyboard/issues) first for larger changes.
+If Jolpai is useful to you, **⭐ star the repo** so more Bangla users can find it.
+
+## 📚 Documents
+- [Architecture](docs/ARCHITECTURE.md): modules, typing pipeline, Bangla engines, privacy model, Android limits
+- [Roadmap](docs/ROADMAP.md): phases, feature checklist, what is pending
+- [Privacy policy](docs/PRIVACY.md)
+- [`jatiya-keyboard-demo.html`](jatiya-keyboard-demo.html): browser demo of the National layout
+
+## 📜 Third-party data
 Each folder holds the licence text and a NOTICE with the exact source and commit.
-- **Avro Phonetic rule table**: `bangla-engine/src/main/resources/avro/`, from
-  [OpenBangla/rupantor-rs](https://github.com/OpenBangla/rupantor-rs) (MPL-2.0, unmodified).
+- **Avro Phonetic rule table**: `bangla-engine/src/main/resources/avro/`, from [OpenBangla/rupantor-rs](https://github.com/OpenBangla/rupantor-rs) (MPL-2.0, unmodified).
 - **English word list**: `suggestion-engine/src/main/resources/en/`, from AOSP LatinIME (Apache-2.0).
-- **Bangla word list and Avro search patterns**: `suggestion-engine/src/main/resources/bn/`, from
-  [OpenBangla/upodesh](https://github.com/OpenBangla/upodesh) (MIT).
-- **Avro suffixes and Roman autocorrections**: same folder, from [OpenBangla/riti](https://github.com/OpenBangla/riti)
-  (MPL-2.0, unmodified).
-
+- **Bangla word list and Avro search patterns**: `suggestion-engine/src/main/resources/bn/`, from [OpenBangla/upodesh](https://github.com/OpenBangla/upodesh) (MIT).
+- **Avro suffixes and Roman autocorrections**: same folder, from [OpenBangla/riti](https://github.com/OpenBangla/riti) (MPL-2.0, unmodified).
 - **Emoji data**: `emoji-engine/src/main/resources/emoji/`, Unicode Emoji 17.0 and CLDR 49 annotations (Unicode License V3).
+- **Icons**: Material Symbols (Apache-2.0).
 
 MPL applies to those files only; the rest of the app is not affected.
 
-## License
+## 📄 License
 Copyright 2026 Md Yeamin Talukder
 
-Jolpai Keyboard is licensed under the [Apache License, Version 2.0](LICENSE). The third-party
-data files listed above keep their own licences (MPL-2.0, MIT, Apache-2.0, Unicode License V3),
-as stated in the NOTICE file in each folder.
+Jolpai Keyboard is licensed under the [Apache License, Version 2.0](LICENSE). The third-party data
+files listed above keep their own licences (MPL-2.0, MIT, Apache-2.0, Unicode License V3), as stated
+in the NOTICE file in each folder.
+
+<div align="center">
+<img src="docs/images/icon-512.png" alt="Jolpai Keyboard app icon: a green olive" width="72">
+<br>
+<sub><b>Jolpai Keyboard</b> · জলপাই কিবোর্ড · open-source Bangla keyboard for Android · Made in Bangladesh 🇧🇩</sub>
+</div>
