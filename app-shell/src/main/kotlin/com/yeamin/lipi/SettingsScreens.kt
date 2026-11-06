@@ -33,6 +33,8 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -120,7 +122,49 @@ fun LanguagesScreen(vm: MainViewModel, settings: KeyboardSettings, onBack: () ->
                 SettingsRadio(id.displayName, selected = settings.defaultLayout == id) { vm.setDefaultLayout(id) }
             }
         }
+
+        SettingsGroup("Offline translation", tone = GroupTone.TERTIARY) {
+            OfflineTranslationSetting()
+        }
+        SettingsNote("Tap 🌐 Translate in the keyboard's top bar: a box opens above the keys, you type in English (or Bangla) and insert the translation. Translation runs on your phone; only the language pack is downloaded, from Google, when you ask.")
     }
+}
+
+/** The offline Bangla pack: whether it is on the phone, with download / delete. */
+@Composable
+private fun OfflineTranslationSetting() {
+    val translator = remember { com.yeamin.lipi.ui.OfflineTranslator() }
+    DisposableEffect(translator) {
+        translator.refresh()
+        onDispose { translator.close() }
+    }
+    val status by translator.status.collectAsState()
+    val size = com.yeamin.lipi.ui.OfflineTranslator.PACK_SIZE_MB
+    val summary = when (status) {
+        com.yeamin.lipi.ui.TranslateStatus.CHECKING -> "Checking…"
+        com.yeamin.lipi.ui.TranslateStatus.NOT_DOWNLOADED -> "English ⇄ বাংলা · download once (about $size MB), then it works offline"
+        com.yeamin.lipi.ui.TranslateStatus.DOWNLOADING -> "Downloading the Bangla pack…"
+        com.yeamin.lipi.ui.TranslateStatus.READY -> "Ready offline · English ⇄ বাংলা"
+        com.yeamin.lipi.ui.TranslateStatus.FAILED -> "Download failed. Check the internet and try again."
+    }
+    SettingsItem(
+        "English ⇄ Bangla pack",
+        summary,
+        UiR.drawable.ms_translate,
+        showChevron = false,
+        enabled = status != com.yeamin.lipi.ui.TranslateStatus.CHECKING && status != com.yeamin.lipi.ui.TranslateStatus.DOWNLOADING,
+        trailing = {
+            when (status) {
+                com.yeamin.lipi.ui.TranslateStatus.READY -> TextButton(onClick = { translator.delete() }) { Text("Delete") }
+                com.yeamin.lipi.ui.TranslateStatus.DOWNLOADING -> androidx.compose.material3.CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 2.5.dp)
+                com.yeamin.lipi.ui.TranslateStatus.CHECKING -> Unit
+                else -> androidx.compose.material3.FilledTonalButton(onClick = { translator.download() }) { Text("Download") }
+            }
+        },
+        onClick = {
+            if (status == com.yeamin.lipi.ui.TranslateStatus.NOT_DOWNLOADED || status == com.yeamin.lipi.ui.TranslateStatus.FAILED) translator.download()
+        },
+    )
 }
 
 /** Capitals, full stops and gestures. */
@@ -300,6 +344,7 @@ fun toolbarName(item: ToolbarItem): String = when (item) {
     ToolbarItem.CLIPBOARD -> "Clipboard"
     ToolbarItem.VOICE -> "Voice"
     ToolbarItem.EDIT -> "Editing"
+    ToolbarItem.TRANSLATE -> "Translate"
 }
 
 private fun toolbarIcon(item: ToolbarItem): Int = when (item) {
@@ -307,6 +352,7 @@ private fun toolbarIcon(item: ToolbarItem): Int = when (item) {
     ToolbarItem.CLIPBOARD -> UiR.drawable.ms_content_paste
     ToolbarItem.VOICE -> UiR.drawable.ms_mic
     ToolbarItem.EDIT -> UiR.drawable.ms_edit_note
+    ToolbarItem.TRANSLATE -> UiR.drawable.ms_translate
 }
 
 /** Which tools appear above the keys, and in what order. */
