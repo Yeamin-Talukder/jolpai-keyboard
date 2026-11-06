@@ -34,8 +34,8 @@ data class KeyboardPalette(
     val imageDim: Float,
 ) {
     companion object {
-        /** The default theme for this context's light/dark mode. */
-        fun forContext(context: Context): KeyboardPalette = from(context, BuiltInThemes.forSystem(isNight(context)))
+        /** The default theme (Olive night), drawn before the user's settings have loaded. */
+        fun forContext(context: Context): KeyboardPalette = from(context, BuiltInThemes.DEFAULT)
 
         fun isNight(context: Context): Boolean =
             context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES

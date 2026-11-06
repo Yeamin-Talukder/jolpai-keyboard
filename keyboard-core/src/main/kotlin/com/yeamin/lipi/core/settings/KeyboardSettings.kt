@@ -1,5 +1,6 @@
 package com.yeamin.lipi.core.settings
 
+import com.yeamin.lipi.theme.KeyboardTheme
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
@@ -70,8 +71,8 @@ data class KeyboardSettings(
     val voiceLanguage: VoiceLanguage = VoiceLanguage.AUTO,
     /** The user's own GIPHY API key; GIF search is off until one is set. Stored only on the device. */
     val giphyApiKey: String = "",
-    /** "system" (light/dark with the phone), a built-in id ("builtin:ocean") or "custom:<n>". */
-    val themeId: String = "system",
+    /** "system" (Material You, light/dark with the phone), a built-in id ("builtin:ocean") or "custom:<n>". Default: Olive night. */
+    val themeId: String = KeyboardTheme.DEFAULT_ID,
     /** Keyboard height, percent of normal (70–140), separately for portrait and landscape. */
     val heightPortrait: Int = 100,
     val heightLandscape: Int = 100,
@@ -167,7 +168,7 @@ class KeyboardSettingsRepository @Inject constructor(
                 emojiSuggestions = p[EMOJI_SUGGESTIONS] ?: true,
                 voiceLanguage = VoiceLanguage.fromStorageKey(p[VOICE_LANGUAGE]),
                 giphyApiKey = p[GIPHY_KEY].orEmpty(),
-                themeId = p[THEME_ID] ?: "system",
+                themeId = p[THEME_ID] ?: KeyboardTheme.DEFAULT_ID,
                 heightPortrait = (p[HEIGHT_PORTRAIT] ?: 100).coerceIn(70, 140),
                 heightLandscape = (p[HEIGHT_LANDSCAPE] ?: 100).coerceIn(70, 140),
                 numberRow = p[NUMBER_ROW] ?: false,

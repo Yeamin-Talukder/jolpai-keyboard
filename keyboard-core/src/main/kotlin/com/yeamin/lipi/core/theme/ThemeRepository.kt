@@ -86,6 +86,6 @@ class ThemeRepository @Inject constructor(
             id == KeyboardTheme.SYSTEM_ID -> BuiltInThemes.forSystem(systemDark)
             id.startsWith(KeyboardTheme.CUSTOM_PREFIX) -> customs.firstOrNull { it.id == id }
             else -> BuiltInThemes.byId(id)
-        } ?: BuiltInThemes.forSystem(systemDark)
+        } ?: BuiltInThemes.DEFAULT
     }
 }

@@ -43,10 +43,13 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            // Without a store key (keystore.properties), sign with this PC's debug key so the
-            // release build can update a debug install in place on a test phone, keeping its data.
-            // Publishing needs a real key: see README "Release builds".
-            signingConfig = if (keystoreFile.exists()) signingConfigs.getByName("release") else signingConfigs.getByName("debug")
+            // Day to day, release builds are signed with this PC's debug key so they update the
+            // test phone's install in place and keep its data. Builds for publishing use the
+            // store key only when asked: ./gradlew :app-shell:assembleRelease -PstoreKey
+            // (needs keystore.properties). Android refuses an update signed with a different
+            // key, so never install a store-signed APK over a debug-signed one without a backup.
+            val useStoreKey = keystoreFile.exists() && project.hasProperty("storeKey")
+            signingConfig = if (useStoreKey) signingConfigs.getByName("release") else signingConfigs.getByName("debug")
         }
     }
     compileOptions {
@@ -54,6 +57,18 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     buildFeatures { compose = true }
+
+    // One APK per processor type: offline translation's native library is ~16 MB per type, so a
+    // single APK for all four was 74 MB. Phones (arm64) install app-shell-arm64-v8a-release.apk.
+    // A Play App Bundle splits by processor on its own.
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("arm64-v8a", "armeabi-v7a", "x86_64", "x86")
+            isUniversalApk = false
+        }
+    }
 }
 
 kotlin {

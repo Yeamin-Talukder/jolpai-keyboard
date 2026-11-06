@@ -30,6 +30,11 @@ class ThemeTest {
         assertTrue(BuiltInThemes.forSystem(true).dynamic && BuiltInThemes.forSystem(true).dark)
     }
 
+    @Test fun `the default theme on a fresh install is Olive night`() {
+        assertEquals(BuiltInThemes.OLIVE_NIGHT, BuiltInThemes.DEFAULT)
+        assertEquals(BuiltInThemes.OLIVE_NIGHT, BuiltInThemes.byId(KeyboardTheme.DEFAULT_ID))
+    }
+
     @Test fun `enter and caps lock icons are readable on the accent colour`() {
         BuiltInThemes.all.forEach { t ->
             val ratio = contrast(t.onAccent, t.accent)

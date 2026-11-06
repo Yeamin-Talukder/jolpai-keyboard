@@ -192,7 +192,7 @@ class MainViewModel @Inject constructor(
     fun deleteTheme(theme: KeyboardTheme, activeId: String) {
         viewModelScope.launch {
             themes.delete(theme)
-            if (activeId == theme.id) repository.setThemeId(KeyboardTheme.SYSTEM_ID)
+            if (activeId == theme.id) repository.setThemeId(KeyboardTheme.DEFAULT_ID)
         }
     }
 

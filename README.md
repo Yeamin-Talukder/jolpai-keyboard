@@ -235,15 +235,22 @@ composer, suggestions, gestures, themes (including label contrast checks), clipb
 <details>
 <summary><b>Release builds and signing</b></summary>
 
-The release build is shrunk with R8 and not debuggable. To sign it for publishing, create
-`keystore.properties` in the project root (git-ignored) with `storeFile`, `storePassword`,
-`keyAlias` and `keyPassword`. Without it, the release APK is signed with your PC's debug key, so it
-can update a test install in place and keep its data. Moving a phone to a store-signed build later
-needs an uninstall (back up in the app first).
+The release build is shrunk with R8 and not debuggable. By default it is signed with your PC's
+debug key, so it can update a test install in place and keep its data:
 
 ```bash
 ./gradlew :app-shell:assembleRelease
 ```
+
+To sign with your own store key (for publishing), create `keystore.properties` in the project root
+(git-ignored) with `storeFile`, `storePassword`, `keyAlias` and `keyPassword`, and pass `-PstoreKey`:
+
+```bash
+./gradlew :app-shell:assembleRelease -PstoreKey
+```
+
+Android only installs an update signed with the same key as the installed app. Moving a phone from
+a debug-signed build to a store-signed one needs an uninstall (back up in the app first).
 
 </details>
 

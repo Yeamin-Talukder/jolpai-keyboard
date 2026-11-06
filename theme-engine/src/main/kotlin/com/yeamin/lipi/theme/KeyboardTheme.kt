@@ -63,6 +63,8 @@ data class KeyboardTheme(
 
         /** Light or dark following the phone's dark mode. */
         const val SYSTEM_ID = "system"
+        /** The theme on a fresh install, and the fallback when a chosen theme is missing. */
+        const val DEFAULT_ID = "builtin:olive-night"
     }
 }
 
@@ -476,6 +478,9 @@ object BuiltInThemes {
      * light or dark mode. Wallpaper colours on Android 12+, the plain Light/Dark colours before that.
      */
     fun forSystem(dark: Boolean): KeyboardTheme = if (dark) MATERIAL_YOU_DARK else MATERIAL_YOU_LIGHT
+
+    /** Jolpai's default theme ([KeyboardTheme.DEFAULT_ID]): Olive night, matching the app icon. */
+    val DEFAULT: KeyboardTheme get() = OLIVE_NIGHT
 }
 
 /** Theme import/export as JSON, so themes can be shared and backed up. */
