@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>জাতীয় Keyboard Demo</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#e9ecef; --phone:#ffffff; --kb:#e3e6ea; --key:#ffffff; --key-fn:#c9ced6;
+    --key-text:#1f2328; --hint:#7a828c; --accent:#1a73e8; --shadow:0 1px 0 rgba(0,0,0,.25);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#111316; --phone:#1b1d21; --kb:#25282d; --key:#3a3e45; --key-fn:#2e3238;
+      --key-text:#eef0f3; --hint:#9aa3ad; --accent:#8ab4f8; --shadow:0 1px 0 rgba(0,0,0,.6);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#111316; --phone:#1b1d21; --kb:#25282d; --key:#3a3e45; --key-fn:#2e3238;
+    --key-text:#eef0f3; --hint:#9aa3ad; --accent:#8ab4f8; --shadow:0 1px 0 rgba(0,0,0,.6);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--key-text);
+    font-family:"Noto Sans Bengali",system-ui,sans-serif;display:flex;flex-wrap:wrap;
+    gap:24px;justify-content:center;padding:24px 16px}
+  .phone{width:min(400px,100%);background:var(--phone);border-radius:28px;overflow:hidden;
+    box-shadow:0 10px 40px rgba(0,0,0,.2);display:flex;flex-direction:column}
+  .top{padding:16px}
+  .top h1{font-size:16px;margin:0 0 8px;font-weight:600}
+  textarea{width:100%;height:150px;font:inherit;font-size:20px;padding:10px;border-radius:12px;
+    border:1px solid var(--key-fn);background:var(--kb);color:var(--key-text);resize:none}
+  .tools{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+  .tools button{font:inherit;font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid var(--key-fn);
+    background:var(--key);color:var(--key-text);cursor:pointer}
+  .kb{background:var(--kb);padding:8px 4px 12px;user-select:none;-webkit-user-select:none}
+  .row{display:flex;gap:5px;justify-content:center;margin:0 0 9px}
+  .row:last-child{margin-bottom:0}
+  .key{position:relative;flex:1 1 0;max-width:38px;height:46px;border-radius:6px;background:var(--key);
+    box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;font-size:21px;
+    cursor:pointer;color:var(--key-text);border:0;font-family:inherit;padding:0}
+  .key .h{position:absolute;top:2px;right:4px;font-size:10px;color:var(--hint)}
+  body.nohint .key .h{display:none}
+  .key:active,.key.down{background:var(--key-fn)}
+  .key.fn{background:var(--key-fn);font-size:15px;max-width:none}
+  .key.wide{flex:1.5 1 0}
+  .key.space{flex:5 1 0;max-width:none;font-size:13px;color:var(--hint)}
+  .key.enter{background:var(--accent);color:#fff}
+  .key.on{color:var(--accent)}
+  .key.lock{color:#fff;background:var(--accent)}
+  .row.r2{padding:0 4%}
+  .side{width:min(420px,100%);font-size:14px;line-height:1.6}
+  .side h2{font-size:16px;margin:0 0 6px}
+  table{border-collapse:collapse;width:100%;margin-bottom:14px}
+  td,th{border:1px solid var(--key-fn);padding:3px 6px;text-align:center}
+  th{background:var(--key-fn);font-weight:600}
+  code{background:var(--key-fn);padding:0 4px;border-radius:4px}
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="top">
+    <h1>বাংলা (জাতীয়) — mobile layout demo</h1>
+    <textarea id="out" placeholder="এখানে টাইপ করুন…" spellcheck="false"></textarea>
+    <div class="tools">
+      <button id="clear">Clear</button>
+      <button id="hint">Toggle shift hints</button>
+      <button id="theme">Light / Dark</button>
+    </div>
+  </div>
+  <div class="kb" id="kb"></div>
+</div>
+
+<div class="side">
+  <h2>How it works (Jatiya rules)</h2>
+  <ul>
+    <li><b>Shift</b>: tap once = next letter only; double‑tap = lock.</li>
+    <li><b>Full vowels</b>: <code>্</code> (hasanta, the <i>g</i> key) + kar → vowel. e.g. <code>্</code>+<code>া</code>=আ, <code>্</code>+<code>ি</code>=ই, <code>্</code>+<code>ে</code>=এ.</li>
+    <li><b>ো / ৌ</b>: type <code>ে</code> then <code>া</code> → ো; <code>ে</code> then <code>ৗ</code> → ৌ.</li>
+    <li><b>Conjuncts</b>: consonant + <code>্</code> + consonant (ক্ষ = ক ্ ষ).</li>
+    <li>Kar is typed <i>after</i> the consonant (Unicode order): ক + ি = কি.</li>
+    <li>Extra letters <b>ৎ ঃ ঁ ৳</b> are on the <b>?123</b> page.</li>
+    <li>On a PC you can also use your physical keyboard (QWERTY positions).</li>
+  </ul>
+  <h2>Mapping (QWERTY position → normal / shift)</h2>
+  <table id="map"></table>
+</div>
+
+<script>
+const L = {
+  normal: [
+    ["ঙ","য","ড","প","ট","চ","জ","হ","গ","ড়"],
+    ["ৃ","ু","ি","ব","্","া","ক","ত","দ"],
+    ["্র","ও","ে","র","ন","স","ম"]
+  ],
+  shift: [
+    ["ং","য়","ঢ","ফ","ঠ","ছ","ঝ","ঞ","ঘ","ঢ়"],
+    ["র্","ূ","ী","ভ","।","অ","খ","থ","ধ"],
+    ["্য","ৗ","ৈ","ল","ণ","ষ","শ"]
+  ],
+  sym: [
+    ["১","২","৩","৪","৫","৬","৭","৮","৯","০"],
+    ["ৎ","ঃ","ঁ","৳","@","#","&","-","+"],
+    ["(",")","'","\"",":","?","!"]
+  ]
+};
+const QW = ["qwertyuiop","asdfghjkl","zxcvbnm"];
+const SHQW = ["QWERTYUIOP","ASDFGHJKL","ZXCVBNM"];
+
+let mode = "normal";   // normal | shift | sym
+let shiftLock = false, lastShiftTap = 0;
+const out = document.getElementById("out");
+const kb = document.getElementById("kb");
+
+const KAR_TO_VOWEL = {"া":"আ","ি":"ই","ী":"ঈ","ু":"উ","ূ":"ঊ","ৃ":"ঋ","ে":"এ","ৈ":"ঐ","ৗ":"ঔ"};
+
+function insert(ch){
+  const s = out.selectionStart, e = out.selectionEnd, v = out.value;
+  let before = v.slice(0,s); const after = v.slice(e);
+  const prev = before.slice(-1);
+  if (prev === "্" && KAR_TO_VOWEL[ch]) { before = before.slice(0,-1); ch = KAR_TO_VOWEL[ch]; }
+  else if (prev === "ে" && ch === "া") { before = before.slice(0,-1); ch = "ো"; }
+  else if (prev === "ে" && ch === "ৗ") { before = before.slice(0,-1); ch = "ৌ"; }
+  else if (prev === "এ" && ch === "া") { before = before.slice(0,-1); ch = "ও"; }
+  out.value = before + ch + after;
+  const p = before.length + ch.length;
+  out.setSelectionRange(p,p);
+}
+function backspace(){
+  const s = out.selectionStart, e = out.selectionEnd, v = out.value;
+  if (s !== e){ out.value = v.slice(0,s)+v.slice(e); out.setSelectionRange(s,s); return; }
+  if (!s) return;
+  out.value = v.slice(0,s-1)+v.slice(s); out.setSelectionRange(s-1,s-1);
+}
+function typeChar(ch){
+  insert(ch);
+  if (mode === "shift" && !shiftLock){ mode = "normal"; render(); }
+}
+
+function mk(label, cls, onTap, hint){
+  const b = document.createElement("button");
+  b.className = "key " + (cls||"");
+  b.textContent = label;
+  if (hint){ const h=document.createElement("span"); h.className="h"; h.textContent=hint; b.appendChild(h); }
+  b.addEventListener("pointerdown", ev => { ev.preventDefault(); onTap(); out.focus(); });
+  return b;
+}
+
+function render(){
+  kb.innerHTML = "";
+  const rows = L[mode];
+  rows.forEach((r,i) => {
+    const row = document.createElement("div");
+    row.className = "row" + (i===1 ? " r2" : "");
+    if (i===2){
+      if (mode === "sym") row.appendChild(mk("=\\<","fn wide",()=>{}));
+      else row.appendChild(mk("⇧","fn wide"+(mode==="shift"?(shiftLock?" lock":" on"):""),onShift));
+    }
+    r.forEach((ch,j) => {
+      const hint = mode==="normal" ? L.shift[i][j] : (mode==="shift" ? L.normal[i][j] : "");
+      row.appendChild(mk(ch,"",()=>typeChar(ch),hint));
+    });
+    if (i===2) row.appendChild(mk("⌫","fn wide",backspace));
+    kb.appendChild(row);
+  });
+  const b = document.createElement("div"); b.className = "row";
+  b.appendChild(mk(mode==="sym"?"কখগ":"?১২৩","fn wide",()=>{ mode = mode==="sym"?"normal":"sym"; shiftLock=false; render(); }));
+  b.appendChild(mk(",","fn",()=>typeChar(",")));
+  b.appendChild(mk("🌐","fn",()=>{}));
+  b.appendChild(mk("বাংলা (জাতীয়)","space",()=>typeChar(" ")));
+  b.appendChild(mk("।","fn",()=>typeChar("।")));
+  b.appendChild(mk("↵","fn wide enter",()=>typeChar("\n")));
+  kb.appendChild(b);
+}
+function onShift(){
+  const now = Date.now();
+  if (mode === "shift"){
+    if (!shiftLock && now - lastShiftTap < 350) shiftLock = true;
+    else { mode = "normal"; shiftLock = false; }
+  } else { mode = "shift"; shiftLock = false; }
+  lastShiftTap = now; render();
+}
+
+/* physical keyboard support */
+const PHYS = {};
+QW.forEach((r,i)=>[...r].forEach((k,j)=>PHYS[k]=L.normal[i][j]));
+SHQW.forEach((r,i)=>[...r].forEach((k,j)=>PHYS[k]=L.shift[i][j]));
+Object.assign(PHYS,{"\\":"ৎ","|":"ঃ","&":"ঁ","$":"৳",
+  "1":"১","2":"২","3":"৩","4":"৪","5":"৫","6":"৬","7":"৭","8":"৮","9":"৯","0":"০"});
+out.addEventListener("keydown", ev => {
+  if (ev.ctrlKey || ev.metaKey || ev.altKey) return;
+  const m = PHYS[ev.key];
+  if (m){ ev.preventDefault(); insert(m); }
+});
+
+/* mapping table */
+const map = document.getElementById("map");
+map.innerHTML = "<tr><th>Key</th><th>Normal</th><th>Shift</th><th>Key</th><th>Normal</th><th>Shift</th></tr>";
+const all = []; QW.forEach((r,i)=>[...r].forEach((k,j)=>all.push([k.toUpperCase(),L.normal[i][j],L.shift[i][j]])));
+for (let i=0;i<all.length;i+=2){
+  const a=all[i], c=all[i+1]||["","",""];
+  map.innerHTML += `<tr><td>${a[0]}</td><td>${a[1]}</td><td>${a[2]}</td><td>${c[0]}</td><td>${c[1]}</td><td>${c[2]}</td></tr>`;
+}
+
+document.getElementById("clear").onclick = ()=>{ out.value=""; out.focus(); };
+document.getElementById("hint").onclick = ()=>document.body.classList.toggle("nohint");
+document.getElementById("theme").onclick = ()=>{
+  const r=document.documentElement;
+  const dark = r.dataset.theme ? r.dataset.theme==="dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  r.dataset.theme = dark ? "light" : "dark";
+};
+render();
+</script>
+</body>
+</html>

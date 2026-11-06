@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="ic_launcher_background">#F3EFD9</color>
+    <!-- Settings app: olive-black background and olive accent (match JolpaiColors.kt). -->
+    <color name="jolpai_background">#11130D</color>
+    <color name="jolpai_olive">#B4CF66</color>
+</resources>

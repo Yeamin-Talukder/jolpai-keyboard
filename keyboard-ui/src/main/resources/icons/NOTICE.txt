@@ -1,0 +1,8 @@
+Icons: Material Symbols (Rounded style, weight 400, 24 px) by Google.
+https://fonts.google.com/icons — https://github.com/google/material-design-icons
+
+Licensed under the Apache License, Version 2.0 (the licence text follows below in the app).
+
+Lipi uses them as Android vector drawables (keyboard-ui/src/main/res/drawable/ms_*.xml),
+generated unmodified from the SVG files by tools/prepare-icons.pl. They are drawn on the
+keyboard (Shift, Backspace, Enter, the toolbar) and throughout the settings app.

@@ -1,0 +1,4 @@
+rupantor-corpus.tsv — input/expected pairs taken from the unit tests in
+https://github.com/OpenBangla/rupantor-rs/blob/92902e31fe43a385df25d66e05437b74069dbd06/src/parser.rs
+Licence: Mozilla Public License 2.0 (see ../../../main/resources/avro/LICENSE-MPL-2.0.txt).
+Used to check that Lipi's PhoneticEngine produces the same output as the reference parser.

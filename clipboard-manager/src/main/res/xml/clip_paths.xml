@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Files Lipi can hand to the app being typed in, one paste at a time (read-only grant). -->
+<paths>
+    <files-path name="clips" path="clips/" />
+    <files-path name="stickers" path="stickers/" />
+    <cache-path name="gifs" path="gifs/" />
+    <cache-path name="clip_share" path="clip-share/" />
+</paths>

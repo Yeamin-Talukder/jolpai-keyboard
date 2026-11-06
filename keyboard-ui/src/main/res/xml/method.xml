@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Declares Lipi as a system keyboard. Subtypes tell Android which languages it types. -->
+<input-method xmlns:android="http://schemas.android.com/apk/res/android"
+    android:settingsActivity="com.yeamin.lipi.MainActivity"
+    android:supportsSwitchingToNextInputMethod="true">
+    <subtype
+        android:imeSubtypeMode="keyboard"
+        android:label="@string/subtype_english"
+        android:languageTag="en-US"
+        android:imeSubtypeLocale="en_US" />
+    <subtype
+        android:imeSubtypeMode="keyboard"
+        android:label="@string/subtype_bangla"
+        android:languageTag="bn-BD"
+        android:imeSubtypeLocale="bn_BD" />
+</input-method>

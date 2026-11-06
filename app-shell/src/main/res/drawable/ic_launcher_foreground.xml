@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Jolpai (জলপাই, olive): an olive on a stem with two leaves, kept inside the adaptive-icon
+     safe zone (66dp circle in the 108dp canvas). The background colour is ic_launcher_background. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:pivotX="54"
+        android:pivotY="54"
+        android:scaleX="1.08"
+        android:scaleY="1.08">
+        <!-- Leaves -->
+        <path
+            android:fillColor="#6E8A2C"
+            android:pathData="M61,40 C65,33 69,31 74,31 C72,36 67,41 61,40Z" />
+        <path
+            android:fillColor="#94AE3A"
+            android:pathData="M61,40 C55,34 50,33 45,34 C48,38 54,41 61,40Z" />
+        <!-- Stem -->
+        <path
+            android:pathData="M58,48 Q58.5,43 61,39.5"
+            android:strokeColor="#4A5A1C"
+            android:strokeWidth="2.4"
+            android:strokeLineCap="round" />
+        <!-- Olive -->
+        <group
+            android:pivotX="50"
+            android:pivotY="65"
+            android:rotation="25">
+            <path android:pathData="M35,65 a15,19 0 1,0 30,0 a15,19 0 1,0 -30,0Z">
+                <aapt:attr name="android:fillColor">
+                    <gradient
+                        android:type="radial"
+                        android:centerX="44"
+                        android:centerY="55"
+                        android:gradientRadius="26"
+                        android:startColor="#9DB447"
+                        android:endColor="#4E6120" />
+                </aapt:attr>
+            </path>
+            <path
+                android:fillColor="#FFFFFF"
+                android:fillAlpha="0.45"
+                android:pathData="M40.9,57 a3.6,6.5 0 1,0 7.2,0 a3.6,6.5 0 1,0 -7.2,0Z" />
+        </group>
+    </group>
+</vector>
