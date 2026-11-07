@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Jolpai Keyboard – Free Bangla &amp; English Keyboard for Android (Avro, জাতীয়)</title>
-<meta name="description" content="Jolpai (জলপাই) Keyboard is a free, open-source Bangla and English keyboard for Android with Avro phonetic typing, the National (জাতীয়) layout, an offline spelling check, offline translation and 64 themes. No ads, no tracking.">
+<title>Jolpai – Free Bangla Keyboard for Android (Avro, জাতীয়)</title>
+<meta name="description" content="Free, open-source Bangla &amp; English keyboard for Android: Avro phonetic, National (জাতীয়) layout, offline spell check and translation. No ads, no tracking.">
 <meta name="keywords" content="Bangla keyboard, Bengali keyboard, Avro keyboard Android, বাংলা কিবোর্ড, অভ্র কিবোর্ড, জাতীয় কিবোর্ড, Jatiya keyboard, Bangla typing, open source keyboard, Jolpai Keyboard">
 <link rel="canonical" href="https://yeamin-talukder.github.io/jolpai-keyboard/">
 <meta name="robots" content="index, follow, max-image-preview:large">
@@ -27,11 +27,14 @@
 <meta name="twitter:description" content="Avro phonetic, National (জাতীয়) layout, offline spelling check and translation. Free and open source.">
 <meta name="twitter:image" content="https://yeamin-talukder.github.io/jolpai-keyboard/images/banner.png">
 
-<link rel="icon" type="image/png" href="images/icon-512.png">
-<link rel="apple-touch-icon" href="images/icon-512.png">
+<link rel="icon" type="image/png" sizes="48x48" href="images/icon-48.png">
+<link rel="icon" type="image/png" sizes="96x96" href="images/icon-96.png">
+<link rel="apple-touch-icon" sizes="180x180" href="images/icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- The font loads in the background: text shows at once in a fallback font, then switches (display=swap). -->
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap"></noscript>
 
 <script type="application/ld+json">
 {
@@ -44,12 +47,18 @@
   "applicationSubCategory": "Keyboard",
   "operatingSystem": "Android 8.0 or newer",
   "softwareVersion": "0.10.1",
+  "datePublished": "2026-11-06",
+  "dateModified": "2026-11-07",
   "inLanguage": ["bn", "en"],
   "url": "https://yeamin-talukder.github.io/jolpai-keyboard/",
   "downloadUrl": "https://github.com/Yeamin-Talukder/jolpai-keyboard/releases/latest",
   "installUrl": "https://github.com/Yeamin-Talukder/jolpai-keyboard/releases/latest",
   "image": "https://yeamin-talukder.github.io/jolpai-keyboard/images/icon-512.png",
   "screenshot": [
+    "https://yeamin-talukder.github.io/jolpai-keyboard/images/screenshots/screenshot-english.webp",
+    "https://yeamin-talukder.github.io/jolpai-keyboard/images/screenshots/screenshot-national.webp",
+    "https://yeamin-talukder.github.io/jolpai-keyboard/images/screenshots/screenshot-check.webp",
+    "https://yeamin-talukder.github.io/jolpai-keyboard/images/screenshots/screenshot-translate.webp",
     "https://yeamin-talukder.github.io/jolpai-keyboard/images/layouts.png",
     "https://yeamin-talukder.github.io/jolpai-keyboard/images/themes.png"
   ],
@@ -128,6 +137,8 @@
     font-size: 17px; line-height: 1.6; overflow-x: hidden;
   }
   a { color: var(--olive); text-decoration: none; }
+  /* links inside running text are underlined, not only coloured (accessibility) */
+  .text-link { text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
   a:hover { text-decoration: underline; }
   img { max-width: 100%; height: auto; display: block; }
   .wrap { max-width: var(--max); margin: 0 auto; padding: 0 20px; }
@@ -474,6 +485,10 @@
     .hero .chips { margin-top: min(26px, 2.6vh); }
   }
 
+  /* ---- speed: sections below the hero are laid out and painted only as they come near the
+     screen (looks the same; much less work on page load, especially on phones) */
+  main > section:not(.hero) { content-visibility: auto; contain-intrinsic-size: auto 900px; }
+
   /* ---- version dropdown (Install section): styled list over a hidden <select> */
   .vh { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
   .vsel { position: relative; }
@@ -690,8 +705,8 @@
 
 <header class="top">
   <div class="wrap nav">
-    <a class="brand" href="./" aria-label="Jolpai Keyboard home">
-      <img src="images/icon-512.png" alt="" width="34" height="34">
+    <a class="brand" href="./" title="Jolpai Keyboard home">
+      <img src="images/icon-96.webp" alt="" width="34" height="34">
       <span>Jolpai <small>জলপাই</small></span>
     </a>
     <button class="menu-btn" aria-label="Open menu" aria-expanded="false" aria-controls="links">☰</button>
@@ -984,7 +999,7 @@
   <!-- Final CTA -->
   <section class="final alt" aria-labelledby="final-title">
     <div class="wrap reveal">
-      <img src="images/icon-512.png" alt="Jolpai Keyboard icon: a green olive" width="84" height="84" style="margin:0 auto 18px;border-radius:20px" loading="lazy">
+      <img src="images/icon-192.webp" alt="Jolpai Keyboard icon: a green olive" width="84" height="84" style="margin:0 auto 18px;border-radius:20px" loading="lazy">
       <h2 id="final-title">Write in Bangla, freely.</h2>
       <p>Free and open source. If Jolpai helps you, a ⭐ on GitHub helps other Bangla writers find it.</p>
       <div class="cta" style="justify-content:center">
@@ -998,8 +1013,8 @@
 <footer>
   <div class="wrap foot">
     <div>
-      <div class="brand" style="margin-bottom:8px"><img src="images/icon-512.png" alt="" width="28" height="28" loading="lazy"><span>Jolpai Keyboard</span></div>
-      <div>© 2026 <a href="https://github.com/Yeamin-Talukder">Md Yeamin Talukder</a> · Apache License 2.0 · Made in Bangladesh 🇧🇩</div>
+      <div class="brand" style="margin-bottom:8px"><img src="images/icon-96.webp" alt="" width="28" height="28" loading="lazy"><span>Jolpai Keyboard</span></div>
+      <div>© 2026 <a class="text-link" href="https://github.com/Yeamin-Talukder">Md Yeamin Talukder</a> · Apache License 2.0 · Made in Bangladesh 🇧🇩</div>
     </div>
     <nav aria-label="Footer">
       <a href="https://github.com/Yeamin-Talukder/jolpai-keyboard">Source code</a>
@@ -1059,17 +1074,8 @@
     });
   });
 
-  // Point the download buttons straight at the latest APK for most phones (falls back to the releases page)
-  fetch('https://api.github.com/repos/Yeamin-Talukder/jolpai-keyboard/releases/latest')
-    .then(r => r.ok ? r.json() : Promise.reject())
-    .then(rel => {
-      const apk = rel.assets.find(a => /arm64-v8a\.apk$/.test(a.name));
-      if (!apk) return;
-      document.querySelectorAll('.js-download').forEach(a => { a.href = apk.browser_download_url; });
-      const mb = (apk.size / 1048576).toFixed(1);
-      document.querySelectorAll('.js-version').forEach(s => { s.textContent = `Version ${rel.tag_name.replace(/^v/, '')} · ${mb} MB`; });
-    })
-    .catch(() => {});
+  // The other Download buttons (.js-download) and the version line (.js-version) are filled by the
+  // download picker below, from the same single request to GitHub's API.
 
   // ---------------------------------------------------------------- download picker
   // Every release and every processor type. Releases come from GitHub's API; when it can't be
@@ -1240,9 +1246,15 @@
     const menu = document.getElementById('hero-dl-menu'), menuHead = document.getElementById('hero-dl-head');
     let heroAbi = 'arm64-v8a';
     function renderHero() {
-      if (!heroMain || !menu) return;
       const r = releases[0], v = ver(r.tag);
       const link = a => (r.apks && r.apks[a] ? r.apks[a].url : `${REPO}/releases/download/${r.tag}/jolpai-keyboard-${v}-${a}.apk`);
+      // The other Download buttons and the version line: the newest APK for the visitor's phone type.
+      document.querySelectorAll('.js-download').forEach(a => { a.href = link(heroAbi); });
+      const top = r.apks && r.apks[heroAbi];
+      document.querySelectorAll('.js-version').forEach(s => {
+        s.textContent = `Version ${v}${top && top.size ? ` · ${(top.size / 1048576).toFixed(1)} MB` : ''}`;
+      });
+      if (!heroMain || !menu) return;
       heroMain.href = link(heroAbi);
       heroMain.setAttribute('download', `jolpai-keyboard-${v}-${heroAbi}.apk`);
       menuHead.textContent = `Jolpai ${v}: choose your phone type`;
