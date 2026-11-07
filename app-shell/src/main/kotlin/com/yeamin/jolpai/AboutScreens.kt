@@ -22,17 +22,15 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -46,6 +44,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -112,66 +111,26 @@ private fun resourceText(path: String): String =
     Notice::class.java.getResourceAsStream(path)?.use { it.readBytes().decodeToString() } ?: "(not found: $path)"
 
 /** Where an update check stands. */
-private sealed interface UpdateState {
-    data object Idle : UpdateState
-    data object Checking : UpdateState
-    data class UpToDate(val latest: String) : UpdateState
-    data class Available(val release: LatestRelease) : UpdateState
-    data object Failed : UpdateState
-}
-
 /** Version, updates, developer, privacy summary, permissions, and the licences of everything Jolpai includes. */
 @Composable
 fun AboutScreen(onBack: () -> Unit) {
     val context = LocalContext.current
     val info = remember { deviceInfo(context) }
     val version = info.appVersion
-    val scope = rememberCoroutineScope()
-    var update by remember { mutableStateOf<UpdateState>(UpdateState.Idle) }
+    val update by AppUpdater.state.collectAsState()
     var showChanges by remember { mutableStateOf(false) }
     var open by remember { mutableStateOf<String?>(null) }
-
-    fun checkForUpdates() {
-        if (update == UpdateState.Checking) return
-        update = UpdateState.Checking
-        scope.launch {
-            val latest = AppUpdates.fetchLatest(version)
-            update = when {
-                latest == null -> UpdateState.Failed
-                AppUpdates.isNewer(latest.version, version) -> UpdateState.Available(latest)
-                else -> UpdateState.UpToDate(latest.version)
-            }
-        }
+    // Back from Android's "Install unknown apps" page: carry on with the update if allowed.
+    LifecycleResumeEffect(Unit) {
+        AppUpdater.onResume(context)
+        onPauseOrDispose { }
     }
 
     SettingsScaffold("About Jolpai", onBack) {
         AboutHeader(version)
 
         SettingsGroup("Updates & feedback", tone = GroupTone.PRIMARY) {
-            val state = update
-            SettingsItem(
-                if (state is UpdateState.Available) "Update available: ${state.release.version}" else "Check for updates",
-                when (state) {
-                    UpdateState.Idle -> "You have $version · checks GitHub only when you tap"
-                    UpdateState.Checking -> "Checking GitHub…"
-                    is UpdateState.UpToDate -> "You have the latest version ($version)"
-                    is UpdateState.Available -> "You have $version · tap Download, then open the file to install"
-                    UpdateState.Failed -> "Couldn't reach GitHub. Check the internet and try again."
-                },
-                UiR.drawable.ms_system_update,
-                showChevron = false,
-                trailing = {
-                    when (state) {
-                        UpdateState.Checking -> CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 2.5.dp)
-                        is UpdateState.Available -> FilledTonalButton(onClick = {
-                            openLink(context, state.release.apkUrl ?: state.release.pageUrl)
-                        }) { Text("Download") }
-                        else -> Unit
-                    }
-                },
-            ) {
-                if (state is UpdateState.Available) openLink(context, state.release.pageUrl) else checkForUpdates()
-            }
+            UpdateSection(update, version)
             SettingsItem("What's new", "Changes in each version", UiR.drawable.ms_new_releases) { showChanges = true }
             SettingsItem("Report a problem", "Opens a GitHub issue with your phone and app version filled in", UiR.drawable.ms_bug_report) {
                 openLink(context, AppUpdates.issueUrl(info) { Uri.encode(it) })
@@ -194,13 +153,14 @@ fun AboutScreen(onBack: () -> Unit) {
             Bullet(UiR.drawable.ms_auto_awesome, "Learning never happens in password, private (incognito) or no-suggestion fields. You can turn it off or clear it.")
             Bullet(UiR.drawable.ms_content_paste, "Clipboard history is saved only while Jolpai is your keyboard, never from password fields or sensitive copies, and is deleted on your schedule.")
             Bullet(UiR.drawable.ms_backup, "Typing data, clipboard pictures and stickers are left out of Android's cloud backup and device transfer.")
-            Bullet(UiR.drawable.ms_gif_box, "The internet is used only for GIF search with your own GIPHY key, to download the offline translation pack when you ask, and when you tap Check for updates (it asks GitHub for the latest version number; nothing about you or your typing is sent). Translation itself runs on the phone. Voice typing uses your phone's speech service, which may work online.")
+            Bullet(UiR.drawable.ms_gif_box, "The internet is used only for GIF search with your own GIPHY key, to download the offline translation pack when you ask, and for updates when you tap them (Check for updates asks GitHub for the latest version; Update downloads it from GitHub; nothing about you or your typing is sent). Translation itself runs on the phone. Voice typing uses your phone's speech service, which may work online.")
         }
 
         SettingsGroup("Permissions") {
             Bullet(UiR.drawable.ms_mic, "Microphone — only for voice typing, asked for on the Voice typing screen.")
-            Bullet(UiR.drawable.ms_language, "Internet — only for GIF search with your own GIPHY key, downloading the offline translation pack, and checking for updates when you tap it.")
+            Bullet(UiR.drawable.ms_language, "Internet — only for GIF search with your own GIPHY key, downloading the offline translation pack, and checking for and downloading updates when you tap them.")
             Bullet(UiR.drawable.ms_vibration, "Vibration — for the key-press strengths you choose.")
+            Bullet(UiR.drawable.ms_system_update, "Install apps — only to install Jolpai's own update when you tap Update; Android asks you to confirm every time.")
         }
 
         SettingsGroup("Open-source data and licences") {

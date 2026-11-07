@@ -72,8 +72,19 @@ object Changelog {
     )
 }
 
-/** The newest release on GitHub. [apkUrl] is the APK for this phone's processor, when found. */
-data class LatestRelease(val version: String, val pageUrl: String, val apkUrl: String?)
+/**
+ * The newest release on GitHub. [apkUrl] / [apkName] / [apkSize] describe the APK for this
+ * phone's processor, when found; [sumsUrl] is the release's SHA256SUMS.txt, used to check the
+ * download before installing it.
+ */
+data class LatestRelease(
+    val version: String,
+    val pageUrl: String,
+    val apkUrl: String?,
+    val apkName: String? = null,
+    val apkSize: Long = 0,
+    val sumsUrl: String? = null,
+)
 
 /** Facts about this install, for bug reports. Never anything the user typed. */
 data class DeviceInfo(
@@ -120,15 +131,24 @@ object AppUpdates {
         val o = json.parseToJsonElement(body).jsonObject
         val tag = o["tag_name"]?.jsonPrimitive?.content ?: return null
         val page = o["html_url"]?.jsonPrimitive?.content ?: JolpaiLinks.LATEST_RELEASE
-        val apks = o["assets"]?.jsonArray.orEmpty().mapNotNull { a ->
+        class Asset(val name: String, val url: String, val size: Long)
+        val assets = o["assets"]?.jsonArray.orEmpty().mapNotNull { a ->
             val obj = a.jsonObject
             val name = obj["name"]?.jsonPrimitive?.content ?: return@mapNotNull null
             val url = obj["browser_download_url"]?.jsonPrimitive?.content ?: return@mapNotNull null
-            if (name.endsWith(".apk", ignoreCase = true)) name to url else null
+            Asset(name, url, obj["size"]?.jsonPrimitive?.content?.toLongOrNull() ?: 0L)
         }
-        val apk = abis.firstNotNullOfOrNull { abi -> apks.firstOrNull { (name, _) -> name.contains("-$abi.") || name.contains("-$abi-") }?.second }
-        LatestRelease(tag.removePrefix("v"), page, apk)
+        val apks = assets.filter { it.name.endsWith(".apk", ignoreCase = true) }
+        val apk = abis.firstNotNullOfOrNull { abi -> apks.firstOrNull { it.name.contains("-$abi.") || it.name.contains("-$abi-") } }
+        val sums = assets.firstOrNull { it.name.equals("SHA256SUMS.txt", ignoreCase = true) }
+        LatestRelease(tag.removePrefix("v"), page, apk?.url, apk?.name, apk?.size ?: 0L, sums?.url)
     }.getOrNull()
+
+    /** The SHA-256 (lower-case hex) listed for [fileName] in a SHA256SUMS.txt body, or null. */
+    fun checksumFor(sums: String, fileName: String): String? = sums.lineSequence()
+        .map { it.trim().split(Regex("\\s+"), limit = 2) }
+        .firstOrNull { it.size == 2 && it[1].removePrefix("*") == fileName && it[0].length == 64 }
+        ?.get(0)?.lowercase()
 
     /** A GitHub issue body with this install's details filled in and room for the problem. */
     fun issueBody(info: DeviceInfo): String = """

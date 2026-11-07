@@ -47,6 +47,9 @@ minute after it was copied, unless you pin it.
 - **Check for updates** (About screen), only when you tap it: the app asks GitHub's public
   API for the latest Jolpai release (`api.github.com`). The request carries the app version
   in its User-Agent and, like any web request, your IP address; nothing you type is sent.
+  **Update**, only when you tap it, downloads the new APK and its checksum file from the
+  GitHub release into the app's cache, checks both and the signing key, and hands the APK to
+  Android's installer, which asks you to confirm. The file is deleted afterwards.
   **Report a problem** opens a GitHub issue page in your browser with the app version,
   Android version, phone model and processor type filled in; nothing is sent until you
   submit it yourself.
@@ -67,7 +70,8 @@ minute after it was copied, unless you pin it.
 
 ## Permissions
 - **Microphone:** only for voice typing; asked for in the app with an explanation.
-- **Internet:** only for GIF search with your own key, downloading the offline translation pack, and checking for updates, each only when you ask.
+- **Internet:** only for GIF search with your own key, downloading the offline translation pack, and checking for and downloading updates, each only when you ask.
+- **Install apps** (`REQUEST_INSTALL_PACKAGES`): only to install Jolpai's own update when you tap Update. Android asks you once to allow it for Jolpai, and asks you to confirm every install.
 - **Vibration:** for the key-press vibration strength setting.
 
 ## Deleting everything
