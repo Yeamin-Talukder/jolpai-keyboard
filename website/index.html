@@ -759,7 +759,7 @@
             <span>View on GitHub</span>
           </a>
         </div>
-        <p class="release-note"><span class="js-version">Version 0.10.1</span> · Android 8.0+ · Free forever</p>
+        <p class="release-note"><span class="js-version">Version 0.10.1</span><span class="js-dl" hidden></span> · Android 8.0+ · Free forever</p>
         <ul class="chips" aria-label="Highlights">
           <li>অভ্র Avro phonetic</li><li>জাতীয় layout</li><li>Works offline</li><li>No ads · No tracking</li><li>Material You</li>
         </ul>
@@ -804,7 +804,7 @@
     <div class="stats" role="list">
       <div role="listitem"><b>3</b><span>layouts</span></div>
       <div role="listitem"><b>64</b><span>themes</span></div>
-      <div role="listitem"><b>100%</b><span>on your phone</span></div>
+      <div role="listitem" class="js-dl-stat"><b>100%</b><span>on your phone</span></div>
       <div role="listitem"><b>0</b><span>ads or trackers</span></div>
       <div role="listitem"><b>Free</b><span>open source</span></div>
       <div role="listitem"><b>8.0+</b><span>Android</span></div>
@@ -1306,9 +1306,42 @@
     fillVersions();
     render();
     renderHero();
+    // Total APK downloads across every release (GitHub counts each download of a release file).
+    // Shown in the hero line and as a stats tile that counts up when it comes into view; if GitHub
+    // can't be reached the page keeps its normal text.
+    function showDownloads(list) {
+      const total = list.filter(r => !r.draft)
+        .reduce((n, r) => n + r.assets.filter(a => /\.apk$/.test(a.name)).reduce((m, a) => m + a.download_count, 0), 0);
+      if (!total) return;
+      const fmt = n => n.toLocaleString('en-US');
+      const word = total === 1 ? 'download' : 'downloads';
+      document.querySelectorAll('.js-dl').forEach(e => { e.innerHTML = ` · <b>${fmt(total)}</b> ${word}`; e.hidden = false; });
+      const cell = document.querySelector('.js-dl-stat');
+      if (!cell) return;
+      const b = cell.querySelector('b');
+      cell.querySelector('span').textContent = word;
+      b.textContent = '0';
+      const count = () => {
+        if (matchMedia('(prefers-reduced-motion: reduce)').matches) { b.textContent = fmt(total); return; }
+        const t0 = performance.now(), dur = 1300;
+        const step = now => {
+          const p = Math.min(1, (now - t0) / dur);
+          b.textContent = fmt(Math.round(total * (1 - Math.pow(1 - p, 3))));
+          if (p < 1) requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+        setTimeout(() => { b.textContent = fmt(total); }, dur + 150); // in case frames are paused
+      };
+      if ('IntersectionObserver' in window) {
+        const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { io.disconnect(); count(); } });
+        io.observe(cell);
+      } else count();
+    }
+
     fetch('https://api.github.com/repos/Yeamin-Talukder/jolpai-keyboard/releases?per_page=30')
       .then(r => r.ok ? r.json() : Promise.reject())
       .then(list => {
+        showDownloads(list);
         const got = list.filter(r => !r.draft && !r.prerelease).map(r => {
           const apks = {};
           r.assets.filter(a => /\.apk$/.test(a.name)).forEach(a => {
