@@ -449,17 +449,9 @@
   }
   .pick-select:hover { border-color: var(--olive-2); }
   .pick-select option { background: var(--card-2); color: var(--text); }
-  .abis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
-  .abi {
-    text-align: left; cursor: pointer; font: inherit; color: var(--text); background: var(--card-2);
-    border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; transition: border-color .2s, background .2s, transform .15s;
-  }
-  .abi b { display: block; font-size: 15.5px; }
-  .abi small { display: block; color: var(--dim); font-size: 12.5px; margin-top: 3px; font-family: var(--mono); }
-  .abi small span { white-space: nowrap; }
-  .abi:hover { border-color: var(--olive-2); transform: translateY(-1px); }
-  .abi[aria-checked="true"] { border-color: var(--olive); background: rgba(181,201,74,.12); box-shadow: inset 0 0 0 1px var(--olive); }
-  .abi .yours { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px; background: var(--olive); color: #18200b; font-size: 11px; font-weight: 700; vertical-align: 2px; }
+  .pick-fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); gap: 0 14px; }
+  .pick-hint { margin: -6px 0 18px; color: var(--dim); font-size: 14px; }
+  .pick-hint b { color: var(--muted); font-weight: 600; }
   .pick-go { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 4px; }
   .pick-go .btn-primary { flex: 1 1 260px; }
   .pick-meta { margin: 14px 0 0; color: var(--dim); font-size: 14px; display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; min-height: 1.4em; }
@@ -471,7 +463,7 @@
   .pick-warn { margin-top: 14px; }
   .pick-warn code { font-family: var(--mono); font-size: .88em; background: rgba(255,255,255,.06); padding: 1px 6px; border-radius: 6px; color: var(--cream); }
   @media (max-width: 720px) {
-    .abis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .pick-fields { grid-template-columns: minmax(0, 1fr); }
     .picker { padding: 20px; }
   }
 
@@ -790,21 +782,24 @@
       <div class="picker reveal" id="download-picker">
         <h3>Choose your download</h3>
         <p>The newest version for most phones is already picked. Need an older version or another phone type? Change it here.</p>
-        <div class="pick-field">
-          <label class="pick-label" for="pick-version">Version</label>
-          <select class="pick-select" id="pick-version">
-            <option value="v0.10.1">0.10.1</option>
-          </select>
-        </div>
-        <div class="pick-field">
-          <span class="pick-label" id="pick-abi-label">Phone type</span>
-          <div class="abis" id="pick-abis" role="radiogroup" aria-labelledby="pick-abi-label">
-            <button type="button" class="abi" role="radio" aria-checked="true" data-abi="arm64-v8a"><b>Most phones</b><small>64-bit · <span>arm64-v8a</span></small></button>
-            <button type="button" class="abi" role="radio" aria-checked="false" data-abi="armeabi-v7a" tabindex="-1"><b>Older phones</b><small>32-bit · <span>armeabi-v7a</span></small></button>
-            <button type="button" class="abi" role="radio" aria-checked="false" data-abi="x86_64" tabindex="-1"><b>Intel / emulator</b><small>64-bit · <span>x86_64</span></small></button>
-            <button type="button" class="abi" role="radio" aria-checked="false" data-abi="x86" tabindex="-1"><b>Old Intel</b><small>32-bit · <span>x86</span></small></button>
+        <div class="pick-fields">
+          <div class="pick-field">
+            <label class="pick-label" for="pick-version">Version</label>
+            <select class="pick-select" id="pick-version">
+              <option value="v0.10.1">0.10.1</option>
+            </select>
+          </div>
+          <div class="pick-field">
+            <label class="pick-label" for="pick-abi">Variant (phone type)</label>
+            <select class="pick-select" id="pick-abi">
+              <option value="arm64-v8a" data-label="Most phones · 64-bit (arm64-v8a)">Most phones · 64-bit (arm64-v8a)</option>
+              <option value="armeabi-v7a" data-label="Older phones · 32-bit (armeabi-v7a)">Older phones · 32-bit (armeabi-v7a)</option>
+              <option value="x86_64" data-label="Intel / emulator · 64-bit (x86_64)">Intel / emulator · 64-bit (x86_64)</option>
+              <option value="x86" data-label="Old Intel · 32-bit (x86)">Old Intel · 32-bit (x86)</option>
+            </select>
           </div>
         </div>
+        <p class="pick-hint" id="pick-hint">Not sure? Almost every phone from 2017 onward needs <b>Most phones · 64-bit</b>.</p>
         <div class="pick-go">
           <a class="btn btn-primary" id="pick-download" href="https://github.com/Yeamin-Talukder/jolpai-keyboard/releases/latest">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0-5-5m5 5 5-5M5 21h14"/></svg>
@@ -925,9 +920,8 @@
     const KNOWN = ['v0.10.1', 'v0.10.0', 'v0.9.0', 'v0.8.0', 'v0.7.0'];
     const ABI_NAME = { 'arm64-v8a': '64-bit', 'armeabi-v7a': '32-bit', 'x86_64': 'x86_64', 'x86': 'x86' };
     const sel = document.getElementById('pick-version');
-    const group = document.getElementById('pick-abis');
-    if (!sel || !group) return;
-    const btns = [...group.querySelectorAll('.abi')];
+    const abiSel = document.getElementById('pick-abi');
+    if (!sel || !abiSel) return;
     const dl = document.getElementById('pick-download'), dlText = document.getElementById('pick-download-text');
     const meta = document.getElementById('pick-meta'), warn = document.getElementById('pick-warn');
     const ver = tag => tag.replace(/^v/, '');
@@ -969,25 +963,12 @@
       } else warn.hidden = true;
     }
 
-    function setAbi(a, focus) {
+    function setAbi(a) {
       abi = a;
-      btns.forEach(b => {
-        const on = b.dataset.abi === a;
-        b.setAttribute('aria-checked', String(on));
-        b.tabIndex = on ? 0 : -1;
-        if (on && focus) b.focus();
-      });
+      abiSel.value = a;
       render();
     }
-    btns.forEach((b, i) => {
-      b.addEventListener('click', () => setAbi(b.dataset.abi));
-      b.addEventListener('keydown', e => {
-        const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
-        if (!step) return;
-        e.preventDefault();
-        setAbi(btns[(i + step + btns.length) % btns.length].dataset.abi, true);
-      });
-    });
+    abiSel.addEventListener('change', () => setAbi(abiSel.value));
     sel.addEventListener('change', render);
     meta.addEventListener('click', e => {
       const b = e.target.closest('.pick-sha');
@@ -1001,9 +982,11 @@
     if (/Android/i.test(navigator.userAgent) && navigator.userAgentData && navigator.userAgentData.getHighEntropyValues) {
       navigator.userAgentData.getHighEntropyValues(['architecture', 'bitness']).then(h => {
         const a = h.architecture === 'x86' ? (h.bitness === '32' ? 'x86' : 'x86_64') : (h.bitness === '32' ? 'armeabi-v7a' : 'arm64-v8a');
-        const b = btns.find(x => x.dataset.abi === a);
-        if (!b) return;
-        b.querySelector('b').insertAdjacentHTML('beforeend', '<span class="yours">Your phone</span>');
+        const o = [...abiSel.options].find(x => x.value === a);
+        if (!o) return;
+        o.textContent = `${o.dataset.label} · your phone`;
+        const hint = document.getElementById('pick-hint');
+        if (hint) hint.innerHTML = `Picked for <b>your phone</b>: ${esc(o.dataset.label)}.`;
         setAbi(a);
       }).catch(() => {});
     }
