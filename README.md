@@ -23,7 +23,7 @@ and nothing you type leaves your phone.**
 [![Last commit](https://img.shields.io/github/last-commit/Yeamin-Talukder/jolpai-keyboard?color=4E6120)](https://github.com/Yeamin-Talukder/jolpai-keyboard/commits/main)
 [![Made in Bangladesh](https://img.shields.io/badge/Made%20in-Bangladesh-006A4E)](#)
 
-**[🌐 Website](https://yeamin-talukder.github.io/jolpai-keyboard/)** · [What's new](#-whats-new-in-090) · [Features](#-features) · [Screenshots](#-screenshots) · [Download](#-download--install) · [Architecture](#-architecture) · [Build](#-build-from-source) · [FAQ](#-faq) · [বাংলা](#-বাংলায়-জলপাই-কিবোর্ড)
+**[🌐 Website](https://yeamin-talukder.github.io/jolpai-keyboard/)** · [What's new](#-whats-new-in-0101) · [Demo](#-see-it-in-action) · [Features](#-features) · [Screenshots](#-screenshots) · [Download](#-download--install) · [Architecture](#-architecture) · [Build](#-build-from-source) · [FAQ](#-faq) · [বাংলা](#-বাংলায়-জলপাই-কিবোর্ড)
 
 </div>
 
@@ -113,9 +113,59 @@ Earlier, in 0.9.0: Check offers the fix plus 2 other likely words (the right wor
 - Internet is used **only** for features you turn on (GIF search, downloading the translation pack, checking for updates).
 - Backup and restore to a file **you** choose. Read the [privacy policy](docs/PRIVACY.md).
 
+## 🎬 See it in action
+
+<div align="center">
+
+<table>
+<tr>
+<td align="center" width="33%"><img src="docs/images/demo/demo-english.webp" width="240" alt="Jolpai Keyboard English typing on Android: word suggestions, next-word prediction and auto-capitals"><br><b>English typing</b></td>
+<td align="center" width="33%"><img src="docs/images/demo/demo-avro.webp" width="240" alt="Avro phonetic Bangla typing in Jolpai Keyboard: ami becomes আমি with dictionary candidates"><br><b>অভ্র phonetic</b></td>
+<td align="center" width="33%"><img src="docs/images/demo/demo-national.webp" width="240" alt="National (Jatiya) Bangla keyboard layout in Jolpai: every letter one tap away"><br><b>জাতীয় layout</b></td>
+</tr>
+<tr>
+<td align="center"><img src="docs/images/demo/demo-spell-check.webp" width="240" alt="Offline spelling and grammar check for Bangla and English in Jolpai Keyboard"><br><b>Spelling &amp; grammar check</b></td>
+<td align="center"><img src="docs/images/demo/demo-translator.webp" width="240" alt="Offline English to Bangla translator inside the Jolpai keyboard"><br><b>Offline translator</b></td>
+<td align="center"><img src="docs/images/demo/demo-voice.webp" width="240" alt="Bangla and English voice typing with spoken punctuation in Jolpai Keyboard"><br><b>Voice typing</b></td>
+</tr>
+<tr>
+<td align="center"><img src="docs/images/demo/demo-autocorrect.webp" width="240" alt="Smart autocorrect in Jolpai Keyboard fixes typos on space, backspace undoes it"><br><b>Smart autocorrect</b></td>
+<td align="center"><img src="docs/images/demo/demo-predictive-touch.webp" width="240" alt="Predictive touch: likely next letters get a bigger tap target in Jolpai Keyboard"><br><b>Predictive touch</b></td>
+<td align="center"><img src="docs/images/demo/demo-language-switch.webp" width="240" alt="One-tap switch between English, Avro Bangla and National Bangla in Jolpai Keyboard"><br><b>One-tap language switch</b></td>
+</tr>
+<tr>
+<td align="center"><img src="docs/images/demo/demo-emoji.webp" width="240" alt="Emoji search in English and Bangla with skin tones in Jolpai Keyboard"><br><b>Emoji search (EN + বাংলা)</b></td>
+<td align="center"><img src="docs/images/demo/demo-clipboard.webp" width="240" alt="Clipboard history with codes, links and notes in Jolpai Keyboard"><br><b>Clipboard</b></td>
+<td align="center"><img src="docs/images/demo/demo-gestures.webp" width="240" alt="Gestures in Jolpai Keyboard: slide on the space bar to move the cursor"><br><b>Gestures</b></td>
+</tr>
+</table>
+
+*Recorded from the live demo on the [website](https://yeamin-talukder.github.io/jolpai-keyboard/), which uses the app's real layouts, icons and the Olive night theme.*
+
+</div>
+
 ## 📸 Screenshots
 
 <div align="center">
+
+<table>
+<tr>
+<td align="center" width="25%"><img src="docs/images/screenshots/screenshot-english.webp" width="200" alt="Jolpai Keyboard on Android: English typing with auto-capitals, word suggestions and an emoji suggestion"><br><sub><b>English</b> with suggestions</sub></td>
+<td align="center" width="25%"><img src="docs/images/screenshots/screenshot-national.webp" width="200" alt="Jolpai Keyboard National (Jatiya) Bangla layout on Android typing জলপাই কিবোর্ড"><br><sub><b>জাতীয়</b> (National) layout</sub></td>
+<td align="center" width="25%"><img src="docs/images/screenshots/screenshot-check.webp" width="200" alt="Jolpai Keyboard spelling check card: takl corrected to talk, with tail and tall as other choices"><br><sub><b>✓ Check</b>: takl → talk · tail · tall</sub></td>
+<td align="center" width="25%"><img src="docs/images/screenshots/screenshot-translate.webp" width="200" alt="Jolpai Keyboard offline translator: good morning, how are you translated to শুভ সকাল, তুমি কেমন আছো"><br><sub><b>Offline translator</b> EN → বাংলা</sub></td>
+</tr>
+<tr>
+<td align="center"><img src="docs/images/screenshots/screenshot-emoji.webp" width="200" alt="Jolpai Keyboard emoji panel with search in English and Bangla"><br><sub><b>Emoji</b>, search in EN + বাংলা</sub></td>
+<td align="center"><img src="docs/images/screenshots/screenshot-home.webp" width="200" alt="Jolpai Keyboard app home screen with setup card and test field"><br><sub><b>App home</b> and test field</sub></td>
+<td align="center"><img src="docs/images/screenshots/screenshot-themes.webp" width="200" alt="Jolpai Keyboard themes screen with live keyboard preview in the Olive night theme"><br><sub><b>Themes</b> with live preview</sub></td>
+<td align="center"><img src="docs/images/screenshots/screenshot-about.webp" width="200" alt="Jolpai Keyboard About page with in-app update check, what's new, report a problem and share"><br><sub><b>About</b>: in-app updates</sub></td>
+</tr>
+</table>
+
+*Real screenshots from Jolpai 0.10.1 on a Pixel 7 Pro (Android 17), Olive night theme.*
+
+### Layouts and themes
 
 <img src="docs/images/layouts.png" alt="Jolpai Keyboard layouts: English QWERTY, Avro phonetic Bangla and National (Jatiya) Bangla keyboard on Android" width="100%">
 
