@@ -474,6 +474,33 @@
     .hero .chips { margin-top: min(26px, 2.6vh); }
   }
 
+  /* ---- version dropdown (Install section): styled list over a hidden <select> */
+  .vh { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+  .vsel { position: relative; }
+  .vsel-btn { display: flex; align-items: center; min-height: 50px; text-align: left; transition: border-color .2s ease, box-shadow .2s ease; }
+  .vsel-btn[aria-expanded="true"] { border-color: var(--olive); box-shadow: 0 0 0 3px rgba(181, 201, 74, .14); }
+  .vsel-val { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+  .vsel-val b { font-weight: 600; }
+  .vtag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 700; letter-spacing: .02em; line-height: 1.5; }
+  .vtag.latest { background: var(--olive); color: #18200b; }
+  .vtag.old { background: rgba(224, 175, 104, .12); color: #e0af68; border: 1px solid #5a4a1c; }
+  .vsel-list {
+    position: absolute; z-index: 30; left: 0; right: 0; top: calc(100% + 8px); margin: 0; padding: 6px; list-style: none;
+    max-height: 340px; overflow: auto; outline: none; background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+    box-shadow: 0 24px 60px -16px rgba(0, 0, 0, .75), 0 0 0 1px rgba(181, 201, 74, .06); animation: menuIn .16s ease;
+  }
+  .vsel-list li { position: relative; padding: 10px 12px 10px 38px; border-radius: 12px; border: 1px solid transparent; cursor: pointer; transition: background .15s ease; }
+  .vsel-list li + li { margin-top: 2px; }
+  .vopt-top { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+  .vsel-list li b { font-size: 15.5px; }
+  .vsel-list li small { display: block; margin-top: 2px; color: var(--dim); font-size: 12.5px; }
+  .vsel-list li.active { background: rgba(181, 201, 74, .1); }
+  .vsel-list li[aria-selected="true"] { border-color: rgba(181, 201, 74, .45); }
+  .vsel-list li[aria-selected="true"]::before {
+    content: ''; position: absolute; left: 14px; top: 50%; width: 11px; height: 6px;
+    border-left: 2.5px solid var(--olive); border-bottom: 2.5px solid var(--olive); transform: translateY(-75%) rotate(-45deg);
+  }
+
   /* ---- download picker (Install section) */
   .picker { max-width: 780px; margin: 28px auto 0; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 26px; }
   .picker h3 { margin: 0 0 4px; font-size: 21px; }
@@ -514,13 +541,48 @@
   }
 
   .faq { max-width: 820px; margin: 0 auto; }
-  .faq details { border: 1px solid var(--line); background: var(--card); border-radius: 16px; padding: 0 20px; }
+  .faq details {
+    position: relative; overflow: hidden; border: 1px solid var(--line); background-color: var(--card); border-radius: 16px; padding: 0 20px;
+    /* reveal (opacity, transform) is staggered by --d; hover and open changes are immediate */
+    transition: opacity .6s ease, transform .6s ease, border-color .25s ease, background-color .25s ease, box-shadow .25s ease;
+    transition-delay: var(--d, 0ms), var(--d, 0ms), 0s, 0s, 0s;
+  }
   .faq details + details { margin-top: 10px; }
-  .faq summary { cursor: pointer; list-style: none; padding: 18px 30px 18px 0; font-weight: 600; font-size: 18px; position: relative; }
+  /* an olive bar grows down the left edge of the open question */
+  .faq details::before {
+    content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--olive);
+    transform: scaleY(0); transform-origin: top; transition: transform .35s ease;
+  }
+  .faq details:hover { border-color: var(--olive-deep); background-color: var(--card-2); box-shadow: 0 16px 38px -24px rgba(0, 0, 0, .85), 0 0 0 1px rgba(181, 201, 74, .07); }
+  .faq details.reveal.in:hover { transform: translateY(-2px); }
+  .faq details[open] { border-color: rgba(181, 201, 74, .42); background-color: var(--card-2); }
+  .faq details[open]::before { transform: scaleY(1); }
+  .faq details:has(summary:focus-visible) { box-shadow: 0 0 0 2px var(--olive); }
+  .faq summary {
+    cursor: pointer; list-style: none; padding: 18px 52px 18px 0; font-weight: 600; font-size: 18px; position: relative;
+    outline: none; transition: color .2s ease;
+  }
   .faq summary::-webkit-details-marker { display: none; }
-  .faq summary::after { content: "+"; position: absolute; right: 0; top: 14px; font-size: 24px; color: var(--olive); transition: transform .2s; }
-  .faq details[open] summary::after { transform: rotate(45deg); }
+  .faq details:hover summary, .faq details[open] summary { color: var(--cream); }
+  /* a round + that spins into × when the answer opens */
+  .faq summary::after {
+    content: ""; position: absolute; right: 0; top: 50%; width: 32px; height: 32px; margin-top: -16px; border-radius: 50%;
+    background: rgba(181, 201, 74, .12) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23b5c94a' stroke-width='2.6' stroke-linecap='round'%3E%3Cpath d='M12 6v12M6 12h12'/%3E%3C/svg%3E") center / 15px no-repeat;
+    transition: transform .4s cubic-bezier(.3, 1.45, .5, 1), background-color .2s ease;
+  }
+  .faq details:hover summary::after { background-color: rgba(181, 201, 74, .24); transform: scale(1.08); }
+  .faq details[open] summary::after {
+    transform: rotate(135deg);
+    background: var(--olive) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2318200b' stroke-width='2.8' stroke-linecap='round'%3E%3Cpath d='M12 6v12M6 12h12'/%3E%3C/svg%3E") center / 15px no-repeat;
+  }
   .faq details p { margin: 0 0 18px; color: var(--muted); }
+  .faq details.opening p { animation: faqIn .38s ease both; }
+  @keyframes faqIn { from { opacity: 0; transform: translateY(-8px); } }
+  @media (prefers-reduced-motion: reduce) {
+    .faq details, .faq details::before, .faq summary::after { transition: none; }
+    .faq details.reveal.in:hover { transform: none; }
+    .faq details.opening p { animation: none; }
+  }
 
   .bn { font-size: 18px; }
   .bn .grid .card p { font-size: 16.5px; }
@@ -846,10 +908,17 @@
         <h3>Choose your download</h3>
         <p>The newest version for most phones is already picked. Need an older version or another phone type? Change it here.</p>
         <div class="pick-field">
-          <label class="pick-label" for="pick-version">Version</label>
-          <select class="pick-select" id="pick-version">
+          <span class="pick-label" id="pick-version-label">Version</span>
+          <!-- The hidden select holds the value; the list below is the visible, styled dropdown. -->
+          <select class="vh" id="pick-version" tabindex="-1" aria-hidden="true">
             <option value="v0.10.1">0.10.1</option>
           </select>
+          <div class="vsel">
+            <button type="button" class="pick-select vsel-btn" id="vsel-btn" aria-haspopup="listbox" aria-expanded="false" aria-controls="vsel-list" aria-labelledby="pick-version-label vsel-btn">
+              <span class="vsel-val" id="vsel-val"><b>0.10.1</b></span>
+            </button>
+            <ul class="vsel-list" id="vsel-list" role="listbox" aria-labelledby="pick-version-label" tabindex="-1" hidden></ul>
+          </div>
         </div>
         <div class="pick-field">
           <span class="pick-label" id="pick-abi-label">Phone type</span>
@@ -959,6 +1028,37 @@
     items.forEach(el => io.observe(el));
   } else items.forEach(el => el.classList.add('in'));
 
+  // FAQ: questions cascade in one after another, and answers slide open and closed smoothly.
+  const calm = matchMedia('(prefers-reduced-motion: reduce)');
+  document.querySelectorAll('.faq details').forEach((d, i) => {
+    d.style.setProperty('--d', `${Math.min(i, 8) * 70}ms`);
+    // Once it has appeared, drop the delay so hover reacts at once.
+    d.addEventListener('transitionend', e => { if (e.propertyName === 'opacity') d.style.setProperty('--d', '0ms'); }, { once: false });
+    const s = d.querySelector('summary');
+    let anim = null, closing = false;
+    const closedHeight = () => s.offsetHeight + 2; // + top and bottom border
+    s.addEventListener('click', e => {
+      if (calm.matches || !d.animate) return; // plain open and close
+      e.preventDefault();
+      const from = d.offsetHeight;
+      if (anim) anim.cancel();
+      if (!d.open || closing) {
+        // Open (or reverse a close in progress).
+        closing = false;
+        d.open = true;
+        const to = d.offsetHeight;
+        d.classList.add('opening');
+        anim = d.animate({ height: [`${from}px`, `${to}px`] }, { duration: 340, easing: 'cubic-bezier(.2, .8, .2, 1)' });
+        anim.onfinish = () => { anim = null; d.classList.remove('opening'); };
+      } else {
+        closing = true;
+        d.classList.remove('opening');
+        anim = d.animate({ height: [`${from}px`, `${closedHeight()}px`] }, { duration: 260, easing: 'cubic-bezier(.4, 0, .2, 1)' });
+        anim.onfinish = () => { anim = null; closing = false; d.open = false; };
+      }
+    });
+  });
+
   // Point the download buttons straight at the latest APK for most phones (falls back to the releases page)
   fetch('https://api.github.com/repos/Yeamin-Talukder/jolpai-keyboard/releases/latest')
     .then(r => r.ok ? r.json() : Promise.reject())
@@ -997,9 +1097,77 @@
       sel.innerHTML = releases.map((r, i) =>
         `<option value="${esc(r.tag)}">${esc(ver(r.tag))}${i === 0 && fromApi ? ' · latest' : ''}${older(r.tag, 'v0.9.0') ? ' · old app ID' : ''}</option>`).join('');
       if (releases.some(r => r.tag === keep)) sel.value = keep;
+      buildList();
     }
 
+    // ---- the version dropdown, drawn in the site's style (the hidden <select> holds the value)
+    const vBtn = document.getElementById('vsel-btn'), vVal = document.getElementById('vsel-val');
+    const vList = document.getElementById('vsel-list');
+    const fmtDate = d => new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    const tagsOf = (r, i) => (i === 0 && fromApi ? '<span class="vtag latest">Latest</span>' : '') +
+      (older(r.tag, 'v0.9.0') ? '<span class="vtag old">Old app ID</span>' : '');
+    const noteOf = r => [r.date ? fmtDate(r.date) : null,
+      older(r.tag, 'v0.9.0') ? 'com.yeamin.lipi · separate app' : older(r.tag, 'v0.10.0') ? 'no in-app updates' : 'updates inside the app',
+    ].filter(Boolean).join(' · ');
+    const opts = () => [...vList.children];
+    let active = -1;
+    function buildList() {
+      vList.innerHTML = releases.map((r, i) =>
+        `<li role="option" id="vopt-${i}" data-value="${esc(r.tag)}" aria-selected="false"><span class="vopt-top"><b>${esc(ver(r.tag))}</b>${tagsOf(r, i)}</span><small>${esc(noteOf(r))}</small></li>`).join('');
+      syncBtn();
+    }
+    function syncBtn() {
+      const i = Math.max(0, releases.findIndex(r => r.tag === sel.value));
+      vVal.innerHTML = `<b>${esc(ver(releases[i].tag))}</b>${tagsOf(releases[i], i)}`;
+      opts().forEach(li => li.setAttribute('aria-selected', String(li.dataset.value === sel.value)));
+    }
+    function setActive(i) {
+      const o = opts();
+      if (!o.length) return;
+      active = (i + o.length) % o.length;
+      o.forEach((li, j) => li.classList.toggle('active', j === active));
+      vList.setAttribute('aria-activedescendant', o[active].id);
+      o[active].scrollIntoView({ block: 'nearest' });
+    }
+    function openList() {
+      vList.hidden = false;
+      vBtn.setAttribute('aria-expanded', 'true');
+      setActive(Math.max(0, releases.findIndex(r => r.tag === sel.value)));
+      vList.focus({ preventScroll: true });
+    }
+    function closeList(refocus) {
+      if (vList.hidden) return;
+      vList.hidden = true;
+      vBtn.setAttribute('aria-expanded', 'false');
+      if (refocus) vBtn.focus({ preventScroll: true });
+    }
+    function choose(i) {
+      const o = opts()[i];
+      if (!o) return;
+      sel.value = o.dataset.value;
+      sel.dispatchEvent(new Event('change'));
+      closeList(true);
+    }
+    vBtn.addEventListener('click', e => { e.stopPropagation(); vList.hidden ? openList() : closeList(true); });
+    vBtn.addEventListener('keydown', e => {
+      if (['ArrowDown', 'ArrowUp', 'Enter', ' '].includes(e.key)) { e.preventDefault(); openList(); }
+    });
+    vList.addEventListener('keydown', e => {
+      const k = e.key;
+      if (k === 'ArrowDown') { e.preventDefault(); setActive(active + 1); }
+      else if (k === 'ArrowUp') { e.preventDefault(); setActive(active - 1); }
+      else if (k === 'Home') { e.preventDefault(); setActive(0); }
+      else if (k === 'End') { e.preventDefault(); setActive(opts().length - 1); }
+      else if (k === 'Enter' || k === ' ') { e.preventDefault(); choose(active); }
+      else if (k === 'Escape') { e.preventDefault(); closeList(true); }
+      else if (k === 'Tab') closeList(false);
+    });
+    vList.addEventListener('click', e => { const li = e.target.closest('li'); if (li) choose(opts().indexOf(li)); });
+    vList.addEventListener('mousemove', e => { const li = e.target.closest('li'); if (li && !li.classList.contains('active')) setActive(opts().indexOf(li)); });
+    document.addEventListener('click', e => { if (!vList.hidden && !e.target.closest('.vsel')) closeList(false); });
+
     function render() {
+      syncBtn();
       const r = releases.find(x => x.tag === sel.value) || releases[0];
       const v = ver(r.tag);
       const file = `jolpai-keyboard-${v}-${abi}.apk`;
