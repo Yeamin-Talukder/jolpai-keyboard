@@ -36,9 +36,11 @@ object Changelog {
     /** Newest first. */
     val RELEASES: List<ChangelogRelease> = listOf(
         ChangelogRelease(
-            "Next version", null,
+            "0.9.0", "7 Nov 2026",
             listOf(
+                "Check offers the fix plus up to 2 other likely words to tap, ranked by what you usually type; a misspelt last word is no longer missed",
                 "About: a new header card, Check for updates (asks GitHub only when you tap), What's new, Report a problem and Share Jolpai",
+                "New app ID com.yeamin.jolpai (was com.yeamin.lipi): installs as a new app once; move your data with Backup & restore",
             ),
         ),
         ChangelogRelease(

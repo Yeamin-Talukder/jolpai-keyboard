@@ -12,7 +12,7 @@ and nothing you type leaves your phone.**
 [![Downloads](https://img.shields.io/github/downloads/Yeamin-Talukder/jolpai-keyboard/total?label=downloads&color=6E8A2C&logo=android&logoColor=white)](https://github.com/Yeamin-Talukder/jolpai-keyboard/releases)
 [![Views](https://hits.sh/github.com/Yeamin-Talukder/jolpai-keyboard.svg?label=views&color=6E8A2C)](https://hits.sh/github.com/Yeamin-Talukder/jolpai-keyboard/)
 [![Stars](https://img.shields.io/github/stars/Yeamin-Talukder/jolpai-keyboard?style=flat&color=B5C94A&logo=github)](https://github.com/Yeamin-Talukder/jolpai-keyboard/stargazers)
-[![Version](https://img.shields.io/badge/version-0.8.0--beta-B5C94A)](docs/ROADMAP.md)
+[![Version](https://img.shields.io/badge/version-0.9.0--beta-B5C94A)](docs/ROADMAP.md)
 [![License: Apache-2.0](https://img.shields.io/github/license/Yeamin-Talukder/jolpai-keyboard?color=4E6120)](LICENSE)
 <br>
 [![Android 8.0+](https://img.shields.io/badge/Android-8.0%2B%20(API%2026)-3DDC84?logo=android&logoColor=white)](#requirements)
@@ -43,16 +43,16 @@ English↔Bangla translation run **offline**.
 > **Also known as:** Jolpai Bangla Keyboard · Jalpai Keyboard · জলপাই বাংলা কিবোর্ড · Jolpai Avro Keyboard
 > (package `com.yeamin.jolpai`; the project was first called *Lipi Keyboard*, package `com.yeamin.lipi` up to v0.8.0).
 
-## 🆕 What's new in 0.8.0
+## 🆕 What's new in 0.9.0
 
-- ✓ **Check**: finds spelling, punctuation and grammar mistakes in English **and বাংলা**, offline, with one-tap fixes.
-- 🎯 **More accurate English autocorrect**: on public misspelling lists the first suggestion is right **91 %** of the time (was 89.6 %), and wrong autocorrections fell by about a third. Correct words are never changed.
-- 🌐 **Translator fixes as chips**: mistakes in the translate box are suggested, never changed on their own.
-- 📊 **Typing stats with speed**: words per minute, best burst and accuracy, plus words per day and English vs বাংলা.
-- 😊 Emoji and clipboard open **above** the keys; **swipe down** closes Translate, Check, emoji and clipboard.
-- 🔤 Key fonts, 🔊 sound packs, a split keyboard, and better Bangla suggestion order.
+- ✓ **Check suggests like the prediction strip**: a misspelling shows the fix plus up to 2 other likely words to tap (`takl → tail · or tall · talk`), with the words you usually type first. The right word is offered **95.8 %** of the time on public misspelling lists.
+- 🐞 Check no longer misses a misspelt **last word**.
+- ℹ️ **New About page**: check for updates, what's new, report a problem, share Jolpai.
+- 🏷️ New app ID **`com.yeamin.jolpai`**: coming from 0.7.0 or 0.8.0, [move your data once](#-download--install).
 
-[Full release notes](docs/release-notes/v0.8.0.md) · [All releases](https://github.com/Yeamin-Talukder/jolpai-keyboard/releases)
+Earlier, in 0.8.0: the ✓ Check tool, sharper English autocorrect, translator fix chips, typing speed stats, key fonts, sound packs and a split keyboard.
+
+[Full release notes](docs/release-notes/v0.9.0.md) · [All releases](https://github.com/Yeamin-Talukder/jolpai-keyboard/releases)
 
 ## ✨ Features
 
@@ -127,7 +127,7 @@ English↔Bangla translation run **offline**.
 
 ## 📥 Download & install
 
-> **Status: beta (v0.8.0).** All seven development phases are built and 270+ unit tests pass. The app runs
+> **Status: beta (v0.9.0).** All seven development phases are built and 280+ unit tests pass. The app runs
 > daily on a Pixel 7 Pro (Android 17); testing on more phones is ongoing. See the [roadmap](docs/ROADMAP.md)
 > for exactly what works and what is pending.
 
@@ -135,10 +135,10 @@ English↔Bangla translation run **offline**.
 Most phones need the **`arm64-v8a`** file; older 32-bit phones need `armeabi-v7a`. Android 8.0 or newer.
 Or [build it from source](#-build-from-source) (about 5 minutes with Android Studio).
 
-> **Coming from 0.7.0 or 0.8.0?** From the next release the app ID changes from `com.yeamin.lipi` to
-> `com.yeamin.jolpai`, so Android installs it as a new app instead of an update. To keep your words,
-> settings and themes: in the old app open **Backup & restore → Save backup**, install the new version,
-> restore the file there, then uninstall the old one.
+> **Coming from 0.7.0 or 0.8.0?** From 0.9.0 the app ID is `com.yeamin.jolpai` (it was
+> `com.yeamin.lipi`), so Android installs it as a new app instead of an update. To keep your words,
+> settings and themes: in the old app open **Backup & restore → Save backup**, install 0.9.0,
+> restore the file there, then uninstall the old one. Later versions update 0.9.0 normally.
 
 Releases are built and signed by GitHub Actions from the tagged source, with SHA-256 checksums in
 `SHA256SUMS.txt`. Every release uses the same signing key, so a new version **installs as an update**
