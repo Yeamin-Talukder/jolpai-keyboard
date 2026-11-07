@@ -355,6 +355,29 @@
   .demo-tabs button:hover { color: var(--text); border-color: var(--olive-deep); }
   .demo-tabs button[aria-pressed="true"] { background: rgba(181,201,74,.16); color: var(--olive); border-color: var(--olive-2); }
 
+  /* Static keyboards: the three layouts and the theme gallery (same keys and icons as the demo) */
+  .kbtheme { --kb-bg: #1b1e16; --kb-key: #2b3024; --kb-press: #3e4534; --kb-fn: #23271d; --kb-text: #eef0e4; --kb-hint: #a5ad8e; --kb-accent: #b5c94a; --kb-on-accent: #1f2608; }
+  .layouts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; }
+  .lay h3 { margin: 14px 0 2px; text-align: center; font-size: 19px; color: var(--text); }
+  .lay p { margin: 0; text-align: center; color: var(--muted); font-size: 15px; }
+  .mini { background: var(--kb-bg); border-radius: 22px; overflow: hidden; border: 1px solid #2b3420; box-shadow: 0 24px 50px -30px rgba(0,0,0,.8); }
+  .mlabel { font-size: 12.5px; color: var(--kb-hint); padding: 12px 14px 0; }
+  .mfield { margin: 6px 12px 8px; border: 1.5px solid var(--kb-accent); border-radius: 14px; padding: 9px 12px; font-size: 17px; min-height: 46px; color: var(--kb-text); background: rgba(0,0,0,.18); white-space: pre-wrap; }
+  .mfield .comp { text-decoration: underline; text-underline-offset: 4px; text-decoration-color: var(--kb-accent); }
+  .mini .key { font-size: 17px; }
+  .themes { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 20px 16px; }
+  .tcard { text-align: center; color: var(--muted); font-size: 15px; }
+  .tmini { border-radius: 16px; padding: 7px 4px; background: var(--kb-bg); display: grid; gap: 5px; margin-bottom: 8px; }
+  .tmini .krow { gap: 3px; padding: 0 1px; }
+  .tmini .krow.mid { padding: 0 8px; }
+  .tmini .key { height: 28px; font-size: 12.5px; border-radius: var(--kb-r); background: var(--kb-key); color: var(--kb-text); box-shadow: inset 0 0 0 1px var(--kb-border); }
+  .tmini .key.fn { background: var(--kb-fn); font-size: 10.5px; }
+  .tmini .key.enter { background: var(--kb-accent); color: var(--kb-on-accent); }
+  @media (max-width: 980px) {
+    .layouts { grid-template-columns: minmax(0, 1fr); max-width: 420px; margin: 0 auto; }
+    .themes { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
+  @media (max-width: 720px) { .themes { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
   /* Sections */
   section { padding: 76px 0; }
@@ -588,14 +611,22 @@
         <h2 id="s-title">Three layouts, one tap apart</h2>
         <p>Switch English ↔ বাংলা (অভ্র) ↔ বাংলা (জাতীয়) from the top bar.</p>
       </div>
-      <figure class="reveal" style="margin:0">
-        <img class="shot" src="images/layouts.png" width="1400" height="560" loading="lazy"
-             alt="Jolpai Keyboard layouts: English QWERTY, Avro phonetic Bangla and National (Jatiya) Bangla keyboard on Android">
-        <figcaption>English QWERTY · Avro phonetic (ami → আমি) · National (জাতীয়) layout</figcaption>
-      </figure>
-      <figure class="reveal" style="margin:40px 0 0">
-        <img class="shot" src="images/themes.png" width="1400" height="792" loading="lazy"
-             alt="Jolpai Keyboard themes: Material You, light pastel themes and soft dark themes for the Android Bangla keyboard">
+      <div class="layouts">
+        <figure class="lay reveal" style="margin:0">
+          <div class="mini kbtheme" data-layout="en" data-label="English (QWERTY)" data-text="Typing in English is " data-comp="fast" data-strip="fast|faster|fastest" role="img" aria-label="Jolpai Keyboard English QWERTY layout with suggestions fast, faster, fastest"></div>
+          <figcaption><h3>English QWERTY</h3><p>Autocorrect · next-word · suggestions</p></figcaption>
+        </figure>
+        <figure class="lay reveal" style="margin:0">
+          <div class="mini kbtheme" data-layout="avro" data-label="Avro phonetic: ami banglay likhi" data-text="আমি বাংলায় " data-comp="লিখি" data-strip="লিখী|লিখি|likhi" role="img" aria-label="Avro phonetic Bangla keyboard: typing ami banglay likhi gives আমি বাংলায় লিখি"></div>
+          <figcaption><h3>Avro Phonetic</h3><p>ami → আমি · dictionary candidates</p></figcaption>
+        </figure>
+        <figure class="lay reveal" style="margin:0">
+          <div class="mini kbtheme" data-layout="nat" data-label="National (Jatiya) layout" data-text="জাতীয় " data-comp="কিবোর্ড" data-strip="কিবোর্ড|কিবোর্ডে|কিবোর্ডের" role="img" aria-label="National (Jatiya) Bangla keyboard layout with corner letters on each key"></div>
+          <figcaption><h3>National (জাতীয়)</h3><p>Ridmik-style keys · hold for the corner letter</p></figcaption>
+        </figure>
+      </div>
+      <figure class="reveal" style="margin:48px 0 0">
+        <div class="themes" id="themes" role="img" aria-label="20 Jolpai Keyboard themes: Material You, light pastel themes and soft dark themes for the Android Bangla keyboard"></div>
         <figcaption>20 of the 64 built-in themes. Material You follows your wallpaper colours.</figcaption>
       </figure>
     </div>
@@ -1303,6 +1334,39 @@
     } catch (e) {
       if (e !== STOP) throw e;
     }
+  }
+
+  // ---- static keyboards: the layouts section and the theme gallery (same keys and icons as the demo)
+  function keyRows(name, o = {}) {
+    const L = LAYOUTS[name], z = o.icon || 20;
+    let h = '';
+    L.rows.forEach((row, ri) => {
+      h += `<div class="krow${ri === 1 ? ' mid' : ''}">`;
+      if (ri === 2) h += `<div class="key fn wide"><span class="lb">${ic('shift', z)}</span></div>`;
+      row.forEach((c, i) => {
+        const hint = o.hints === false ? null : L.hints[ri]?.[i];
+        h += `<div class="key"><span class="lb">${shown(c)}</span>${hint ? `<sup>${shown(hint)}</sup>` : ''}</div>`;
+      });
+      if (ri === 2) h += `<div class="key fn wide"><span class="lb">${ic('backspace', z)}</span></div>`;
+      h += '</div>';
+    });
+    return h + `<div class="krow"><div class="key fn wide"><span class="lb">${L.num}</span></div>` +
+      `<div class="key fn"><span class="lb">${ic('mood', z - 1)}</span></div><div class="key fn"><span class="lb">,</span></div>` +
+      `<div class="key fn space"><span class="lb">${o.space === false ? '' : L.space}</span></div>` +
+      `<div class="key fn"><span class="lb">${L.dot}</span></div><div class="key enter"><span class="lb">${ic('keyboard_return', z)}</span></div></div>`;
+  }
+  document.querySelectorAll('.mini').forEach(el => {
+    const d = el.dataset, L = LAYOUTS[d.layout], [a, b, c] = d.strip.split('|');
+    el.innerHTML = `<div class="mlabel">${esc(d.label)}</div>
+      <div class="mfield">${esc(d.text)}${d.comp ? `<span class="comp">${esc(d.comp)}</span>` : ''}<span class="caret"></span></div>
+      <div class="tb"><div class="tb-lead">${ic('grid_view', 19)}</div><div class="tb-mid"><div class="tb-layer strip"><span>${a}</span><b>${b}</b><span>${c}</span></div></div><div class="lang">${ic('language', 14)}<span>${L.pill}</span></div></div>
+      <div class="kb">${keyRows(d.layout)}</div>`;
+  });
+  // Colours from theme-engine KeyboardTheme. Material You follows the wallpaper; a green one is shown.
+  const THEMES = [{"n":"Material You","bg":"#e9efdc","k":"#fbfdf5","f":"#d6e0c2","t":"#1a1c16","h":"#6b7560","a":"#4c662b","o":"#ffffff","b":"transparent","r":12},{"n":"Light","bg":"#e8ebef","k":"#ffffff","f":"#d0d5dd","t":"#1b1d21","h":"#7b818b","a":"#0b57d0","o":"#ffffff","b":"transparent","r":8},{"n":"Cloud","bg":"#f2f4f8","k":"#ffffff","f":"#e6eaf1","t":"#1f2430","h":"#8a93a6","a":"#5b6cf0","o":"#ffffff","b":"transparent","r":16},{"n":"Peach","bg":"#fbe9e0","k":"#ffffff","f":"#f5d9cc","t":"#3b2620","h":"#a07a6c","a":"#c8553d","o":"#ffffff","b":"transparent","r":14},{"n":"Sky","bg":"linear-gradient(160deg, #e3f2fd, #d3e6fa)","k":"#ffffff","f":"#cfe3f7","t":"#13263a","h":"#5f7a94","a":"#2f6fb5","o":"#ffffff","b":"transparent","r":14},{"n":"Pistachio","bg":"#eaf4dc","k":"#fbfef6","f":"#dcebc8","t":"#1f3311","h":"#6b8656","a":"#4c7a26","o":"#ffffff","b":"transparent","r":16},{"n":"Sakura","bg":"linear-gradient(160deg, #fce4ec, #f6cfdc)","k":"#ffffff","f":"#f7d3df","t":"#3d1f2b","h":"#9c6b7d","a":"#c93d67","o":"#ffffff","b":"transparent","r":14},{"n":"Lemonade","bg":"linear-gradient(160deg, #fff59d, #e6f59a)","k":"#fffde7","f":"#f7ee8a","t":"#2f2a05","h":"#857a20","a":"#5e8c12","o":"#ffffff","b":"transparent","r":16},{"n":"Olive night","bg":"#1b1e16","k":"#2b3024","f":"#23271d","t":"#eef0e4","h":"#a5ad8e","a":"#b5c94a","o":"#1f2608","b":"transparent","r":12},{"n":"Misty blue","bg":"linear-gradient(160deg, #1c2230, #232b3c)","k":"#2a3344","f":"#232a39","t":"#e4eaf5","h":"#98a6bf","a":"#9bb8e8","o":"#14223a","b":"transparent","r":12},{"n":"Moonlight","bg":"linear-gradient(160deg, #161a2b, #252b45)","k":"#ffffff1f","f":"#ffffff12","t":"#f0f2fa","h":"#b4bad6","a":"#c9d3ff","o":"#1a2048","b":"#ffffff1a","r":14},{"n":"Arctic night","bg":"#182327","k":"#24343a","f":"#1e2b30","t":"#e2f1f3","h":"#93b2b8","a":"#8fd9d9","o":"#0d2e30","b":"transparent","r":12},{"n":"Sage night","bg":"#1c2421","k":"#2a3531","f":"#232c29","t":"#e5efea","h":"#9db2a8","a":"#9fd3be","o":"#12302a","b":"transparent","r":12},{"n":"Aurora","bg":"linear-gradient(160deg, #0f2027, #1f3f47)","k":"#ffffff26","f":"#ffffff14","t":"#ffffff","h":"#b5e3d8","a":"#4fe3b5","o":"#07261e","b":"#ffffff2e","r":12},{"n":"Cosmic","bg":"linear-gradient(160deg, #0d0b26, #2a1450)","k":"#ffffff29","f":"#ffffff14","t":"#ffffff","h":"#c7bdf2","a":"#9d7bff","o":"#14073a","b":"#ffffff24","r":14},{"n":"Sunset","bg":"linear-gradient(160deg, #7b2d8e, #b83b6b)","k":"#ffffff33","f":"#00000022","t":"#ffffff","h":"#ffe3ee","a":"#ffd166","o":"#4a1a55","b":"transparent","r":12},{"n":"Grape","bg":"linear-gradient(160deg, #2d0f4a, #4a1673)","k":"#4b2470","f":"#3b1a5b","t":"#f6edff","h":"#c9a8ec","a":"#ffc94d","o":"#3a2000","b":"transparent","r":14},{"n":"Emerald","bg":"#04342a","k":"#0b5244","f":"#074437","t":"#e6fff7","h":"#88d9c0","a":"#2ee6a8","o":"#00281c","b":"transparent","r":12},{"n":"Frost","bg":"#2e3440","k":"#3b4252","f":"#343a47","t":"#eceff4","h":"#a3abba","a":"#88c0d0","o":"#2e3440","b":"transparent","r":10},{"n":"Neon","bg":"#050508","k":"#0d0d14","f":"#08080d","t":"#e9fbff","h":"#6fe9ff","a":"#00e5ff","o":"#001a1f","b":"#00a8c2","r":10}];
+  const gallery = document.getElementById('themes');
+  if (gallery) {
+    gallery.innerHTML = THEMES.map(t => `<div class="tcard"><div class="tmini" style="--kb-bg:${t.bg};--kb-key:${t.k};--kb-fn:${t.f};--kb-text:${t.t};--kb-hint:${t.h};--kb-accent:${t.a};--kb-on-accent:${t.o};--kb-border:${t.b};--kb-r:${Math.round(t.r * 0.6)}px">${keyRows('en', { icon: 15, hints: false, space: false })}</div>${t.n}</div>`).join('');
   }
 
   applyLayout('en'); setText(''); render();
