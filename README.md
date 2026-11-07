@@ -23,7 +23,7 @@ and nothing you type leaves your phone.**
 [![Last commit](https://img.shields.io/github/last-commit/Yeamin-Talukder/jolpai-keyboard?color=4E6120)](https://github.com/Yeamin-Talukder/jolpai-keyboard/commits/main)
 [![Made in Bangladesh](https://img.shields.io/badge/Made%20in-Bangladesh-006A4E)](#)
 
-[What's new](#-whats-new-in-080) · [Features](#-features) · [Screenshots](#-screenshots) · [Download](#-download--install) · [Architecture](#-architecture) · [Build](#-build-from-source) · [FAQ](#-faq) · [বাংলা](#-বাংলায়-জলপাই-কিবোর্ড)
+**[🌐 Website](https://yeamin-talukder.github.io/jolpai-keyboard/)** · [What's new](#-whats-new-in-090) · [Features](#-features) · [Screenshots](#-screenshots) · [Download](#-download--install) · [Architecture](#-architecture) · [Build](#-build-from-source) · [FAQ](#-faq) · [বাংলা](#-বাংলায়-জলপাই-কিবোর্ড)
 
 </div>
 
@@ -131,7 +131,7 @@ Earlier, in 0.8.0: the ✓ Check tool, sharper English autocorrect, translator f
 > daily on a Pixel 7 Pro (Android 17); testing on more phones is ongoing. See the [roadmap](docs/ROADMAP.md)
 > for exactly what works and what is pending.
 
-**[⬇️ Download the latest APK](https://github.com/Yeamin-Talukder/jolpai-keyboard/releases/latest)** from the Releases page.
+**[⬇️ Download the latest APK](https://github.com/Yeamin-Talukder/jolpai-keyboard/releases/latest)** from the Releases page, or visit the website: **[yeamin-talukder.github.io/jolpai-keyboard](https://yeamin-talukder.github.io/jolpai-keyboard/)**.
 Most phones need the **`arm64-v8a`** file; older 32-bit phones need `armeabi-v7a`. Android 8.0 or newer.
 Or [build it from source](#-build-from-source) (about 5 minutes with Android Studio).
 

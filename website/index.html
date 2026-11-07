@@ -1,0 +1,654 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jolpai Keyboard – Free Bangla &amp; English Keyboard for Android (Avro, জাতীয়)</title>
+<meta name="description" content="Jolpai (জলপাই) Keyboard is a free, open-source Bangla and English keyboard for Android with Avro phonetic typing, the National (জাতীয়) layout, an offline spelling check, offline translation and 64 themes. No ads, no tracking.">
+<meta name="keywords" content="Bangla keyboard, Bengali keyboard, Avro keyboard Android, বাংলা কিবোর্ড, অভ্র কিবোর্ড, জাতীয় কিবোর্ড, Jatiya keyboard, Bangla typing, open source keyboard, Jolpai Keyboard">
+<link rel="canonical" href="https://yeamin-talukder.github.io/jolpai-keyboard/">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="theme-color" content="#151a10">
+<meta name="author" content="Md Yeamin Talukder">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Jolpai Keyboard">
+<meta property="og:title" content="Jolpai Keyboard – Free Bangla & English Keyboard for Android">
+<meta property="og:description" content="Avro phonetic, the National (জাতীয়) layout, offline spelling check and translation, 64 themes. Free, open source, no ads, no tracking.">
+<meta property="og:url" content="https://yeamin-talukder.github.io/jolpai-keyboard/">
+<meta property="og:image" content="https://yeamin-talukder.github.io/jolpai-keyboard/images/banner.png">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="640">
+<meta property="og:image:alt" content="Jolpai Keyboard: জলপাই — বাংলা ও ইংরেজি কিবোর্ড">
+<meta property="og:locale" content="en_US">
+<meta property="og:locale:alternate" content="bn_BD">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Jolpai Keyboard – Free Bangla & English Keyboard for Android">
+<meta name="twitter:description" content="Avro phonetic, National (জাতীয়) layout, offline spelling check and translation. Free and open source.">
+<meta name="twitter:image" content="https://yeamin-talukder.github.io/jolpai-keyboard/images/banner.png">
+
+<link rel="icon" type="image/png" href="images/icon-512.png">
+<link rel="apple-touch-icon" href="images/icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Jolpai Keyboard",
+  "alternateName": ["জলপাই কিবোর্ড", "Jolpai Bangla Keyboard", "Jalpai Keyboard"],
+  "description": "Free, open-source, privacy-first Bangla and English keyboard for Android with Avro phonetic typing, the National (জাতীয়) layout, smart suggestions, an offline spelling and grammar check, offline English–Bangla translation, voice typing, a clipboard manager and 64 themes.",
+  "applicationCategory": "UtilitiesApplication",
+  "applicationSubCategory": "Keyboard",
+  "operatingSystem": "Android 8.0 or newer",
+  "softwareVersion": "0.9.0",
+  "inLanguage": ["bn", "en"],
+  "url": "https://yeamin-talukder.github.io/jolpai-keyboard/",
+  "downloadUrl": "https://github.com/Yeamin-Talukder/jolpai-keyboard/releases/latest",
+  "installUrl": "https://github.com/Yeamin-Talukder/jolpai-keyboard/releases/latest",
+  "image": "https://yeamin-talukder.github.io/jolpai-keyboard/images/icon-512.png",
+  "screenshot": [
+    "https://yeamin-talukder.github.io/jolpai-keyboard/images/layouts.png",
+    "https://yeamin-talukder.github.io/jolpai-keyboard/images/themes.png"
+  ],
+  "featureList": [
+    "Avro phonetic Bangla typing",
+    "National (Jatiya) Bangla layout",
+    "English QWERTY with autocorrect",
+    "Offline spelling, punctuation and grammar check for Bangla and English",
+    "Offline English to Bangla translation",
+    "Voice typing in Bangla and English",
+    "Clipboard history and snippets",
+    "64 themes and a theme editor",
+    "No ads, no account, no tracking"
+  ],
+  "isAccessibleForFree": true,
+  "license": "https://www.apache.org/licenses/LICENSE-2.0",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "author": {
+    "@type": "Person",
+    "name": "Md Yeamin Talukder",
+    "url": "https://github.com/Yeamin-Talukder"
+  },
+  "sameAs": ["https://github.com/Yeamin-Talukder/jolpai-keyboard"]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type": "Question", "name": "How do I type Bangla on Android with Jolpai Keyboard?",
+     "acceptedAnswer": {"@type": "Answer", "text": "Install Jolpai, turn it on in the app's two setup steps, then tap the language button to choose বাংলা (অভ্র) for phonetic typing (ami → আমি) or বাংলা (জাতীয়) for the National layout."}},
+    {"@type": "Question", "name": "Does Jolpai Keyboard support Avro phonetic typing?",
+     "acceptedAnswer": {"@type": "Answer", "text": "Yes. It has a built-in Avro phonetic engine using the open Avro rule table from OpenBangla, with dictionary candidates and learning of your choices. It works fully offline."}},
+    {"@type": "Question", "name": "Does it have the National (জাতীয়) / Jatiya layout? What about Bijoy?",
+     "acceptedAnswer": {"@type": "Answer", "text": "Yes, the Bangladesh National layout is built in, arranged like Ridmik Keyboard. The Bijoy layout is not included."}},
+    {"@type": "Question", "name": "Is Jolpai Keyboard safe? Does it collect what I type?",
+     "acceptedAnswer": {"@type": "Answer", "text": "No. It has no account, analytics, ads or crash-reporting SDK, and stores learned words and clipboard history only on your phone, in an encrypted database. Password and incognito fields are never learned. The code is open source, so you can check this yourself."}},
+    {"@type": "Question", "name": "Does Jolpai Keyboard work offline?",
+     "acceptedAnswer": {"@type": "Answer", "text": "Yes. Typing, suggestions, Avro, the spelling and grammar check, the clipboard and themes need no internet. Translation works offline after a one-time pack download. Only GIF search needs the internet (and checking for updates, when you tap it)."}},
+    {"@type": "Question", "name": "Does it check Bangla spelling and grammar?",
+     "acceptedAnswer": {"@type": "Answer", "text": "Yes. Check finds Bangla spelling mistakes (look-alike letters, vowel signs, word endings) and punctuation such as দাঁড়ি, plus English spelling, punctuation and common grammar, all offline. It is rule-based, so it won't judge meaning or style."}},
+    {"@type": "Question", "name": "Can I translate English to Bangla inside the keyboard?",
+     "acceptedAnswer": {"@type": "Answer", "text": "Yes. The Translate box translates English to Bangla (and back) as you type, on your device, after a one-time download of about 30 MB."}},
+    {"@type": "Question", "name": "Which Android versions are supported?",
+     "acceptedAnswer": {"@type": "Answer", "text": "Android 8.0 (Oreo, API 26) and newer. Material You colours need Android 12 or newer."}},
+    {"@type": "Question", "name": "Is it free?",
+     "acceptedAnswer": {"@type": "Answer", "text": "Yes. It is free and open source under the Apache License 2.0, with no ads and no in-app purchases."}}
+  ]
+}
+</script>
+
+<style>
+  :root {
+    --bg: #11150d;
+    --bg-2: #171d12;
+    --card: #1d2417;
+    --card-2: #232c1b;
+    --line: #313c25;
+    --text: #eef2e2;
+    --muted: #b4bea0;
+    --dim: #8a957a;
+    --olive: #b5c94a;
+    --olive-2: #8fa83a;
+    --olive-deep: #4e6120;
+    --cream: #f4f1df;
+    --radius: 20px;
+    --max: 1160px;
+    --font: 'Hind Siliguri', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --mono: ui-monospace, 'JetBrains Mono', Consolas, Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text); font-family: var(--font);
+    font-size: 17px; line-height: 1.6; overflow-x: hidden;
+  }
+  a { color: var(--olive); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  img { max-width: 100%; height: auto; display: block; }
+  .wrap { max-width: var(--max); margin: 0 auto; padding: 0 20px; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  :focus-visible { outline: 2px solid var(--olive); outline-offset: 3px; border-radius: 6px; }
+
+  /* Header */
+  header.top {
+    position: sticky; top: 0; z-index: 20;
+    background: color-mix(in srgb, var(--bg) 82%, transparent);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid color-mix(in srgb, var(--line) 60%, transparent);
+  }
+  .nav { display: flex; align-items: center; gap: 16px; height: 64px; }
+  .brand { display: flex; align-items: center; gap: 10px; color: var(--text); font-weight: 700; font-size: 19px; }
+  .brand:hover { text-decoration: none; }
+  .brand img { width: 34px; height: 34px; border-radius: 9px; }
+  .brand small { color: var(--olive); font-weight: 500; font-size: 15px; }
+  .nav-links { display: flex; gap: 22px; margin-left: auto; align-items: center; }
+  .nav-links a { color: var(--muted); font-size: 15.5px; font-weight: 500; }
+  .nav-links a:hover { color: var(--text); text-decoration: none; }
+  .nav-links a.btn-primary, .nav-links a.btn-primary:hover { color: #18200b; }
+  .menu-btn { display: none; margin-left: auto; background: none; border: 1px solid var(--line); color: var(--text); border-radius: 10px; width: 42px; height: 40px; font-size: 20px; cursor: pointer; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 10px; justify-content: center;
+    padding: 14px 24px; border-radius: 999px; font-weight: 600; font-size: 17px; line-height: 1.2;
+    border: 1px solid transparent; transition: transform .15s ease, background .2s ease, box-shadow .2s ease;
+  }
+  .btn:hover { text-decoration: none; transform: translateY(-1px); }
+  .btn-primary { background: var(--olive); color: #18200b; box-shadow: 0 8px 30px -10px rgba(181, 201, 74, .55); }
+  .btn-primary:hover { background: #c4d65a; }
+  .btn-ghost { border-color: var(--line); color: var(--text); background: rgba(255,255,255,.02); }
+  .btn-ghost:hover { border-color: var(--olive-2); }
+  .btn-sm { padding: 9px 16px; font-size: 15px; }
+  .btn svg { width: 20px; height: 20px; flex: none; }
+
+  /* Hero */
+  .hero { position: relative; padding: 72px 0 56px; overflow: hidden; }
+  .hero::before {
+    content: ""; position: absolute; inset: -20% -10% auto auto; width: 70%; height: 120%;
+    background: radial-gradient(closest-side, rgba(143, 168, 58, .22), transparent 70%); pointer-events: none;
+  }
+  .hero-grid { display: grid; grid-template-columns: 1.1fr .9fr; gap: 48px; align-items: center; position: relative; }
+  .eyebrow { color: var(--olive); font-weight: 600; letter-spacing: .14em; text-transform: uppercase; font-size: 14px; margin: 0 0 12px; }
+  h1 { font-size: clamp(38px, 5.6vw, 62px); line-height: 1.06; margin: 0 0 10px; letter-spacing: -.01em; }
+  .h1-bn { display: block; font-size: clamp(26px, 3.4vw, 38px); color: var(--olive); font-weight: 600; margin-top: 10px; line-height: 1.3; }
+  .lead { color: var(--muted); font-size: 19px; max-width: 34em; margin: 18px 0 28px; }
+  .cta { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .release-note { color: var(--dim); font-size: 14.5px; margin-top: 14px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 26px; padding: 0; list-style: none; }
+  .chips li { border: 1px solid var(--line); background: var(--bg-2); border-radius: 999px; padding: 5px 14px; font-size: 14.5px; color: var(--muted); }
+
+  /* Phone demo */
+  .phone {
+    width: min(340px, 100%); margin: 0 auto; background: #0b0e08; border-radius: 40px; padding: 14px;
+    border: 1px solid #2b3420; box-shadow: 0 40px 80px -30px rgba(0,0,0,.8), 0 0 0 8px #161c10, 0 0 60px -10px rgba(181,201,74,.2);
+  }
+  .screen { background: var(--bg-2); border-radius: 28px; overflow: hidden; }
+  .app-bar { display: flex; align-items: center; gap: 10px; padding: 16px 16px 10px; color: var(--muted); font-size: 14px; }
+  .app-bar .dot { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, #8fa83a, #4e6120); flex: none; }
+  .bubble { margin: 6px 16px; padding: 10px 14px; background: var(--card-2); border-radius: 16px 16px 16px 4px; font-size: 15px; color: var(--muted); max-width: 80%; }
+  .field { margin: 14px 12px 10px; border: 1.5px solid var(--olive); border-radius: 14px; padding: 12px 14px; min-height: 52px; font-size: 20px; color: var(--text); }
+  .caret { display: inline-block; width: 2px; height: 1.1em; background: var(--olive); vertical-align: -3px; margin-left: 1px; animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .strip { display: flex; justify-content: space-around; align-items: center; padding: 8px 10px; border-top: 1px solid var(--line); color: var(--muted); font-size: 15px; min-height: 42px; }
+  .strip b { color: var(--olive); }
+  .typed { font-family: var(--mono); color: var(--dim); font-size: 13px; text-align: center; padding: 0 12px 8px; min-height: 26px; }
+  .typed span { color: var(--olive); }
+  .keys { padding: 8px 6px 12px; display: grid; gap: 7px; background: #141a0f; }
+  .row { display: flex; gap: 5px; justify-content: center; }
+  .k { flex: 1; max-width: 30px; height: 38px; border-radius: 8px; background: #252e1c; color: var(--text); display: grid; place-items: center; font-size: 15px; transition: background .1s, transform .1s; }
+  .k.wide { max-width: 46px; } .k.space { max-width: 150px; flex: 5; font-size: 12px; color: var(--dim); } .k.enter { background: var(--olive); color: #18200b; max-width: 46px; }
+  .k.hit { background: var(--olive-2); transform: translateY(1px); }
+
+  /* Sections */
+  section { padding: 76px 0; }
+  .section-head { max-width: 760px; margin: 0 auto 40px; text-align: center; }
+  .section-head h2 { font-size: clamp(30px, 3.8vw, 42px); margin: 0 0 10px; line-height: 1.15; }
+  .section-head p { color: var(--muted); margin: 0; font-size: 18px; }
+  .alt { background: var(--bg-2); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+
+  .stats { display: grid; grid-template-columns: repeat(6, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+  .stats div { background: var(--bg-2); padding: 18px 10px; text-align: center; }
+  .stats b { display: block; font-size: 24px; color: var(--olive); line-height: 1.2; }
+  .stats span { color: var(--muted); font-size: 14px; }
+
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 26px;
+    transition: transform .2s ease, border-color .2s ease;
+  }
+  .card:hover { transform: translateY(-3px); border-color: var(--olive-deep); }
+  .card .ic { width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; font-size: 24px; background: rgba(181,201,74,.12); margin-bottom: 14px; }
+  .card h3 { margin: 0 0 6px; font-size: 20px; line-height: 1.3; }
+  .card p { margin: 0; color: var(--muted); font-size: 16px; }
+  .card code, .faq code { font-family: var(--mono); font-size: .88em; background: rgba(255,255,255,.06); padding: 1px 6px; border-radius: 6px; color: var(--cream); }
+
+  .shot { border-radius: var(--radius); border: 1px solid var(--line); overflow: hidden; background: #0d1009; }
+  .shot + .shot { margin-top: 22px; }
+  figcaption { color: var(--dim); text-align: center; font-size: 15px; margin-top: 10px; }
+
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
+  .split h2 { font-size: clamp(28px, 3.4vw, 38px); line-height: 1.2; margin: 0 0 14px; }
+  .split p { color: var(--muted); }
+  .ticks { list-style: none; padding: 0; margin: 18px 0 0; display: grid; gap: 10px; }
+  .ticks li { padding-left: 30px; position: relative; }
+  .ticks li::before { content: "✓"; position: absolute; left: 0; top: 0; color: var(--olive); font-weight: 700; }
+
+  .check-demo { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; }
+  .check-demo .text { font-size: 19px; margin-bottom: 16px; }
+  .check-demo mark { background: none; color: inherit; text-decoration: underline wavy #e5484d; text-underline-offset: 4px; }
+  .issue { display: flex; align-items: center; gap: 12px; border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; background: var(--bg-2); }
+  .issue + .issue { margin-top: 10px; }
+  .issue .kind { font-size: 12px; font-weight: 600; border-radius: 999px; padding: 2px 10px; }
+  .k-sp { background: rgba(229,72,77,.15); color: #ff8a8d; } .k-pu { background: rgba(62,142,240,.15); color: #8ab8ff; } .k-gr { background: rgba(224,154,31,.16); color: #f2c069; }
+  .issue s { color: var(--dim); } .issue b { color: var(--text); }
+  .issue .fix { margin-left: auto; font-size: 14px; color: #18200b; background: var(--olive); border-radius: 999px; padding: 4px 12px; font-weight: 600; }
+
+  .privacy { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+
+  .steps { counter-reset: s; display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; list-style: none; padding: 0; margin: 0; }
+  .steps li { counter-increment: s; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; position: relative; }
+  .steps li::before { content: counter(s); display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--olive); color: #18200b; font-weight: 700; margin-bottom: 12px; }
+  .steps h3 { margin: 0 0 6px; font-size: 19px; }
+  .steps p { margin: 0; color: var(--muted); font-size: 16px; }
+  .note { margin-top: 22px; border: 1px solid #5a4a1c; background: rgba(224,175,104,.07); border-radius: 16px; padding: 16px 20px; color: var(--muted); font-size: 16px; }
+  .note b { color: var(--cream); }
+
+  .faq { max-width: 820px; margin: 0 auto; }
+  .faq details { border: 1px solid var(--line); background: var(--card); border-radius: 16px; padding: 0 20px; }
+  .faq details + details { margin-top: 10px; }
+  .faq summary { cursor: pointer; list-style: none; padding: 18px 30px 18px 0; font-weight: 600; font-size: 18px; position: relative; }
+  .faq summary::-webkit-details-marker { display: none; }
+  .faq summary::after { content: "+"; position: absolute; right: 0; top: 14px; font-size: 24px; color: var(--olive); transition: transform .2s; }
+  .faq details[open] summary::after { transform: rotate(45deg); }
+  .faq details p { margin: 0 0 18px; color: var(--muted); }
+
+  .bn { font-size: 18px; }
+  .bn .grid .card p { font-size: 16.5px; }
+
+  .final { text-align: center; padding: 84px 0; }
+  .final h2 { font-size: clamp(30px, 4vw, 44px); margin: 0 0 12px; }
+  .final p { color: var(--muted); margin: 0 auto 26px; max-width: 34em; }
+
+  footer { border-top: 1px solid var(--line); padding: 36px 0 44px; color: var(--dim); font-size: 15px; }
+  .foot { display: flex; flex-wrap: wrap; gap: 18px 32px; justify-content: space-between; align-items: flex-start; }
+  .foot nav { display: flex; flex-wrap: wrap; gap: 10px 22px; }
+  .foot nav a { color: var(--muted); }
+
+  .reveal { opacity: 0; transform: translateY(18px); transition: opacity .6s ease, transform .6s ease; }
+  .reveal.in { opacity: 1; transform: none; }
+
+  @media (max-width: 980px) {
+    .hero-grid, .split { grid-template-columns: 1fr; }
+    .hero { padding-top: 44px; }
+    .grid, .privacy { grid-template-columns: repeat(2, 1fr); }
+    .stats { grid-template-columns: repeat(3, 1fr); }
+    .steps { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 720px) {
+    .nav-links { display: none; position: absolute; top: 64px; left: 0; right: 0; flex-direction: column; gap: 0; background: var(--bg-2); border-bottom: 1px solid var(--line); padding: 8px 20px 16px; }
+    .nav-links.open { display: flex; }
+    .nav-links a { padding: 10px 0; width: 100%; }
+    .menu-btn { display: block; }
+    .grid, .privacy { grid-template-columns: 1fr; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    section { padding: 56px 0; }
+    .lead { font-size: 17.5px; }
+    .btn { width: 100%; }
+    .cta { flex-direction: column; align-items: stretch; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .reveal { opacity: 1; transform: none; transition: none; }
+    .caret { animation: none; }
+    .card, .btn { transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap nav">
+    <a class="brand" href="./" aria-label="Jolpai Keyboard home">
+      <img src="images/icon-512.png" alt="" width="34" height="34">
+      <span>Jolpai <small>জলপাই</small></span>
+    </a>
+    <button class="menu-btn" aria-label="Open menu" aria-expanded="false" aria-controls="links">☰</button>
+    <nav class="nav-links" id="links" aria-label="Main">
+      <a href="#features">Features</a>
+      <a href="#check">Spell check</a>
+      <a href="#privacy">Privacy</a>
+      <a href="#install">Install</a>
+      <a href="#faq">FAQ</a>
+      <a href="#bangla" lang="bn">বাংলা</a>
+      <a href="https://github.com/Yeamin-Talukder/jolpai-keyboard">GitHub</a>
+      <a class="btn btn-primary btn-sm js-download" href="https://github.com/Yeamin-Talukder/jolpai-keyboard/releases/latest">Download</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <!-- Hero -->
+  <section class="hero" aria-labelledby="title">
+    <div class="wrap hero-grid">
+      <div>
+        <p class="eyebrow">Free · Open source · Android</p>
+        <h1 id="title">Bangla &amp; English Keyboard for Android
+          <span class="h1-bn" lang="bn">জলপাই — বাংলা ও ইংরেজি কিবোর্ড</span>
+        </h1>
+        <p class="lead">Type Bangla the way it sounds with <b>Avro phonetic</b> (<code style="font-family:var(--mono)">ami</code> → আমি), use the
+          <b>National (জাতীয়)</b> layout, or switch to English, all in one keyboard. Smart suggestions, an offline
+          spelling check, offline translation and 64 themes. <b>No ads, no account, no tracking.</b></p>
+        <div class="cta">
+          <a class="btn btn-primary js-download" href="https://github.com/Yeamin-Talukder/jolpai-keyboard/releases/latest">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0-5-5m5 5 5-5M5 21h14"/></svg>
+            <span>Download APK</span>
+          </a>
+          <a class="btn btn-ghost" href="https://github.com/Yeamin-Talukder/jolpai-keyboard">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.2 1.77 1.2 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.79 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.42-2.7 5.39-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>
+            <span>View on GitHub</span>
+          </a>
+        </div>
+        <p class="release-note"><span class="js-version">Version 0.9.0</span> · Android 8.0+ · Free forever</p>
+        <ul class="chips" aria-label="Highlights">
+          <li>অভ্র Avro phonetic</li><li>জাতীয় layout</li><li>Works offline</li><li>No ads · No tracking</li><li>Material You</li>
+        </ul>
+      </div>
+
+      <div aria-hidden="true">
+        <div class="phone">
+          <div class="screen">
+            <div class="app-bar"><span class="dot"></span><span>Chat</span></div>
+            <div class="bubble" lang="bn">কেমন আছো? 🙂</div>
+            <div class="field" lang="bn"><span id="out"></span><span class="caret"></span></div>
+            <div class="typed">you type: <span id="roman"></span></div>
+            <div class="strip" lang="bn" id="strip"><span>…</span><b>…</b><span>…</span></div>
+            <div class="keys" id="keys"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats -->
+  <div class="wrap reveal">
+    <div class="stats" role="list">
+      <div role="listitem"><b>3</b><span>layouts</span></div>
+      <div role="listitem"><b>64</b><span>themes</span></div>
+      <div role="listitem"><b>100%</b><span>on your phone</span></div>
+      <div role="listitem"><b>0</b><span>ads or trackers</span></div>
+      <div role="listitem"><b>Free</b><span>open source</span></div>
+      <div role="listitem"><b>8.0+</b><span>Android</span></div>
+    </div>
+  </div>
+
+  <!-- Features -->
+  <section id="features" aria-labelledby="f-title">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <h2 id="f-title">Everything you need to type Bangla and English</h2>
+        <p>One keyboard for every app: WhatsApp, Messenger, Facebook, Gmail, Chrome and more.</p>
+      </div>
+      <div class="grid">
+        <article class="card reveal"><div class="ic">অ</div><h3>Avro phonetic (অভ্র)</h3><p>Type how a word sounds: <code>ami banglay likhi</code> → আমি বাংলায় লিখি. Dictionary candidates, and it remembers your picks.</p></article>
+        <article class="card reveal"><div class="ic">জ</div><h3>National (জাতীয়) layout</h3><p>The Bangladesh national standard layout, arranged like Ridmik. Hold a key for the letter in its corner.</p></article>
+        <article class="card reveal"><div class="ic">⌨️</div><h3>English with autocorrect</h3><p>Fixes phone slips and spelling-by-sound mistakes, but only when one fix is clearly best. Undo with Backspace.</p></article>
+        <article class="card reveal"><div class="ic">✓</div><h3>Spelling &amp; grammar check</h3><p>Finds spelling, punctuation and grammar mistakes in English <b>and বাংলা</b>, offline, with one-tap fixes.</p></article>
+        <article class="card reveal"><div class="ic">🌐</div><h3>Offline translation</h3><p>English ↔ Bangla inside the keyboard. Download a ~30 MB pack once; then it works without internet.</p></article>
+        <article class="card reveal"><div class="ic">🎤</div><h3>Voice typing</h3><p>Speak Bangla or English, with spoken punctuation: "comma", "দাঁড়ি", "নতুন লাইন".</p></article>
+        <article class="card reveal"><div class="ic">🧠</div><h3>Learns how you write</h3><p>Next-word prediction, Bangla word frequencies and a personal dictionary, all learned on your phone.</p></article>
+        <article class="card reveal"><div class="ic">📋</div><h3>Clipboard &amp; snippets</h3><p>Clipboard history with pins and smart categories (links, OTP codes, phone numbers). Type <code>@addr</code> to insert your address.</p></article>
+        <article class="card reveal"><div class="ic">🎨</div><h3>64 themes</h3><p>Material You, soft pastels, gradients and dark themes like Olive night, plus your own photo themes, key fonts and sounds.</p></article>
+        <article class="card reveal"><div class="ic">😊</div><h3>Emoji, stickers, GIFs</h3><p>Emoji search in English and Bangla, skin tones, kaomoji, your own stickers and GIF search.</p></article>
+        <article class="card reveal"><div class="ic">✌️</div><h3>Gestures &amp; trackpad</h3><p>Slide on space to move the cursor, swipe Backspace to delete words, and set your own swipes.</p></article>
+        <article class="card reveal"><div class="ic">📊</div><h3>Typing stats</h3><p>Words per day, typing speed (WPM) and accuracy. Only numbers are kept, never what you type.</p></article>
+      </div>
+    </div>
+  </section>
+
+  <!-- Screenshots -->
+  <section class="alt" aria-labelledby="s-title">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <h2 id="s-title">Three layouts, one tap apart</h2>
+        <p>Switch English ↔ বাংলা (অভ্র) ↔ বাংলা (জাতীয়) from the top bar.</p>
+      </div>
+      <figure class="reveal" style="margin:0">
+        <img class="shot" src="images/layouts.png" width="1400" height="560" loading="lazy"
+             alt="Jolpai Keyboard layouts: English QWERTY, Avro phonetic Bangla and National (Jatiya) Bangla keyboard on Android">
+        <figcaption>English QWERTY · Avro phonetic (ami → আমি) · National (জাতীয়) layout</figcaption>
+      </figure>
+      <figure class="reveal" style="margin:40px 0 0">
+        <img class="shot" src="images/themes.png" width="1400" height="792" loading="lazy"
+             alt="Jolpai Keyboard themes: Material You, light pastel themes and soft dark themes for the Android Bangla keyboard">
+        <figcaption>20 of the 64 built-in themes. Material You follows your wallpaper colours.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- Spell check -->
+  <section id="check" aria-labelledby="c-title">
+    <div class="wrap split">
+      <div class="reveal">
+        <p class="eyebrow">New in 0.8 and 0.9</p>
+        <h2 id="c-title">An offline spelling check for বাংলা and English</h2>
+        <p>Tap <b>✓ Check</b> in the top bar to see what may be wrong in what you're writing, and fix it in one tap. It runs entirely on your phone.</p>
+        <ul class="ticks">
+          <li>Bangla spelling: look-alike letters (ি/ী, শ/ষ/স), vowel signs and word endings</li>
+          <li>Punctuation: spaces around marks, দাঁড়ি in Bangla, a missing full stop</li>
+          <li>English grammar: a/an, "i" → "I", "could of", "better then" …</li>
+          <li>Each mistake shows the fix plus other likely words, ranked by your own typing</li>
+        </ul>
+      </div>
+      <div class="check-demo reveal" aria-label="Example of the spelling check">
+        <div class="text" lang="bn">আমার <mark>পরিক্ষা</mark> কাল। i <mark>recieved</mark> it ,thanks</div>
+        <div class="issue"><span class="kind k-sp">Spelling</span><span lang="bn"><s>পরিক্ষা</s> → <b>পরীক্ষা</b></span><span class="fix">Fix</span></div>
+        <div class="issue"><span class="kind k-sp">Spelling</span><span><s>recieved</s> → <b>received</b></span><span class="fix">Fix</span></div>
+        <div class="issue"><span class="kind k-gr">Grammar</span><span><s>i</s> → <b>I</b></span><span class="fix">Fix</span></div>
+        <div class="issue"><span class="kind k-pu">Punctuation</span><span><s>it ,thanks</s> → <b>it, thanks</b></span><span class="fix">Fix</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Privacy -->
+  <section id="privacy" class="alt" aria-labelledby="p-title">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <h2 id="p-title">A keyboard sees everything you type. Jolpai keeps it on your phone.</h2>
+        <p>Open source, so anyone can check. Read the full <a href="privacy.html">privacy policy</a>.</p>
+      </div>
+      <div class="privacy">
+        <article class="card reveal"><div class="ic">🚫</div><h3>No ads, no tracking</h3><p>No account, analytics, crash-reporting SDK or ads. Nothing to sign up for.</p></article>
+        <article class="card reveal"><div class="ic">🔐</div><h3>Encrypted on device</h3><p>Learned words and clipboard live in an encrypted database, left out of cloud backups.</p></article>
+        <article class="card reveal"><div class="ic">🔒</div><h3>Private fields stay private</h3><p>No learning, suggestions or clipboard capture in password and incognito fields.</p></article>
+        <article class="card reveal"><div class="ic">📴</div><h3>Works offline</h3><p>The internet is used only for features you turn on, such as GIF search or the translation download.</p></article>
+      </div>
+    </div>
+  </section>
+
+  <!-- Install -->
+  <section id="install" aria-labelledby="i-title">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <h2 id="i-title">Install in a minute</h2>
+        <p>Most phones need the <b>arm64-v8a</b> APK; older 32-bit phones need armeabi-v7a.</p>
+      </div>
+      <ol class="steps">
+        <li class="reveal"><h3>Download the APK</h3><p>Get the latest release from GitHub. If Android asks, allow installing apps from your browser.</p></li>
+        <li class="reveal"><h3>Turn it on</h3><p>Open Jolpai Keyboard and switch it on in Android's keyboard list. Everything stays on your phone.</p></li>
+        <li class="reveal"><h3>Choose it and type</h3><p>Pick Jolpai as your keyboard, then tap the language button for English, অভ্র or জাতীয়.</p></li>
+      </ol>
+      <p class="note reveal"><b>Coming from 0.7 or 0.8?</b> Version 0.9 has a new app ID, so it installs next to the old one. Save a backup in the old app (Backup &amp; restore), restore it in the new one, then uninstall the old app. Later versions update normally.</p>
+      <div class="cta reveal" style="justify-content:center;margin-top:28px">
+        <a class="btn btn-primary js-download" href="https://github.com/Yeamin-Talukder/jolpai-keyboard/releases/latest">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0-5-5m5 5 5-5M5 21h14"/></svg>
+          <span>Download APK</span>
+        </a>
+        <a class="btn btn-ghost" href="https://github.com/Yeamin-Talukder/jolpai-keyboard/releases">All versions &amp; checksums</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq" class="alt" aria-labelledby="q-title">
+    <div class="wrap">
+      <div class="section-head reveal"><h2 id="q-title">Questions</h2></div>
+      <div class="faq">
+        <details class="reveal"><summary>How do I type Bangla on Android with Jolpai Keyboard?</summary><p>Install Jolpai, turn it on in the app's two setup steps, then tap the language button to choose বাংলা (অভ্র) for phonetic typing (<code>ami</code> → আমি) or বাংলা (জাতীয়) for the National layout.</p></details>
+        <details class="reveal"><summary>Does Jolpai Keyboard support Avro phonetic typing?</summary><p>Yes. It has a built-in Avro phonetic engine using the open Avro rule table from OpenBangla, with dictionary candidates and learning of your choices. It works fully offline.</p></details>
+        <details class="reveal"><summary>Does it have the National (জাতীয়) / Jatiya layout? What about Bijoy?</summary><p>Yes, the Bangladesh National layout is built in, arranged like Ridmik Keyboard. The Bijoy layout is not included.</p></details>
+        <details class="reveal"><summary>Is Jolpai Keyboard safe? Does it collect what I type?</summary><p>No. It has no account, analytics, ads or crash-reporting SDK, and stores learned words and clipboard history only on your phone, in an encrypted database. Password and incognito fields are never learned. The code is open source, so you can check this yourself.</p></details>
+        <details class="reveal"><summary>Does Jolpai Keyboard work offline?</summary><p>Yes. Typing, suggestions, Avro, the spelling and grammar check, the clipboard and themes need no internet. Translation works offline after a one-time pack download. Only GIF search needs the internet (and checking for updates, when you tap it).</p></details>
+        <details class="reveal"><summary>Does it check Bangla spelling and grammar?</summary><p>Yes. Check finds Bangla spelling mistakes (look-alike letters, vowel signs, word endings) and punctuation such as দাঁড়ি, plus English spelling, punctuation and common grammar, all offline. It is rule-based, so it won't judge meaning or style.</p></details>
+        <details class="reveal"><summary>Can I translate English to Bangla inside the keyboard?</summary><p>Yes. The Translate box translates English to Bangla (and back) as you type, on your device, after a one-time download of about 30 MB.</p></details>
+        <details class="reveal"><summary>Which Android versions are supported?</summary><p>Android 8.0 (Oreo, API 26) and newer. Material You colours need Android 12 or newer.</p></details>
+        <details class="reveal"><summary>Is it free?</summary><p>Yes. It is free and open source under the Apache License 2.0, with no ads and no in-app purchases.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <!-- Bangla -->
+  <section id="bangla" class="bn" lang="bn" aria-labelledby="b-title">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <h2 id="b-title">জলপাই কিবোর্ড: অ্যান্ড্রয়েডের জন্য ফ্রি বাংলা কিবোর্ড</h2>
+        <p>অভ্র ফোনেটিক, জাতীয় লেআউট আর ইংরেজি — সব একটি কিবোর্ডে। কোনো বিজ্ঞাপন নেই, ট্র্যাকিং নেই।</p>
+      </div>
+      <div class="grid">
+        <article class="card reveal"><div class="ic">অ</div><h3>অভ্র ফোনেটিক</h3><p>যেমন উচ্চারণ, তেমন লিখুন: <code>ami</code> → আমি। আপনার বেছে নেওয়া শব্দ মনে রাখে।</p></article>
+        <article class="card reveal"><div class="ic">জ</div><h3>জাতীয় কিবোর্ড লেআউট</h3><p>বাংলাদেশের জাতীয় মানের লেআউট, রিদমিকের মতো সাজানো।</p></article>
+        <article class="card reveal"><div class="ic">✓</div><h3>বানান ও ব্যাকরণ চেক</h3><p>বাংলা ও ইংরেজি লেখার বানান, যতিচিহ্ন ও ব্যাকরণের ভুল দেখায়, এক ট্যাপে ঠিক করা যায়।</p></article>
+        <article class="card reveal"><div class="ic">🌐</div><h3>অফলাইন অনুবাদ</h3><p>কিবোর্ডের ভেতরেই ইংরেজি↔বাংলা অনুবাদ, ইন্টারনেট ছাড়াই।</p></article>
+        <article class="card reveal"><div class="ic">🔒</div><h3>প্রাইভেসি আগে</h3><p>আপনি যা লেখেন তা আপনার ফোনেই থাকে, এনক্রিপ্টেড অবস্থায়। কোনো অ্যাকাউন্ট লাগে না।</p></article>
+        <article class="card reveal"><div class="ic">🎨</div><h3>৬৪টি থিম</h3><p>Material You, ডার্ক থিম, নিজের ছবি দিয়ে থিম, কী-ফন্ট ও কী-সাউন্ড।</p></article>
+      </div>
+      <div class="cta reveal" style="justify-content:center;margin-top:32px">
+        <a class="btn btn-primary js-download" href="https://github.com/Yeamin-Talukder/jolpai-keyboard/releases/latest"><span>ডাউনলোড করুন (ফ্রি)</span></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Final CTA -->
+  <section class="final alt" aria-labelledby="final-title">
+    <div class="wrap reveal">
+      <img src="images/icon-512.png" alt="Jolpai Keyboard icon: a green olive" width="84" height="84" style="margin:0 auto 18px;border-radius:20px" loading="lazy">
+      <h2 id="final-title">Write in Bangla, freely.</h2>
+      <p>Free and open source. If Jolpai helps you, a ⭐ on GitHub helps other Bangla writers find it.</p>
+      <div class="cta" style="justify-content:center">
+        <a class="btn btn-primary js-download" href="https://github.com/Yeamin-Talukder/jolpai-keyboard/releases/latest"><span>Download APK</span></a>
+        <a class="btn btn-ghost" href="https://github.com/Yeamin-Talukder/jolpai-keyboard"><span>⭐ Star on GitHub</span></a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <div>
+      <div class="brand" style="margin-bottom:8px"><img src="images/icon-512.png" alt="" width="28" height="28" loading="lazy"><span>Jolpai Keyboard</span></div>
+      <div>© 2026 <a href="https://github.com/Yeamin-Talukder">Md Yeamin Talukder</a> · Apache License 2.0 · Made in Bangladesh 🇧🇩</div>
+    </div>
+    <nav aria-label="Footer">
+      <a href="https://github.com/Yeamin-Talukder/jolpai-keyboard">Source code</a>
+      <a href="https://github.com/Yeamin-Talukder/jolpai-keyboard/releases">Releases</a>
+      <a href="privacy.html">Privacy policy</a>
+      <a href="https://github.com/Yeamin-Talukder/jolpai-keyboard/issues">Report a problem</a>
+      <a href="https://github.com/Yeamin-Talukder/jolpai-keyboard/blob/main/docs/ROADMAP.md">Roadmap</a>
+    </nav>
+  </div>
+</footer>
+
+<script>
+(() => {
+  // Mobile menu
+  const btn = document.querySelector('.menu-btn'), links = document.getElementById('links');
+  btn.addEventListener('click', () => {
+    const open = links.classList.toggle('open');
+    btn.setAttribute('aria-expanded', open);
+  });
+  links.addEventListener('click', e => { if (e.target.tagName === 'A') { links.classList.remove('open'); btn.setAttribute('aria-expanded', false); } });
+
+  // Fade sections in as they scroll into view
+  const items = document.querySelectorAll('.reveal');
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { rootMargin: '0px 0px -8% 0px' });
+    items.forEach(el => io.observe(el));
+  } else items.forEach(el => el.classList.add('in'));
+
+  // Point the download buttons straight at the latest APK for most phones (falls back to the releases page)
+  fetch('https://api.github.com/repos/Yeamin-Talukder/jolpai-keyboard/releases/latest')
+    .then(r => r.ok ? r.json() : Promise.reject())
+    .then(rel => {
+      const apk = rel.assets.find(a => /arm64-v8a\.apk$/.test(a.name));
+      if (!apk) return;
+      document.querySelectorAll('.js-download').forEach(a => { a.href = apk.browser_download_url; });
+      const mb = (apk.size / 1048576).toFixed(1);
+      document.querySelectorAll('.js-version').forEach(s => { s.textContent = `Version ${rel.tag_name.replace(/^v/, '')} · ${mb} MB`; });
+    })
+    .catch(() => {});
+
+  // Typing demo: roman letters in, Bangla out (Avro phonetic)
+  const rows = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'];
+  const keys = document.getElementById('keys');
+  const keyEls = {};
+  rows.forEach((r, i) => {
+    const row = document.createElement('div'); row.className = 'row';
+    if (i === 2) { const s = document.createElement('div'); s.className = 'k wide'; s.textContent = '⇧'; row.appendChild(s); }
+    [...r].forEach(c => { const k = document.createElement('div'); k.className = 'k'; k.textContent = c; keyEls[c] = k; row.appendChild(k); });
+    if (i === 2) { const s = document.createElement('div'); s.className = 'k wide'; s.textContent = '⌫'; row.appendChild(s); }
+    keys.appendChild(row);
+  });
+  const last = document.createElement('div'); last.className = 'row';
+  last.innerHTML = '<div class="k wide">?123</div><div class="k">,</div><div class="k space" lang="bn">বাংলা (অভ্র)</div><div class="k">.</div><div class="k enter">↵</div>';
+  keys.appendChild(last);
+  keyEls[' '] = last.querySelector('.space');
+
+  const demos = [
+    { words: [['ami', 'আমি'], ['bhalo', 'ভালো'], ['achhi', 'আছি']], strip: [['আমি', 'আমী'], ['ভালো', 'ভাল'], ['আছি', 'আছে']] },
+    { words: [['ami', 'আমি'], ['banglay', 'বাংলায়'], ['likhi', 'লিখি']], strip: [['আমি', 'আমী'], ['বাংলায়', 'বাংলা'], ['লিখি', 'লিখী']] },
+    { words: [['dhonnobad', 'ধন্যবাদ']], strip: [['ধন্যবাদ', 'ধন্নবাদ']] },
+  ];
+  const out = document.getElementById('out'), roman = document.getElementById('roman'), strip = document.getElementById('strip');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  const press = c => { const k = keyEls[c]; if (!k) return; k.classList.add('hit'); setTimeout(() => k.classList.remove('hit'), 120); };
+  const setStrip = (a, b, c) => { strip.innerHTML = `<span>${a}</span><b>${b}</b><span>${c}</span>`; };
+
+  async function run() {
+    if (reduce) { out.textContent = 'আমি বাংলায় লিখি'; roman.textContent = 'ami banglay likhi'; setStrip('আমি', 'বাংলায়', 'লিখি'); return; }
+    for (;;) {
+      for (const d of demos) {
+        let done = '', typedLine = '';
+        for (let w = 0; w < d.words.length; w++) {
+          const [rom, bn] = d.words[w];
+          let cur = '';
+          for (const c of rom) {
+            cur += c; press(c);
+            roman.textContent = (typedLine + cur);
+            out.textContent = done + cur;
+            setStrip(rom.startsWith(cur) ? cur : cur, d.strip[w][0], d.strip[w][1]);
+            await wait(150);
+          }
+          await wait(250);
+          press(' ');
+          done += bn + ' ';
+          typedLine += rom + ' ';
+          out.textContent = done;
+          roman.textContent = typedLine;
+          setStrip(d.strip[w][1], bn, rom);
+          await wait(420);
+        }
+        await wait(1800);
+        out.textContent = ''; roman.textContent = ''; setStrip('…', '…', '…');
+        await wait(500);
+      }
+    }
+  }
+  run();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+name: Website
+
+# Publishes website/ to GitHub Pages: https://yeamin-talukder.github.io/jolpai-keyboard/
+# The privacy page is built from docs/PRIVACY.md each time, so the two never drift apart.
+on:
+  push:
+    branches: [main]
+    paths: ['website/**', 'docs/PRIVACY.md', '.github/workflows/pages.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Build the privacy page from docs/PRIVACY.md
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p _site
+          cp -r website/. _site/
+          rm _site/privacy.template.html
+          jq -n --rawfile text docs/PRIVACY.md '{text: $text, mode: "gfm", context: "${{ github.repository }}"}' > req.json
+          gh api markdown --input req.json > body.html
+          node -e "
+            const fs = require('fs');
+            const t = fs.readFileSync('website/privacy.template.html', 'utf8');
+            fs.writeFileSync('_site/privacy.html', t.replace('{{BODY}}', fs.readFileSync('body.html', 'utf8')));
+          "
+          grep -q '<h1' _site/privacy.html
+
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v5
