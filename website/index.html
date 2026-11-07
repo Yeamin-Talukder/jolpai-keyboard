@@ -436,6 +436,44 @@
   .note { margin-top: 22px; border: 1px solid #5a4a1c; background: rgba(224,175,104,.07); border-radius: 16px; padding: 16px 20px; color: var(--muted); font-size: 16px; }
   .note b { color: var(--cream); }
 
+  /* ---- hero download: split button with a ▾ menu of phone types */
+  .dl-split { display: inline-flex; align-items: stretch; position: relative; border-radius: 999px; box-shadow: 0 8px 30px -10px rgba(181, 201, 74, .55); }
+  .dl-split .btn-primary { box-shadow: none; }
+  .dl-split .btn:hover { transform: none; }
+  .dl-main { border-radius: 999px 0 0 999px; padding-right: 20px; }
+  .dl-caret { border-radius: 0 999px 999px 0; padding: 0 18px 0 14px; cursor: pointer; border-left: 1px solid rgba(24, 32, 11, .28); font: inherit; }
+  .dl-caret svg { width: 20px; height: 20px; transition: transform .2s ease; }
+  .dl-caret[aria-expanded="true"] svg { transform: rotate(180deg); }
+  .dl-menu {
+    position: fixed; z-index: 60; width: min(340px, calc(100vw - 16px)); padding: 8px;
+    background: var(--card); border: 1px solid var(--line); border-radius: 18px;
+    box-shadow: 0 24px 60px -16px rgba(0, 0, 0, .75), 0 0 0 1px rgba(181, 201, 74, .06);
+    animation: menuIn .16s ease;
+  }
+  @keyframes menuIn { from { opacity: 0; transform: translateY(-4px) scale(.98); } }
+  .dl-menu-head { margin: 4px 10px 8px; font-size: 12.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--dim); font-weight: 700; }
+  .dl-item { display: block; padding: 10px 12px; border-radius: 12px; color: var(--text); border: 1px solid transparent; }
+  .dl-item b { display: block; font-size: 15.5px; }
+  .dl-item small { display: block; color: var(--dim); font-size: 12.5px; margin-top: 2px; font-family: var(--mono); }
+  .dl-item:hover, .dl-item:focus-visible { background: rgba(181, 201, 74, .1); text-decoration: none; outline: none; }
+  .dl-item.on { border-color: rgba(181, 201, 74, .45); background: rgba(181, 201, 74, .08); }
+  .dl-item .yours { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px; background: var(--olive); color: #18200b; font-size: 11px; font-weight: 700; vertical-align: 2px; }
+  .dl-more { display: block; margin-top: 4px; padding: 10px 12px; border-top: 1px solid var(--line); font-size: 14.5px; font-weight: 600; }
+  .dl-more:hover, .dl-more:focus-visible { text-decoration: none; background: rgba(181, 201, 74, .08); border-radius: 0 0 12px 12px; outline: none; }
+
+  /* ---- hero on one screen (wide screens): content centred in the window's height; the phone demo
+     is scaled to fit by the script below, and the text eases down on short windows */
+  @media (min-width: 981px) {
+    .hero { min-height: calc(100vh - 64px); min-height: calc(100svh - 64px); display: flex; align-items: center; padding: clamp(16px, 3.5vh, 56px) 0; }
+    .hero > .wrap { width: 100%; }
+    .hero .demo { transform-origin: top center; }
+    .hero h1 { font-size: clamp(34px, min(5.6vw, 6.6vh), 62px); }
+    .hero .h1-bn { font-size: clamp(22px, min(3.4vw, 4.1vh), 38px); margin-top: min(10px, 1.1vh); }
+    .hero .lead { font-size: clamp(15.5px, min(1.6vw, 2.15vh), 19px); margin: min(18px, 1.9vh) 0 min(28px, 3vh); }
+    .hero .release-note { margin-top: min(14px, 1.5vh); }
+    .hero .chips { margin-top: min(26px, 2.6vh); }
+  }
+
   /* ---- download picker (Install section) */
   .picker { max-width: 780px; margin: 28px auto 0; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 26px; }
   .picker h3 { margin: 0 0 4px; font-size: 21px; }
@@ -449,9 +487,17 @@
   }
   .pick-select:hover { border-color: var(--olive-2); }
   .pick-select option { background: var(--card-2); color: var(--text); }
-  .pick-fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); gap: 0 14px; }
-  .pick-hint { margin: -6px 0 18px; color: var(--dim); font-size: 14px; }
-  .pick-hint b { color: var(--muted); font-weight: 600; }
+  .abis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+  .abi {
+    text-align: left; cursor: pointer; font: inherit; color: var(--text); background: var(--card-2);
+    border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; transition: border-color .2s, background .2s, transform .15s;
+  }
+  .abi b { display: block; font-size: 15.5px; }
+  .abi small { display: block; color: var(--dim); font-size: 12.5px; margin-top: 3px; font-family: var(--mono); }
+  .abi small span { white-space: nowrap; }
+  .abi:hover { border-color: var(--olive-2); transform: translateY(-1px); }
+  .abi[aria-checked="true"] { border-color: var(--olive); background: rgba(181,201,74,.12); box-shadow: inset 0 0 0 1px var(--olive); }
+  .abi .yours { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px; background: var(--olive); color: #18200b; font-size: 11px; font-weight: 700; vertical-align: 2px; }
   .pick-go { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 4px; }
   .pick-go .btn-primary { flex: 1 1 260px; }
   .pick-meta { margin: 14px 0 0; color: var(--dim); font-size: 14px; display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; min-height: 1.4em; }
@@ -463,7 +509,7 @@
   .pick-warn { margin-top: 14px; }
   .pick-warn code { font-family: var(--mono); font-size: .88em; background: rgba(255,255,255,.06); padding: 1px 6px; border-radius: 6px; color: var(--cream); }
   @media (max-width: 720px) {
-    .pick-fields { grid-template-columns: minmax(0, 1fr); }
+    .abis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .picker { padding: 20px; }
   }
 
@@ -508,6 +554,9 @@
     section { padding: 56px 0; }
     .lead { font-size: 17.5px; }
     .btn { width: 100%; }
+    .dl-split { display: flex; width: 100%; }
+    .dl-split .dl-main { flex: 1 1 auto; width: auto; }
+    .dl-split .dl-caret { width: auto; flex: none; }
     .cta { flex-direction: column; align-items: stretch; }
   }
   @media (prefers-reduced-motion: reduce) {
@@ -610,10 +659,24 @@
           <b>National (জাতীয়)</b> layout, or switch to English, all in one keyboard. Smart suggestions, an offline
           spelling check, offline translation and 64 themes. <b>No ads, no account, no tracking.</b></p>
         <div class="cta">
-          <a class="btn btn-primary js-download" href="https://github.com/Yeamin-Talukder/jolpai-keyboard/releases/latest">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0-5-5m5 5 5-5M5 21h14"/></svg>
-            <span>Download APK</span>
-          </a>
+          <!-- Split button: download now, or ▾ to pick the phone type (filled by the download picker script) -->
+          <div class="dl-split" id="hero-dl">
+            <a class="btn btn-primary dl-main" id="hero-dl-main" href="https://github.com/Yeamin-Talukder/jolpai-keyboard/releases/latest">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0-5-5m5 5 5-5M5 21h14"/></svg>
+              <span>Download APK</span>
+            </a>
+            <button type="button" class="btn btn-primary dl-caret" id="hero-dl-caret" aria-haspopup="menu" aria-expanded="false" aria-controls="hero-dl-menu" aria-label="Choose your phone type">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <div class="dl-menu" id="hero-dl-menu" role="menu" aria-labelledby="hero-dl-caret" hidden>
+              <p class="dl-menu-head" id="hero-dl-head">Choose your phone type</p>
+              <a role="menuitem" class="dl-item" data-abi="arm64-v8a" href="#install"><b>Most phones</b><small>64-bit · arm64-v8a</small></a>
+              <a role="menuitem" class="dl-item" data-abi="armeabi-v7a" href="#install"><b>Older phones</b><small>32-bit · armeabi-v7a</small></a>
+              <a role="menuitem" class="dl-item" data-abi="x86_64" href="#install"><b>Intel / emulator</b><small>64-bit · x86_64</small></a>
+              <a role="menuitem" class="dl-item" data-abi="x86" href="#install"><b>Old Intel</b><small>32-bit · x86</small></a>
+              <a role="menuitem" class="dl-more" href="#install">Older versions &amp; checksums →</a>
+            </div>
+          </div>
           <a class="btn btn-ghost" href="https://github.com/Yeamin-Talukder/jolpai-keyboard">
             <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.2 1.77 1.2 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.79 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.42-2.7 5.39-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>
             <span>View on GitHub</span>
@@ -782,24 +845,21 @@
       <div class="picker reveal" id="download-picker">
         <h3>Choose your download</h3>
         <p>The newest version for most phones is already picked. Need an older version or another phone type? Change it here.</p>
-        <div class="pick-fields">
-          <div class="pick-field">
-            <label class="pick-label" for="pick-version">Version</label>
-            <select class="pick-select" id="pick-version">
-              <option value="v0.10.1">0.10.1</option>
-            </select>
-          </div>
-          <div class="pick-field">
-            <label class="pick-label" for="pick-abi">Variant (phone type)</label>
-            <select class="pick-select" id="pick-abi">
-              <option value="arm64-v8a" data-label="Most phones · 64-bit (arm64-v8a)">Most phones · 64-bit (arm64-v8a)</option>
-              <option value="armeabi-v7a" data-label="Older phones · 32-bit (armeabi-v7a)">Older phones · 32-bit (armeabi-v7a)</option>
-              <option value="x86_64" data-label="Intel / emulator · 64-bit (x86_64)">Intel / emulator · 64-bit (x86_64)</option>
-              <option value="x86" data-label="Old Intel · 32-bit (x86)">Old Intel · 32-bit (x86)</option>
-            </select>
+        <div class="pick-field">
+          <label class="pick-label" for="pick-version">Version</label>
+          <select class="pick-select" id="pick-version">
+            <option value="v0.10.1">0.10.1</option>
+          </select>
+        </div>
+        <div class="pick-field">
+          <span class="pick-label" id="pick-abi-label">Phone type</span>
+          <div class="abis" id="pick-abis" role="radiogroup" aria-labelledby="pick-abi-label">
+            <button type="button" class="abi" role="radio" aria-checked="true" data-abi="arm64-v8a"><b>Most phones</b><small>64-bit · <span>arm64-v8a</span></small></button>
+            <button type="button" class="abi" role="radio" aria-checked="false" data-abi="armeabi-v7a" tabindex="-1"><b>Older phones</b><small>32-bit · <span>armeabi-v7a</span></small></button>
+            <button type="button" class="abi" role="radio" aria-checked="false" data-abi="x86_64" tabindex="-1"><b>Intel / emulator</b><small>64-bit · <span>x86_64</span></small></button>
+            <button type="button" class="abi" role="radio" aria-checked="false" data-abi="x86" tabindex="-1"><b>Old Intel</b><small>32-bit · <span>x86</span></small></button>
           </div>
         </div>
-        <p class="pick-hint" id="pick-hint">Not sure? Almost every phone from 2017 onward needs <b>Most phones · 64-bit</b>.</p>
         <div class="pick-go">
           <a class="btn btn-primary" id="pick-download" href="https://github.com/Yeamin-Talukder/jolpai-keyboard/releases/latest">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0-5-5m5 5 5-5M5 21h14"/></svg>
@@ -920,8 +980,9 @@
     const KNOWN = ['v0.10.1', 'v0.10.0', 'v0.9.0', 'v0.8.0', 'v0.7.0'];
     const ABI_NAME = { 'arm64-v8a': '64-bit', 'armeabi-v7a': '32-bit', 'x86_64': 'x86_64', 'x86': 'x86' };
     const sel = document.getElementById('pick-version');
-    const abiSel = document.getElementById('pick-abi');
-    if (!sel || !abiSel) return;
+    const group = document.getElementById('pick-abis');
+    if (!sel || !group) return;
+    const btns = [...group.querySelectorAll('.abi')];
     const dl = document.getElementById('pick-download'), dlText = document.getElementById('pick-download-text');
     const meta = document.getElementById('pick-meta'), warn = document.getElementById('pick-warn');
     const ver = tag => tag.replace(/^v/, '');
@@ -963,12 +1024,25 @@
       } else warn.hidden = true;
     }
 
-    function setAbi(a) {
+    function setAbi(a, focus) {
       abi = a;
-      abiSel.value = a;
+      btns.forEach(b => {
+        const on = b.dataset.abi === a;
+        b.setAttribute('aria-checked', String(on));
+        b.tabIndex = on ? 0 : -1;
+        if (on && focus) b.focus();
+      });
       render();
     }
-    abiSel.addEventListener('change', () => setAbi(abiSel.value));
+    btns.forEach((b, i) => {
+      b.addEventListener('click', () => setAbi(b.dataset.abi));
+      b.addEventListener('keydown', e => {
+        const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
+        if (!step) return;
+        e.preventDefault();
+        setAbi(btns[(i + step + btns.length) % btns.length].dataset.abi, true);
+      });
+    });
     sel.addEventListener('change', render);
     meta.addEventListener('click', e => {
       const b = e.target.closest('.pick-sha');
@@ -982,17 +1056,76 @@
     if (/Android/i.test(navigator.userAgent) && navigator.userAgentData && navigator.userAgentData.getHighEntropyValues) {
       navigator.userAgentData.getHighEntropyValues(['architecture', 'bitness']).then(h => {
         const a = h.architecture === 'x86' ? (h.bitness === '32' ? 'x86' : 'x86_64') : (h.bitness === '32' ? 'armeabi-v7a' : 'arm64-v8a');
-        const o = [...abiSel.options].find(x => x.value === a);
-        if (!o) return;
-        o.textContent = `${o.dataset.label} · your phone`;
-        const hint = document.getElementById('pick-hint');
-        if (hint) hint.innerHTML = `Picked for <b>your phone</b>: ${esc(o.dataset.label)}.`;
+        const b = btns.find(x => x.dataset.abi === a);
+        if (!b) return;
+        b.querySelector('b').insertAdjacentHTML('beforeend', '<span class="yours">Your phone</span>');
         setAbi(a);
+        heroAbi = a;
+        const item = menu && menu.querySelector(`.dl-item[data-abi="${a}"] b`);
+        if (item) item.insertAdjacentHTML('beforeend', '<span class="yours">Your phone</span>');
+        renderHero();
       }).catch(() => {});
+    }
+
+    // ---- hero split button: the newest release for the visitor's phone type; ▾ lists the others
+    const heroMain = document.getElementById('hero-dl-main'), caret = document.getElementById('hero-dl-caret');
+    const menu = document.getElementById('hero-dl-menu'), menuHead = document.getElementById('hero-dl-head');
+    let heroAbi = 'arm64-v8a';
+    function renderHero() {
+      if (!heroMain || !menu) return;
+      const r = releases[0], v = ver(r.tag);
+      const link = a => (r.apks && r.apks[a] ? r.apks[a].url : `${REPO}/releases/download/${r.tag}/jolpai-keyboard-${v}-${a}.apk`);
+      heroMain.href = link(heroAbi);
+      heroMain.setAttribute('download', `jolpai-keyboard-${v}-${heroAbi}.apk`);
+      menuHead.textContent = `Jolpai ${v}: choose your phone type`;
+      menu.querySelectorAll('.dl-item').forEach(it => {
+        const a = it.dataset.abi, apk = r.apks && r.apks[a], sm = it.querySelector('small');
+        if (!sm.dataset.base) sm.dataset.base = sm.textContent;
+        it.href = link(a);
+        it.setAttribute('download', `jolpai-keyboard-${v}-${a}.apk`);
+        sm.textContent = sm.dataset.base + (apk && apk.size ? ` · ${(apk.size / 1048576).toFixed(1)} MB` : '');
+        it.classList.toggle('on', a === heroAbi);
+      });
+    }
+    if (heroMain && caret && menu) {
+      const items = () => [...menu.querySelectorAll('[role="menuitem"]')];
+      const place = () => {
+        // Fixed to the window, so the hero's clipped edges never cut the menu off.
+        const box = document.getElementById('hero-dl').getBoundingClientRect();
+        menu.style.left = `${Math.max(8, Math.min(box.left, innerWidth - menu.offsetWidth - 8))}px`;
+        const below = innerHeight - box.bottom - 8;
+        menu.style.top = below >= menu.offsetHeight ? `${box.bottom + 8}px` : `${Math.max(8, box.top - menu.offsetHeight - 8)}px`;
+      };
+      const open = focusFirst => {
+        menu.hidden = false;
+        caret.setAttribute('aria-expanded', 'true');
+        place();
+        if (focusFirst) (menu.querySelector('.dl-item.on') || items()[0]).focus();
+      };
+      const close = refocus => {
+        if (menu.hidden) return;
+        menu.hidden = true;
+        caret.setAttribute('aria-expanded', 'false');
+        if (refocus) caret.focus();
+      };
+      caret.addEventListener('click', e => { e.stopPropagation(); menu.hidden ? open(e.detail === 0) : close(); });
+      caret.addEventListener('keydown', e => { if (e.key === 'ArrowDown') { e.preventDefault(); open(true); } });
+      menu.addEventListener('keydown', e => {
+        const list = items(), i = list.indexOf(document.activeElement);
+        if (e.key === 'Escape') { e.preventDefault(); close(true); }
+        else if (e.key === 'ArrowDown') { e.preventDefault(); list[(i + 1) % list.length].focus(); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); list[(i - 1 + list.length) % list.length].focus(); }
+        else if (e.key === 'Tab') close(false);
+      });
+      menu.addEventListener('click', e => { if (e.target.closest('a')) close(false); });
+      document.addEventListener('click', e => { if (!menu.hidden && !e.target.closest('#hero-dl')) close(false); });
+      addEventListener('resize', () => close(false));
+      addEventListener('scroll', () => { if (!menu.hidden) place(); }, { passive: true });
     }
 
     fillVersions();
     render();
+    renderHero();
     fetch('https://api.github.com/repos/Yeamin-Talukder/jolpai-keyboard/releases?per_page=30')
       .then(r => r.ok ? r.json() : Promise.reject())
       .then(list => {
@@ -1010,8 +1143,38 @@
         fillVersions();
         sel.value = releases[0].tag;
         render();
+        renderHero();
       })
       .catch(() => {});
+  })();
+
+  // ---------------------------------------------------------------- hero on one screen
+  // Wide screens: scale the phone demo (caption, phone, tabs) down to the window's height, never up,
+  // so the whole hero fits without scrolling. The demo's finger divides by the same scale.
+  (() => {
+    const hero = document.querySelector('.hero'), demo = hero && hero.querySelector('.demo');
+    const top = document.querySelector('header.top');
+    if (!demo) return;
+    let raf = 0;
+    function fit() {
+      demo.style.transform = '';
+      demo.style.marginBottom = '';
+      if (innerWidth <= 980) return;
+      const cs = getComputedStyle(hero);
+      const avail = innerHeight - (top ? top.offsetHeight : 64) - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+      const h = demo.offsetHeight;
+      const f = Math.min(1, avail / h);
+      if (f < 0.995) {
+        demo.style.transform = `scale(${f.toFixed(4)})`;
+        demo.style.marginBottom = `${(-(1 - f) * h).toFixed(1)}px`;
+      }
+    }
+    const later = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(fit); };
+    addEventListener('resize', later);
+    addEventListener('load', later);
+    if (document.fonts) document.fonts.ready.then(later);
+    setTimeout(later, 400); // after the demo has built its tabs
+    later();
   })();
 
   // ---------------------------------------------------------------- feature demo
@@ -1129,9 +1292,12 @@
   const toolOn = (t, on) => tool(t).classList.toggle('on', on);
 
   // ---- finger
+  // The hero may scale the demo to fit the screen (a CSS transform): screen distances are divided
+  // by that scale so the finger, key bubbles and hints still land on the right key.
+  const demoScale = () => (stage.getBoundingClientRect().width / stage.offsetWidth) || 1;
   function at(el, dx = 0, dy = 0) {
-    const a = el.getBoundingClientRect(), s = stage.getBoundingClientRect();
-    return [a.left - s.left + a.width * (0.5 + dx), a.top - s.top + a.height * (0.5 + dy)];
+    const a = el.getBoundingClientRect(), s = stage.getBoundingClientRect(), z = demoScale();
+    return [(a.left - s.left + a.width * (0.5 + dx)) / z, (a.top - s.top + a.height * (0.5 + dy)) / z];
   }
   async function moveTo(x, y, ms = 280) {
     finger.style.transitionDuration = `${ms}ms, .25s, .12s`;
@@ -1150,7 +1316,7 @@
       p.className = 'pop';
       p.textContent = pop;
       const [cx] = at(el), r = el.getBoundingClientRect(), s = stage.getBoundingClientRect();
-      p.style.left = `${cx}px`; p.style.top = `${r.top - s.top - 4}px`;
+      p.style.left = `${cx}px`; p.style.top = `${(r.top - s.top) / demoScale() - 4}px`;
       stage.appendChild(p);
     }
     await wait(hold);
@@ -1163,7 +1329,7 @@
     h.className = 'hint';
     h.textContent = text;
     const r = el.getBoundingClientRect(), s = stage.getBoundingClientRect();
-    h.style.left = `${r.left - s.left + r.width / 2}px`; h.style.top = `${r.top - s.top + dy}px`;
+    h.style.left = `${(r.left - s.left + r.width / 2) / demoScale()}px`; h.style.top = `${(r.top - s.top) / demoScale() + dy}px`;
     stage.appendChild(h);
     setTimeout(() => h.remove(), ms);
   }
@@ -1212,7 +1378,7 @@
     p.className = 'lpop';
     p.innerHTML = choices.map((c, i) => `<span class="${i ? '' : 'on'}">${shown(c)}</span>`).join('');
     const r = el.getBoundingClientRect(), s = stage.getBoundingClientRect();
-    p.style.left = `${Math.max(70, Math.min(s.width - 70, x))}px`; p.style.top = `${r.top - s.top - 6}px`;
+    p.style.left = `${Math.max(70, Math.min(stage.offsetWidth - 70, x))}px`; p.style.top = `${(r.top - s.top) / demoScale() - 6}px`;
     stage.appendChild(p);
     if (note) hint(el, note, 1300, -64);
     await wait(note ? 1100 : 620);
