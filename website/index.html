@@ -187,14 +187,16 @@
     display: flex; align-items: center; gap: 12px; width: min(380px, 100%); min-height: 62px;
     background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 10px 14px;
   }
-  .cap-ic { width: 40px; height: 40px; flex: none; border-radius: 12px; display: grid; place-items: center; font-size: 20px; background: rgba(181,201,74,.14); color: var(--olive); font-weight: 700; }
+  .cap-ic { width: 40px; height: 40px; flex: none; border-radius: 12px; display: grid; place-items: center; font-size: 20px; fill: currentColor; background: rgba(181,201,74,.14); color: var(--olive); font-weight: 700; }
   .cap-txt { display: flex; flex-direction: column; line-height: 1.3; min-width: 0; }
   .cap-txt b { font-size: 16.5px; }
   .cap-txt span { color: var(--muted); font-size: 14.5px; }
   .cap-anim { animation: capIn .35s ease; }
   @keyframes capIn { from { opacity: 0; transform: translateY(6px); } }
 
-  .stage { position: relative; width: min(360px, 100%); }
+  .stage { position: relative; width: min(360px, 100%);
+    --kb-bg: #1b1e16; --kb-key: #2b3024; --kb-press: #3e4534; --kb-fn: #23271d; --kb-text: #eef0e4; --kb-hint: #a5ad8e; --kb-accent: #b5c94a; --kb-on-accent: #1f2608; }
+  .ms { display: block; fill: currentColor; flex: none; }
   .phone {
     background: #0b0e08; border-radius: 42px; padding: 12px;
     border: 1px solid #2b3420; box-shadow: 0 40px 80px -30px rgba(0,0,0,.8), 0 0 0 7px #161c10, 0 0 70px -12px rgba(181,201,74,.22);
@@ -222,7 +224,7 @@
   .field .wavy { text-decoration: underline wavy #e5484d; text-underline-offset: 4px; }
   .field .flash { background: rgba(181,201,74,.28); border-radius: 4px; transition: background .8s; }
   .caret { display: inline-block; width: 2px; height: 1.15em; background: var(--olive); vertical-align: -3px; margin: 0 -1px; animation: blink 1s steps(1) infinite; }
-  .sendb { width: 40px; height: 40px; border-radius: 50%; background: var(--olive); color: #18200b; display: grid; place-items: center; font-size: 16px; flex: none; transition: transform .12s; }
+  .sendb { width: 40px; height: 40px; border-radius: 50%; background: var(--kb-accent); color: var(--kb-on-accent); display: grid; place-items: center; flex: none; transition: transform .12s; }
   .sendb.down { transform: scale(.88); }
 
   /* Section above the toolbar (translate, check, clipboard, emoji) */
@@ -235,7 +237,13 @@
   .tbox { background: #1d2417; border: 1px solid #2f3a22; border-radius: 12px; padding: 8px 10px; min-height: 38px; }
   .tout { background: rgba(181,201,74,.08); border: 1px solid #3b4a28; border-radius: 12px; padding: 8px 10px; min-height: 38px; display: flex; align-items: center; gap: 8px; }
   .tout .t { flex: 1; font-size: 15.5px; }
-  .ins { width: 32px; height: 32px; border-radius: 50%; background: var(--olive); color: #18200b; display: grid; place-items: center; flex: none; font-size: 14px; transition: transform .12s; }
+  .ins { width: 32px; height: 32px; border-radius: 50%; background: var(--kb-accent); color: var(--kb-on-accent); display: grid; place-items: center; flex: none; transition: transform .12s; }
+  .up-head .ms { color: var(--kb-accent); }
+  .up-head .x .ms { color: var(--kb-hint); }
+  .up-head .swap { color: var(--kb-hint); }
+  .good { display: flex; align-items: center; gap: 8px; }
+  .chiprow span, .clip small, .esearch { display: inline-flex; align-items: center; gap: 4px; }
+  .esearch { display: flex; }
   .ins.down { transform: scale(.85); }
   .dots span { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--olive); margin-right: 4px; animation: dot 1s infinite ease-in-out; }
   .dots span:nth-child(2) { animation-delay: .15s; } .dots span:nth-child(3) { animation-delay: .3s; }
@@ -260,45 +268,48 @@
   .egrid span.down { transform: scale(1.3); background: rgba(181,201,74,.2); }
 
   /* Top bar of the keyboard: tools, suggestions or the voice bar */
-  .tb { display: flex; align-items: center; height: 44px; padding: 0 6px; background: #151b10; border-top: 1px solid #1f2717; }
-  .tb-lead { width: 34px; color: var(--muted); text-align: center; font-size: 17px; flex: none; }
+  .tb { display: flex; align-items: center; height: 46px; padding: 0 4px; background: var(--kb-bg); }
+  .tb-lead { width: 34px; height: 34px; color: var(--kb-text); display: grid; place-items: center; flex: none; border-radius: 50%; }
   .tb-mid { flex: 1; position: relative; height: 100%; min-width: 0; }
   .tb-layer { position: absolute; inset: 0; display: flex; align-items: center; justify-content: space-around; transition: opacity .2s, transform .2s; }
   .tb-layer.off { opacity: 0; transform: translateY(6px); pointer-events: none; }
-  .tool { width: 34px; height: 30px; border-radius: 10px; display: grid; place-items: center; font-size: 16px; transition: background .15s; color: var(--text); }
-  .tool.on { background: rgba(181,201,74,.22); }
+  .tool { width: 32px; height: 30px; border-radius: 12px; display: grid; place-items: center; transition: background .15s, color .15s; color: var(--kb-text); }
+  .tool.on { background: rgba(181,201,74,.18); color: var(--kb-accent); }
+  .tool.down { background: rgba(62,69,52,.9); }
   .strip span, .strip b { flex: 1; text-align: center; font-size: 14.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 2px; }
-  .strip span { color: var(--muted); }
-  .strip b { color: var(--olive); font-weight: 700; border-left: 1px solid #2b3620; border-right: 1px solid #2b3620; }
+  .strip span { color: var(--kb-text); }
+  .strip b { color: var(--kb-accent); font-weight: 700; border-left: 1px solid rgba(165,173,142,.3); border-right: 1px solid rgba(165,173,142,.3); }
   .strip b.hl { background: rgba(181,201,74,.14); border-radius: 8px; }
-  .voice { justify-content: flex-start; gap: 10px; padding-left: 4px; }
-  .mic { width: 30px; height: 30px; border-radius: 50%; background: #e5484d; display: grid; place-items: center; font-size: 14px; animation: micp 1.2s ease-in-out infinite; flex: none; }
-  @keyframes micp { 50% { box-shadow: 0 0 0 7px rgba(229,72,77,.18); } }
+  .voice { justify-content: flex-start; gap: 8px; padding-left: 2px; }
+  .mic { width: 32px; height: 32px; border-radius: 50%; background: var(--kb-accent); color: var(--kb-on-accent); display: grid; place-items: center; animation: micp 1.4s ease-in-out infinite; flex: none; }
+  @keyframes micp { 0% { box-shadow: 0 0 0 0 rgba(181,201,74,.45); } 100% { box-shadow: 0 0 0 10px rgba(181,201,74,0); } }
+  .vchip { margin-left: auto; background: var(--kb-fn); color: var(--kb-text); border-radius: 99px; padding: 2px 9px; font-size: 12px; }
+  .vbtn { width: 26px; height: 26px; display: grid; place-items: center; color: var(--kb-hint); flex: none; }
   .wave { display: flex; align-items: center; gap: 3px; height: 26px; }
-  .wave i { width: 3px; border-radius: 2px; background: var(--olive); height: 6px; animation: wv .9s ease-in-out infinite; }
+  .wave i { width: 3px; border-radius: 2px; background: var(--kb-accent); height: 6px; animation: wv .9s ease-in-out infinite; }
   .wave i:nth-child(2) { animation-delay: .1s; } .wave i:nth-child(3) { animation-delay: .25s; } .wave i:nth-child(4) { animation-delay: .4s; } .wave i:nth-child(5) { animation-delay: .15s; } .wave i:nth-child(6) { animation-delay: .3s; } .wave i:nth-child(7) { animation-delay: .05s; }
   @keyframes wv { 50% { height: 22px; } }
-  .vtext { color: var(--muted); font-size: 13px; white-space: nowrap; }
-  .lang { flex: none; display: flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 99px; background: #232c1b; font-size: 12.5px; color: var(--text); transition: transform .12s, background .2s; min-width: 58px; justify-content: center; }
-  .lang.down { transform: scale(.9); background: #3b4a28; }
+  .vtext { color: var(--kb-hint); font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .lang { flex: none; display: flex; align-items: center; gap: 5px; height: 30px; padding: 0 11px 0 9px; border-radius: 99px; background: var(--kb-fn); font-size: 12.5px; font-weight: 600; color: var(--kb-text); transition: transform .12s, background .2s; }
+  .lang.down { transform: scale(.92); background: var(--kb-press); }
 
   /* Keys */
-  .kb { background: #12170e; padding: 6px 4px 10px; display: grid; gap: 8px; }
-  .krow { display: flex; gap: 5px; justify-content: center; padding: 0 2px; }
+  .kb { background: var(--kb-bg); padding: 4px 3px 10px; display: grid; gap: 7px; }
+  .krow { display: flex; gap: 4px; justify-content: center; padding: 0 2px; }
   .krow.mid { padding: 0 14px; }
   .key {
-    position: relative; flex: 1; height: 42px; border-radius: 9px; background: #262f1d; color: var(--text);
-    display: grid; place-items: center; font-size: 17px; box-shadow: 0 1.5px 0 #0b0f08; transition: background .1s, transform .1s;
+    position: relative; flex: 1; height: 44px; border-radius: 10px; background: var(--kb-key); color: var(--kb-text);
+    display: grid; place-items: center; font-size: 18px; transition: background .1s, transform .1s;
     perspective: 400px;
   }
   .key .lb { display: block; transition: transform .18s ease, opacity .18s; }
   .key.flip .lb { transform: rotateX(90deg); opacity: 0; }
-  .key sup { position: absolute; top: 2px; right: 4px; font-size: 9px; color: var(--dim); line-height: 1; }
-  .key.fn { background: #1d2516; font-size: 14px; color: var(--muted); }
+  .key sup { position: absolute; top: 3px; right: 4px; font-size: 9.5px; color: var(--kb-hint); line-height: 1; }
+  .key.fn { background: var(--kb-fn); font-size: 13.5px; color: var(--kb-text); }
   .key.wide { flex: 1.5; }
-  .key.space { flex: 4.6; font-size: 12.5px; color: var(--dim); }
-  .key.enter { flex: 1.5; background: var(--olive); color: #18200b; }
-  .key.down { background: #3d4c2a; transform: translateY(1px); }
+  .key.space { flex: 4.6; font-size: 12.5px; color: var(--kb-hint); }
+  .key.enter { flex: 1.5; background: var(--kb-accent); color: var(--kb-on-accent); }
+  .key.down { background: var(--kb-press); transform: translateY(1px); }
   .key.enter.down { background: #c9da62; }
   .key.grow::after {
     content: ""; position: absolute; inset: -9px -10px; border-radius: 13px;
@@ -308,7 +319,7 @@
   .key.dim { opacity: .55; }
   @keyframes grow { from { transform: scale(.7); opacity: 0; } }
   .pop {
-    position: absolute; z-index: 5; width: 46px; height: 56px; border-radius: 12px; background: #3a472a; color: #fff;
+    position: absolute; z-index: 5; width: 46px; height: 58px; border-radius: 12px; background: var(--kb-press); color: var(--kb-text);
     display: grid; place-items: center; font-size: 24px; pointer-events: none; transform: translate(-50%, -100%);
     box-shadow: 0 8px 18px rgba(0,0,0,.45); animation: pop .16s ease;
   }
@@ -505,18 +516,18 @@
               <div class="status"><span>9:41</span><span>●●● ▮</span></div>
               <div class="appbar"><span class="av"></span><span><b>Nusrat</b><small>online</small></span></div>
               <div class="msgs" id="msgs"><div class="msg in" lang="bn">কেমন আছো? 🙂</div></div>
-              <div class="composer"><div class="field" id="field"></div><div class="sendb" id="send">➤</div></div>
+              <div class="composer"><div class="field" id="field"></div><div class="sendb" id="send" data-ic="send:20"></div></div>
               <div class="upper" id="upper"></div>
               <div class="tb">
-                <div class="tb-lead">⊞</div>
+                <div class="tb-lead" data-ic="grid_view:20"></div>
                 <div class="tb-mid">
                   <div class="tb-layer tools" id="tools">
-                    <span class="tool" data-t="emoji">😊</span><span class="tool" data-t="clip">📋</span><span class="tool" data-t="mic">🎤</span><span class="tool" data-t="edit">✎</span><span class="tool" data-t="tr">🌐</span><span class="tool" data-t="check">✓</span>
+                    <span class="tool" data-t="settings" data-ic="settings:19"></span><span class="tool" data-t="emoji" data-ic="mood:19"></span><span class="tool" data-t="clip" data-ic="content_paste:19"></span><span class="tool" data-t="mic" data-ic="mic:19"></span><span class="tool" data-t="edit" data-ic="edit_note:19"></span><span class="tool" data-t="tr" data-ic="translate:19"></span><span class="tool" data-t="check" data-ic="spellcheck:19"></span>
                   </div>
                   <div class="tb-layer strip off" id="strip"><span></span><b></b><span></span></div>
-                  <div class="tb-layer voice off" id="voice"><span class="mic" id="mic">🎤</span><span class="wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="vtext" lang="bn">শুনছি… বাংলা</span></div>
+                  <div class="tb-layer voice off" id="voice"><span class="mic" id="mic" data-ic="mic_fill:18"></span><span class="wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="vtext" lang="bn">শুনছি…</span><span class="vchip" lang="bn">বাংলা</span><span class="vbtn" data-ic="expand_more:18"></span><span class="vbtn" id="vclose" data-ic="close:18"></span></div>
                 </div>
-                <div class="lang" id="lang">🌐 EN</div>
+                <div class="lang" id="lang"><span data-ic="language:15"></span><span id="langT">EN</span></div>
               </div>
               <div class="kb" id="kb"></div>
             </div>
@@ -753,30 +764,36 @@
   const STOP = 'stop';
   let run = 0;
   const wait = ms => { const r = run; return new Promise((ok, no) => setTimeout(() => (r === run ? ok() : no(STOP)), ms)); };
+  // Material Symbols Rounded (Apache 2.0): the same icons the keyboard draws (keyboard-ui/res/drawable/ms_*.xml)
+  const ICON = {"123":"M220-540h-30q-13 0-21.5-8.5T160-570q0-13 8.5-21.5T190-600h60q13 0 21.5 8.5T280-570v180q0 13-8.5 21.5T250-360q-13 0-21.5-8.5T220-390v-150Zm140 150v-70q0-17 11.5-28.5T400-500h80v-40h-90q-13 0-21.5-8.5T360-570q0-13 8.5-21.5T390-600h110q17 0 28.5 11.5T540-560v60q0 17-11.5 28.5T500-460h-80v40h90q13 0 21.5 8.5T540-390q0 13-8.5 21.5T510-360H390q-13 0-21.5-8.5T360-390Zm380 30H630q-13 0-21.5-8.5T600-390q0-13 8.5-21.5T630-420h90v-40h-60q-8 0-14-6t-6-14q0-8 6-14t14-6h60v-40h-90q-13 0-21.5-8.5T600-570q0-13 8.5-21.5T630-600h110q17 0 28.5 11.5T780-560v160q0 17-11.5 28.5T740-360Z","grid_view":"M200-520q-33 0-56.5-23.5T120-600v-160q0-33 23.5-56.5T200-840h160q33 0 56.5 23.5T440-760v160q0 33-23.5 56.5T360-520H200Zm0 400q-33 0-56.5-23.5T120-200v-160q0-33 23.5-56.5T200-440h160q33 0 56.5 23.5T440-360v160q0 33-23.5 56.5T360-120H200Zm400-400q-33 0-56.5-23.5T520-600v-160q0-33 23.5-56.5T600-840h160q33 0 56.5 23.5T840-760v160q0 33-23.5 56.5T760-520H600Zm0 400q-33 0-56.5-23.5T520-200v-160q0-33 23.5-56.5T600-440h160q33 0 56.5 23.5T840-360v160q0 33-23.5 56.5T760-120H600ZM200-600h160v-160H200v160Zm400 0h160v-160H600v160Zm0 400h160v-160H600v160Zm-400 0h160v-160H200v160Zm400-400Zm0 240Zm-240 0Zm0-240Z","settings":"M433-80q-27 0-46.5-18T363-142l-9-66q-13-5-24.5-12T307-235l-62 26q-25 11-50 2t-39-32l-47-82q-14-23-8-49t27-43l53-40q-1-7-1-13.5v-27q0-6.5 1-13.5l-53-40q-21-17-27-43t8-49l47-82q14-23 39-32t50 2l62 26q11-8 23-15t24-12l9-66q4-26 23.5-44t46.5-18h94q27 0 46.5 18t23.5 44l9 66q13 5 24.5 12t22.5 15l62-26q25-11 50-2t39 32l47 82q14 23 8 49t-27 43l-53 40q1 7 1 13.5v27q0 6.5-2 13.5l53 40q21 17 27 43t-8 49l-48 82q-14 23-39 32t-50-2l-60-26q-11 8-23 15t-24 12l-9 66q-4 26-23.5 44T527-80h-94Zm7-80h79l14-106q31-8 57.5-23.5T639-327l99 41 39-68-86-65q5-14 7-29.5t2-31.5q0-16-2-31.5t-7-29.5l86-65-39-68-99 42q-22-23-48.5-38.5T533-694l-13-106h-79l-14 106q-31 8-57.5 23.5T321-633l-99-41-39 68 86 64q-5 15-7 30t-2 32q0 16 2 31t7 30l-86 65 39 68 99-42q22 23 48.5 38.5T427-266l13 106Zm42-180q58 0 99-41t41-99q0-58-41-99t-99-41q-59 0-99.5 41T342-480q0 58 40.5 99t99.5 41Zm-2-140Z","mood":"M620-520q25 0 42.5-17.5T680-580q0-25-17.5-42.5T620-640q-25 0-42.5 17.5T560-580q0 25 17.5 42.5T620-520Zm-280 0q25 0 42.5-17.5T400-580q0-25-17.5-42.5T340-640q-25 0-42.5 17.5T280-580q0 25 17.5 42.5T340-520Zm-16 408.5Q251-143 197-197t-85.5-127Q80-397 80-480t31.5-156Q143-709 197-763t127-85.5Q397-880 480-880t156 31.5Q709-817 763-763t85.5 127Q880-563 880-480t-31.5 156Q817-251 763-197t-127 85.5Q563-80 480-80t-156-31.5ZM480-480Zm227 227q93-93 93-227t-93-227q-93-93-227-93t-227 93q-93 93-93 227t93 227q93 93 227 93t227-93Zm-227-7q58 0 107-28t79-76q6-12-1-24t-21-12H316q-14 0-21 12t-1 24q30 48 79.5 76T480-260Z","content_paste":"M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h167q11-35 43-57.5t70-22.5q40 0 71.5 22.5T594-840h166q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560h-80v80q0 17-11.5 28.5T640-640H320q-17 0-28.5-11.5T280-680v-80h-80v560Zm308.5-571.5Q520-783 520-800t-11.5-28.5Q497-840 480-840t-28.5 11.5Q440-817 440-800t11.5 28.5Q463-760 480-760t28.5-11.5Z","mic":"M395-435q-35-35-35-85v-240q0-50 35-85t85-35q50 0 85 35t35 85v240q0 50-35 85t-85 35q-50 0-85-35Zm85-205Zm-40 480v-83q-92-13-157.5-78T203-479q-2-17 9-29t28-12q17 0 28.5 11.5T284-480q14 70 69.5 115T480-320q72 0 127-45.5T676-480q4-17 15.5-28.5T720-520q17 0 28 12t9 29q-14 91-79 157t-158 79v83q0 17-11.5 28.5T480-120q-17 0-28.5-11.5T440-160Zm68.5-331.5Q520-503 520-520v-240q0-17-11.5-28.5T480-800q-17 0-28.5 11.5T440-760v240q0 17 11.5 28.5T480-480q17 0 28.5-11.5Z","mic_fill":"M395-435q-35-35-35-85v-240q0-50 35-85t85-35q50 0 85 35t35 85v240q0 50-35 85t-85 35q-50 0-85-35Zm45 275v-83q-92-13-157.5-78T203-479q-2-17 9-29t28-12q17 0 28.5 11.5T284-480q14 70 69.5 115T480-320q72 0 127-45.5T676-480q4-17 15.5-28.5T720-520q17 0 28 12t9 29q-14 91-79 157t-158 79v83q0 17-11.5 28.5T480-120q-17 0-28.5-11.5T440-160Z","edit_note":"M200-400q-17 0-28.5-11.5T160-440q0-17 11.5-28.5T200-480h200q17 0 28.5 11.5T440-440q0 17-11.5 28.5T400-400H200Zm0-160q-17 0-28.5-11.5T160-600q0-17 11.5-28.5T200-640h360q17 0 28.5 11.5T600-600q0 17-11.5 28.5T560-560H200Zm0-160q-17 0-28.5-11.5T160-760q0-17 11.5-28.5T200-800h360q17 0 28.5 11.5T600-760q0 17-11.5 28.5T560-720H200Zm320 520v-66q0-8 3-15.5t9-13.5l209-208q9-9 20-13t22-4q12 0 23 4.5t20 13.5l37 37q8 9 12.5 20t4.5 22q0 11-4 22.5T863-380L655-172q-6 6-13.5 9t-15.5 3h-66q-17 0-28.5-11.5T520-200Zm300-223-37-37 37 37ZM580-220h38l121-122-18-19-19-18-122 121v38Zm141-141-19-18 37 37-18-19Z","translate":"m603-202-34 97q-4 11-14 18t-22 7q-20 0-32.5-16.5T496-133l152-402q5-11 15-18t22-7h30q12 0 22 7t15 18l152 403q8 19-4 35.5T868-80q-13 0-22.5-7T831-106l-34-96H603ZM362-401 188-228q-11 11-27.5 11.5T132-228q-11-11-11-28t11-28l174-174q-35-35-63.5-80T190-640h84q20 39 40 68t48 58q33-33 68.5-92.5T484-720H80q-17 0-28.5-11.5T40-760q0-17 11.5-28.5T80-800h240v-40q0-17 11.5-28.5T360-880q17 0 28.5 11.5T400-840v40h240q17 0 28.5 11.5T680-760q0 17-11.5 28.5T640-720h-76q-21 72-63 148t-83 116l96 98-30 82-122-125Zm266 129h144l-72-204-72 204Z","spellcheck":"m564-192 198-198q11-11 28-11t28 11q11 11 11 28t-11 28L621-137q-12 12-27 18t-30 6q-15 0-30-6t-27-18l-85-85q-11-11-11-28t11-28q11-11 28-11t28 11l86 86ZM254-452l-37 105q-5 12-15 19.5t-23 7.5q-22 0-34-18t-4-38l162-435q5-13 16.5-21t25.5-8h32q14 0 25.5 8t16.5 21l162 434q8 21-4.5 39T541-320q-14 0-25-8t-16-21l-36-103H254Zm28-76h156l-76-216h-4l-76 216Z","language":"M325-111.5q-73-31.5-127.5-86t-86-127.5Q80-398 80-480.5t31.5-155q31.5-72.5 86-127t127.5-86Q398-880 480.5-880t155 31.5q72.5 31.5 127 86t86 127Q880-563 880-480.5T848.5-325q-31.5 73-86 127.5t-127 86Q563-80 480.5-80T325-111.5ZM480-162q26-36 45-75t31-83H404q12 44 31 83t45 75Zm-104-16q-18-33-31.5-68.5T322-320H204q29 50 72.5 87t99.5 55Zm208 0q56-18 99.5-55t72.5-87H638q-9 38-22.5 73.5T584-178ZM170-400h136q-3-20-4.5-39.5T300-480q0-21 1.5-40.5T306-560H170q-5 20-7.5 39.5T160-480q0 21 2.5 40.5T170-400Zm216 0h188q3-20 4.5-39.5T580-480q0-21-1.5-40.5T574-560H386q-3 20-4.5 39.5T380-480q0 21 1.5 40.5T386-400Zm268 0h136q5-20 7.5-39.5T800-480q0-21-2.5-40.5T790-560H654q3 20 4.5 39.5T660-480q0 21-1.5 40.5T654-400Zm-16-240h118q-29-50-72.5-87T584-782q18 33 31.5 68.5T638-640Zm-234 0h152q-12-44-31-83t-45-75q-26 36-45 75t-31 83Zm-200 0h118q9-38 22.5-73.5T376-782q-56 18-99.5 55T204-640Z","shift":"M320-160v-280H204q-26 0-36.5-22.5T173-505l276-337q12-15 31-15t31 15l276 337q16 20 5.5 42.5T756-440H640v280q0 17-11.5 28.5T600-120H360q-17 0-28.5-11.5T320-160Zm80-40h160v-320h111L480-754 289-520h111v320Zm80-320Z","backspace":"m560-424 76 76q11 11 28 11t28-11q11-11 11-28t-11-28l-76-76 76-76q11-11 11-28t-11-28q-11-11-28-11t-28 11l-76 76-76-76q-11-11-28-11t-28 11q-11 11-11 28t11 28l76 76-76 76q-11 11-11 28t11 28q11 11 28 11t28-11l76-76ZM360-160q-19 0-36-8.5T296-192L116-432q-16-21-16-48t16-48l180-240q11-15 28-23.5t36-8.5h440q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H360Zm0-80h440v-480H360L180-480l180 240Zm130-240Z","keyboard_return":"m272-440 116 116q11 11 11 28t-11 28q-11 11-28 11t-28-11L148-452q-6-6-8.5-13t-2.5-15q0-8 2.5-15t8.5-13l184-184q11-11 28-11t28 11q11 11 11 28t-11 28L272-520h488v-120q0-17 11.5-28.5T800-680q17 0 28.5 11.5T840-640v120q0 33-23.5 56.5T760-440H272Z","send":"M792-443 176-183q-20 8-38-3.5T120-220v-520q0-22 18-33.5t38-3.5l616 260q25 11 25 37t-25 37ZM200-280l474-200-474-200v140l240 60-240 60v140Zm0 0v-400 400Z","close":"M480-424 284-228q-11 11-28 11t-28-11q-11-11-11-28t11-28l196-196-196-196q-11-11-11-28t11-28q11-11 28-11t28 11l196 196 196-196q11-11 28-11t28 11q11 11 11 28t-11 28L536-480l196 196q11 11 11 28t-11 28q-11 11-28 11t-28-11L480-424Z","swap_horiz":"m233-320 75 75q11 11 11 27.5T308-189q-12 12-28.5 12T251-189L108-332q-6-6-8.5-13T97-360q0-8 2.5-15t8.5-13l144-144q12-12 28-11.5t28 12.5q11 12 11.5 28T308-475l-75 75h247q17 0 28.5 11.5T520-360q0 17-11.5 28.5T480-320H233Zm494-240H480q-17 0-28.5-11.5T440-600q0-17 11.5-28.5T480-640h247l-75-75q-11-11-11-27.5t11-28.5q12-12 28.5-12t28.5 12l143 143q6 6 8.5 13t2.5 15q0 8-2.5 15t-8.5 13L708-428q-12 12-28 11.5T652-429q-11-12-11.5-28t11.5-28l75-75Z","search":"M380-320q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l224 224q11 11 11 28t-11 28q-11 11-28 11t-28-11L532-372q-30 24-69 38t-83 14Zm0-80q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z","check_circle_fill":"m424-408-86-86q-11-11-28-11t-28 11q-11 11-11 28t11 28l114 114q12 12 28 12t28-12l226-226q11-11 11-28t-11-28q-11-11-28-11t-28 11L424-408Zm56 328q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Z","push_pin":"M640-760v280l68 68q6 6 9 13.5t3 15.5v23q0 17-11.5 28.5T680-320H520v234q0 17-11.5 28.5T480-46q-17 0-28.5-11.5T440-86v-234H280q-17 0-28.5-11.5T240-360v-23q0-8 3-15.5t9-13.5l68-68v-280q-17 0-28.5-11.5T280-800q0-17 11.5-28.5T320-840h320q17 0 28.5 11.5T680-800q0 17-11.5 28.5T640-760ZM354-400h252l-46-46v-314H400v314l-46 46Zm126 0Z","link":"M280-280q-83 0-141.5-58.5T80-480q0-83 58.5-141.5T280-680h120q17 0 28.5 11.5T440-640q0 17-11.5 28.5T400-600H280q-50 0-85 35t-35 85q0 50 35 85t85 35h120q17 0 28.5 11.5T440-320q0 17-11.5 28.5T400-280H280Zm80-160q-17 0-28.5-11.5T320-480q0-17 11.5-28.5T360-520h240q17 0 28.5 11.5T640-480q0 17-11.5 28.5T600-440H360Zm200 160q-17 0-28.5-11.5T520-320q0-17 11.5-28.5T560-360h120q50 0 85-35t35-85q0-50-35-85t-85-35H560q-17 0-28.5-11.5T520-640q0-17 11.5-28.5T560-680h120q83 0 141.5 58.5T880-480q0 83-58.5 141.5T680-280H560Z","auto_awesome":"m706-706-70-32q-6-3-8.5-8t-2.5-10q0-5 2.5-10t8.5-8l70-32 32-70q3-6 8-9t10-3q5 0 10 3t8 9l32 70 70 32q6 3 9 8t3 10q0 5-3 10t-9 8l-70 32-32 70q-3 6-8 8.5t-10 2.5q-5 0-10-2.5t-8-8.5l-32-70ZM260-380l-160-73q-9-4-13-11.5T83-480q0-8 4-15.5t13-11.5l160-73 73-160q4-9 11.5-13t15.5-4q8 0 15.5 4t11.5 13l73 160 160 73q9 4 13 11.5t4 15.5q0 8-4 15.5T620-453l-160 73-73 160q-4 9-11.5 13t-15.5 4q-8 0-15.5-4T333-220l-73-160Zm100 26 40-86 86-40-86-40-40-86-40 86-86 40 86 40 40 86Zm350 204-70-32q-6-3-9-8t-3-10q0-5 3-10t9-8l70-32 32-70q3-6 8-9t10-3q5 0 10 3t8 9l32 70 70 32q6 3 9 8t3 10q0 5-3 10t-9 8l-70 32-32 70q-3 6-8 9t-10 3q-5 0-10-3t-8-9l-32-70ZM360-480Z","touch_long":"M419-80q-28 0-52.5-12T325-126L124-381q-8-9-7-21.5t9-20.5q20-21 48-25t52 11l74 45v-328q0-17 11.5-28.5T340-760q17 0 29 11.5t12 28.5v400q0 23-20.5 34.5T320-286l-36-22 104 133q6 7 14 11t17 4h221q33 0 56.5-23.5T720-240v-160q0-17-11.5-28.5T680-440H501q-17 0-28.5-11.5T461-480q0-17 11.5-28.5T501-520h179q50 0 85 35t35 85v160q0 66-47 113T640-80H419Zm83-260ZM339-960q100 0 170 70t70 170q0 25-5 48.5T559-625q-5 11-15.5 14t-21.5-2q-11-5-15.5-17t.5-25q6-16 9-32t3-33q0-75-52.5-127.5T339-900q-75 0-127.5 52.5T159-720q0 17 2.5 33.5T170-655q5 13 .5 25T155-613q-11 5-21.5 1.5T118-626q-9-22-14-45.5T99-720q0-100 70-170t170-70Zm0 100q58 0 99 41t41 99q0 10-1.5 19t-3.5 18q-4 13-15 19t-23 2q-12-4-18.5-15t-2.5-23q1-3 3-20 0-33-23.5-56.5T338-800q-33 0-56.5 23T258-720q0 5 .5 10.5T261-699q3 12-3 22t-18 13q-12 3-22.5-3T203-685q-2-7-3-15.5t-1-19.5q0-59 41-99.5t99-40.5Z","swipe_left":"M164-740h86q13 0 21.5 8.5T280-710q0 13-8.5 21.5T250-680H120q-17 0-28.5-11.5T80-720v-130q0-13 8.5-21.5T110-880q13 0 21.5 8.5T140-850v51q72-59 159-90t181-31q134 0 240 57t148 150q5 12-1 22.5T849-680q-15 0-27.5-8T801-709q-45-71-129-111t-192-40q-88 0-169 31t-147 89ZM473-80q-24 0-46-9t-39-26L212-292q-11-11-11.5-27.5T211-348l3-3q16-16 37.5-21.5t42.5.5l66 19v-327q0-17 11.5-28.5T400-720q17 0 28.5 11.5T440-680v380q0 20-16 32t-35 7l-46-13 102 102q5 5 12.5 8.5T473-160h167q33 0 56.5-23.5T720-240v-160q0-17 11.5-28.5T760-440q17 0 28.5 11.5T800-400v160q0 66-47 113T640-80H473Zm75.5-468.5Q560-537 560-520v120q0 17-11.5 28.5T520-360q-17 0-28.5-11.5T480-400v-120q0-17 11.5-28.5T520-560q17 0 28.5 11.5Zm120 40Q680-497 680-480v80q0 17-11.5 28.5T640-360q-17 0-28.5-11.5T600-400v-80q0-17 11.5-28.5T640-520q17 0 28.5 11.5ZM571-280Z","keyboard":"M160-200q-33 0-56.5-23.5T80-280v-400q0-33 23.5-56.5T160-760h640q33 0 56.5 23.5T880-680v400q0 33-23.5 56.5T800-200H160Zm0-80h640v-400H160v400Zm200-40h240q17 0 28.5-11.5T640-360q0-17-11.5-28.5T600-400H360q-17 0-28.5 11.5T320-360q0 17 11.5 28.5T360-320Zm-200 40v-400 400Zm108.5-291.5Q280-583 280-600t-11.5-28.5Q257-640 240-640t-28.5 11.5Q200-617 200-600t11.5 28.5Q223-560 240-560t28.5-11.5Zm120 0Q400-583 400-600t-11.5-28.5Q377-640 360-640t-28.5 11.5Q320-617 320-600t11.5 28.5Q343-560 360-560t28.5-11.5Zm120 0Q520-583 520-600t-11.5-28.5Q497-640 480-640t-28.5 11.5Q440-617 440-600t11.5 28.5Q463-560 480-560t28.5-11.5Zm120 0Q640-583 640-600t-11.5-28.5Q617-640 600-640t-28.5 11.5Q560-617 560-600t11.5 28.5Q583-560 600-560t28.5-11.5Zm120 0Q760-583 760-600t-11.5-28.5Q737-640 720-640t-28.5 11.5Q680-617 680-600t11.5 28.5Q703-560 720-560t28.5-11.5Zm-480 120Q280-463 280-480t-11.5-28.5Q257-520 240-520t-28.5 11.5Q200-497 200-480t11.5 28.5Q223-440 240-440t28.5-11.5Zm120 0Q400-463 400-480t-11.5-28.5Q377-520 360-520t-28.5 11.5Q320-497 320-480t11.5 28.5Q343-440 360-440t28.5-11.5Zm120 0Q520-463 520-480t-11.5-28.5Q497-520 480-520t-28.5 11.5Q440-497 440-480t11.5 28.5Q463-440 480-440t28.5-11.5Zm120 0Q640-463 640-480t-11.5-28.5Q617-520 600-520t-28.5 11.5Q560-497 560-480t11.5 28.5Q583-440 600-440t28.5-11.5Zm120 0Q760-463 760-480t-11.5-28.5Q737-520 720-520t-28.5 11.5Q680-497 680-480t11.5 28.5Q703-440 720-440t28.5-11.5Z","restart_alt":"M393-132q-103-29-168-113.5T160-440q0-57 19-108.5t54-94.5q11-12 27-12.5t29 12.5q11 11 11.5 27T290-586q-24 31-37 68t-13 78q0 81 47.5 144.5T410-209q13 4 21.5 15t8.5 24q0 20-14 31.5t-33 6.5Zm174 0q-19 5-33-7t-14-32q0-12 8.5-23t21.5-15q75-24 122.5-87T720-440q0-100-70-170t-170-70h-3l16 16q11 11 11 28t-11 28q-11 11-28 11t-28-11l-84-84q-6-6-8.5-13t-2.5-15q0-8 2.5-15t8.5-13l84-84q11-11 28-11t28 11q11 11 11 28t-11 28l-16 16h3q134 0 227 93t93 227q0 109-65 194T567-132Z","expand_more":"M465-364.5q-7-2.5-13-8.5L268-557q-11-11-11-28t11-28q11-11 28-11t28 11l156 156 156-156q11-11 28-11t28 11q11 11 11 28t-11 28L508-373q-6 6-13 8.5t-15 2.5q-8 0-15-2.5Z"};
+  const ic = (n, s = 22) => `<svg class="ms" width="${s}" height="${s}" viewBox="0 -960 960 960" aria-hidden="true"><path d="${ICON[n]}"/></svg>`;
+  document.querySelectorAll('[data-ic]').forEach(e => { const [n, z] = e.dataset.ic.split(':'); e.innerHTML = ic(n, +z); });
   const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
   // ---- keyboard
   const SIGNS = new Set(['ৃ', 'ু', 'ি', '্', 'া', 'ঁ', 'ো', 'ে']);
   const LATIN = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'].map(r => [...r]);
   const LAYOUTS = {
-    en: { rows: LATIN, hints: '1234567890', space: 'English', dot: '.', pill: '🌐 EN', num: '?123' },
-    avro: { rows: LATIN, hints: '1234567890', space: 'বাংলা (অভ্র)', dot: '.', pill: '🌐 অভ্র', num: '?123' },
+    en: { rows: LATIN, hints: [[...'1234567890']], space: 'English', dot: '.', pill: 'EN', num: '?123' },
+    avro: { rows: LATIN, hints: [[...'1234567890']], space: 'অভ্র', dot: '.', pill: 'অভ্র', num: '?123' },
     nat: {
       rows: [['ঙ', 'য', 'ড', 'প', 'ট', 'চ', 'জ', 'হ', 'গ', 'ড়'], ['ৃ', 'ু', 'ি', 'ব', '্', 'া', 'ক', 'ত', 'দ'], ['ঁ', 'ো', 'ে', 'র', 'ন', 'স', 'ম']],
-      hints: '১২৩৪৫৬৭৮৯০', space: 'বাংলা (জাতীয়)', dot: '।', pill: '🌐 জাতীয়', num: '?১২৩',
+      // The corner letters (hold a key to type them), as in the app's NationalKeyMap.HINTS
+      hints: [['ং', 'য়', 'ঢ', 'ফ', 'ঠ', 'ছ', 'ঝ', 'ঞ', 'ঘ', 'ঢ়'], ['ঋ', 'উ', 'ই', 'ভ', '', 'আ', 'খ', 'ৎ', 'ধ'], ['ঃ', 'ও', 'এ', 'ল', 'ণ', 'ষ', 'শ']],
+      space: 'জাতীয়', dot: '।', pill: 'জাতীয়', num: '?১২৩',
     },
   };
   const mk = (cls, label) => { const k = document.createElement('div'); k.className = 'key ' + cls; k.innerHTML = `<span class="lb">${label}</span>`; return k; };
   const letterKeys = [[], [], []];
   const rowEls = [0, 1, 2, 3].map(i => { const r = document.createElement('div'); r.className = 'krow' + (i === 1 ? ' mid' : ''); kbEl.appendChild(r); return r; });
   const K = {};
-  K.shift = mk('fn wide', '⇧'); K.back = mk('fn wide', '⌫');
+  K.shift = mk('fn wide', ic('shift', 21)); K.back = mk('fn wide', ic('backspace', 21));
   [10, 9, 7].forEach((n, ri) => {
     if (ri === 2) rowEls[2].appendChild(K.shift);
     for (let i = 0; i < n; i++) { const k = mk('', ''); letterKeys[ri].push(k); rowEls[ri].appendChild(k); }
     if (ri === 2) rowEls[2].appendChild(K.back);
   });
-  K.num = mk('fn wide', '?123'); K.emoji = mk('fn', '😊'); K.comma = mk('fn', ','); K.space = mk('fn space', 'English'); K.dot = mk('fn', '.'); K.enter = mk('enter', '↵');
+  K.num = mk('fn wide', '?123'); K.emoji = mk('fn', ic('mood', 20)); K.comma = mk('fn', ','); K.space = mk('fn space', 'English'); K.dot = mk('fn', '.'); K.enter = mk('enter', ic('keyboard_return', 21));
   [K.num, K.emoji, K.comma, K.space, K.dot, K.enter].forEach(k => rowEls[3].appendChild(k));
   let layout = 'en', keyFor = {};
   const label = (k, t) => { k.querySelector('.lb').textContent = t; };
@@ -787,11 +804,12 @@
       const k = letterKeys[ri][i];
       label(k, SIGNS.has(c) ? '◌' + c : c);
       k.querySelector('sup')?.remove();
-      if (ri === 0) { const s = document.createElement('sup'); s.textContent = L.hints[i]; k.appendChild(s); }
+      const h = L.hints[ri]?.[i];
+      if (h) { const s = document.createElement('sup'); s.textContent = h; k.appendChild(s); }
       keyFor[c] = k;
     }));
     label(K.space, L.space); label(K.dot, L.dot); label(K.num, L.num);
-    $('lang').textContent = L.pill;
+    $('langT').textContent = L.pill;
     keyFor[L.dot] = K.dot;
     layout = name;
   }
@@ -886,7 +904,7 @@
     setTimeout(() => h.remove(), ms);
   }
   function caption(sc) {
-    $('capI').textContent = sc.ic; $('capT').textContent = sc.t; $('capS').textContent = sc.s;
+    if (ICON[sc.ic]) $('capI').innerHTML = ic(sc.ic, 22); else $('capI').textContent = sc.ic; $('capT').textContent = sc.t; $('capS').textContent = sc.s;
     const cap = document.querySelector('.demo-cap');
     cap.classList.remove('cap-anim'); void cap.offsetWidth; cap.classList.add('cap-anim');
   }
@@ -937,7 +955,7 @@
       },
     },
     {
-      tab: 'Predictive touch', ic: '◎', t: 'Predictive touch', s: 'Likely next letters get a bigger target',
+      tab: 'Predictive touch', ic: 'touch_long', t: 'Predictive touch', s: 'Likely next letters get a bigger target',
       async run() {
         await setLayout('en'); setText(''); focus(true);
         await typeKeys(['t', 'h'], () => bar('strip', [lastWord(), 'the', 'that']));
@@ -961,7 +979,7 @@
       },
     },
     {
-      tab: 'Autocorrect', ic: '✨', t: 'Smart autocorrect', s: 'Fixes typos when you press space; ⌫ undoes it',
+      tab: 'Autocorrect', ic: 'auto_awesome', t: 'Smart autocorrect', s: 'Fixes typos when you press space; ⌫ undoes it',
       async run() {
         await setLayout('en'); setText('I '); focus(true);
         await tap(fieldEl);
@@ -979,7 +997,7 @@
       },
     },
     {
-      tab: 'Language switch', ic: '🌐', t: 'One-tap language switch', s: 'English ⇄ বাংলা (অভ্র) ⇄ বাংলা (জাতীয়)',
+      tab: 'Language switch', ic: 'language', t: 'One-tap language switch', s: 'English ⇄ বাংলা (অভ্র) ⇄ বাংলা (জাতীয়)',
       async run() {
         await setLayout('en'); setText(''); focus(true); bar('tools');
         await wait(300);
@@ -995,7 +1013,7 @@
       },
     },
     {
-      tab: 'Voice', ic: '🎤', t: 'Voice typing', s: 'Speak Bangla or English, with spoken punctuation',
+      tab: 'Voice', ic: 'mic', t: 'Voice typing', s: 'Speak Bangla or English, with spoken punctuation',
       async run() {
         await setLayout('avro'); setText(''); focus(true); bar('tools');
         await tap(tool('mic')); toolOn('mic', true);
@@ -1011,18 +1029,18 @@
         await wait(1000);
         setText(F.t + '।'); flash(F.t.length - 1, F.t.length, 700);
         await wait(1000);
-        await tap($('mic')); toolOn('mic', false); bar('tools');
+        await tap($('vclose')); toolOn('mic', false); bar('tools');
         await wait(1000);
       },
     },
     {
-      tab: 'Translator', ic: '⇄', t: 'Offline translator', s: 'English → বাংলা right inside the keyboard',
+      tab: 'Translator', ic: 'translate', t: 'Offline translator', s: 'English → বাংলা right inside the keyboard',
       async run() {
         await setLayout('en'); setText(''); focus(true); bar('tools');
         await tap(tool('tr')); toolOn('tr', true);
-        await openUpper(`<div class="up-head">🌐 <b>English</b> ⇄ <b lang="bn">বাংলা</b><span class="x">✕</span></div>
+        await openUpper(`<div class="up-head">${ic('translate', 18)} <b>English</b><span class="swap">${ic('swap_horiz', 18)}</span><b lang="bn">বাংলা</b><span class="x">${ic('close', 18)}</span></div>
           <div class="tbox" id="tin"><span class="caret"></span></div>
-          <div class="tout"><span class="t" id="tout" lang="bn"></span><span class="ins" id="ins">➤</span></div>`);
+          <div class="tout"><span class="t" id="tout" lang="bn"></span><span class="ins" id="ins">${ic('send', 17)}</span></div>`);
         focus(false);
         let s = '';
         for (const ch of 'good morning') {
@@ -1042,14 +1060,14 @@
       },
     },
     {
-      tab: 'Spell check', ic: '✓', t: 'Spelling & grammar check', s: 'Finds mistakes in বাংলা and English, offline',
+      tab: 'Spell check', ic: 'spellcheck', t: 'Spelling & grammar check', s: 'Finds mistakes in বাংলা and English, offline',
       async run() {
         await setLayout('avro'); setText('আমার পরিক্ষা কাল'); focus(true); bar('tools');
         await wait(500);
         await tap(tool('check')); toolOn('check', true);
         const i = F.t.indexOf('পরিক্ষা');
         F.wavy = [i, i + 'পরিক্ষা'.length]; render();
-        await openUpper(`<div class="up-head">✓ <b>Check</b> · 2 suggestions<span class="x">✕</span></div>
+        await openUpper(`<div class="up-head">${ic('spellcheck', 18)} <b>Check</b> · 2 suggestions<span class="x">${ic('close', 18)}</span></div>
           <div class="iss" lang="bn"><span class="kd k-sp">Spelling</span><span><s>পরিক্ষা</s> → <b>পরীক্ষা</b></span></div>
           <div class="iss" lang="bn"><span class="kd k-pu">Punctuation</span><span>add <b>।</b> at the end</span></div>
           <span class="fixall" id="fixall">Fix all</span>`);
@@ -1058,23 +1076,23 @@
         upper.querySelectorAll('.iss').forEach(e => e.classList.add('gone'));
         setText('আমার পরীক্ষা কাল।'); flash(i, i + 'পরীক্ষা'.length, 1200);
         await wait(350);
-        upper.querySelector('.up-in').innerHTML = '<div class="up-head">✓ <b>Check</b></div><div class="good">✓ Looks good</div>';
+        upper.querySelector('.up-in').innerHTML = `<div class="up-head">${ic('spellcheck', 18)} <b>Check</b></div><div class="good">${ic('check_circle_fill', 22)} Looks good</div>`;
         await wait(1500);
         toolOn('check', false); await closeUpper();
         await wait(800);
       },
     },
     {
-      tab: 'Clipboard', ic: '📋', t: 'Clipboard', s: 'Your recent copies: codes, links, notes',
+      tab: 'Clipboard', ic: 'content_paste', t: 'Clipboard', s: 'Your recent copies: codes, links, notes',
       async run() {
         await setLayout('en'); setText('Code: '); focus(true); bar('tools');
         await tap(tool('clip')); toolOn('clip', true);
-        await openUpper(`<div class="chiprow"><span class="on">All</span><span>🔗 Links</span><span>🔢 Codes</span><span>📌</span></div>
+        await openUpper(`<div class="chiprow"><span class="on">All</span><span>${ic('link', 14)}Links</span><span>${ic('123', 14)}Codes</span><span>${ic('push_pin', 14)}</span></div>
           <div class="clips">
-            <div class="clip" id="clip1"><small>🔢 Code · 2 min</small>482913</div>
-            <div class="clip"><small>🔗 Link · 1 h</small>github.com/…</div>
+            <div class="clip" id="clip1"><small>${ic('123', 13)} Code · 2 min</small>482913</div>
+            <div class="clip"><small>${ic('link', 13)} Link · 1 h</small>github.com/…</div>
             <div class="clip"><small>Text · 3 h</small>Meeting at 5 pm</div>
-            <div class="clip"><small>📌 Pinned</small>Thanks a lot! 🙏</div>
+            <div class="clip"><small>${ic('push_pin', 13)} Pinned</small>Thanks a lot! 🙏</div>
           </div>`);
         await wait(1200);
         await tap($('clip1'), { hold: 160 });
@@ -1084,12 +1102,12 @@
       },
     },
     {
-      tab: 'Emoji', ic: '😊', t: 'Emoji', s: 'Search in English or বাংলা, with skin tones',
+      tab: 'Emoji', ic: 'mood', t: 'Emoji', s: 'Search in English or বাংলা, with skin tones',
       async run() {
         await setLayout('avro'); setText('দারুণ হয়েছে '); focus(true); bar('tools');
         await tap(K.emoji);
         const E = ['😀', '😂', '🥰', '😍', '😎', '🤩', '😊', '🙏', '❤️', '👍', '🎉', '🔥', '✨', '🌸', '🌿', '💯', '😅', '🤗', '😴', '🤔', '👏', '💚', '🌙', '☕'];
-        await openUpper(`<div class="esearch">🔍 Search emoji · <span lang="bn">ইমোজি খুঁজুন</span></div>
+        await openUpper(`<div class="esearch">${ic('search', 16)} Search emoji · <span lang="bn">ইমোজি খুঁজুন</span></div>
           <div class="egrid">${E.map((e, i) => `<span id="em${i}">${e}</span>`).join('')}</div>`);
         await wait(700);
         for (const i of [1, 8, 10]) { await tap($('em' + i), { hold: 150 }); insert(E[i]); await wait(120); }
@@ -1099,7 +1117,7 @@
       },
     },
     {
-      tab: 'Gestures', ic: '👆', t: 'Gestures', s: 'Swipe ⌫ left to delete whole words',
+      tab: 'Gestures', ic: 'swipe_left', t: 'Gestures', s: 'Swipe ⌫ left to delete whole words',
       async run() {
         await setLayout('en'); setText('See you at the cafe tomorrow evening'); focus(true); bar('tools');
         await wait(500);
