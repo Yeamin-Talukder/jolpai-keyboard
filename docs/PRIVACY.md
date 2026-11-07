@@ -44,6 +44,12 @@ minute after it was copied, unless you pin it.
   and can be deleted there. When translation is used, the ML Kit library may send Google
   diagnostic data about the library itself (app and phone model, Android version, how long
   translation took, a per-install identifier); it does not send the text.
+- **Check for updates** (About screen), only when you tap it: the app asks GitHub's public
+  API for the latest Jolpai release (`api.github.com`). The request carries the app version
+  in its User-Agent and, like any web request, your IP address; nothing you type is sent.
+  **Report a problem** opens a GitHub issue page in your browser with the app version,
+  Android version, phone model and processor type filled in; nothing is sent until you
+  submit it yourself.
 - **✨ AI proofreading** (Check card, only on phones with Google's on-device AI, Gemini Nano):
   the text is proofread on the phone by Android's AICore system app; it is not sent to a server.
   The AI model is managed and downloaded by AICore when you first use it. The button only
@@ -61,7 +67,7 @@ minute after it was copied, unless you pin it.
 
 ## Permissions
 - **Microphone:** only for voice typing; asked for in the app with an explanation.
-- **Internet:** only for GIF search with your own key and for downloading the offline translation pack when you ask.
+- **Internet:** only for GIF search with your own key, downloading the offline translation pack, and checking for updates, each only when you ask.
 - **Vibration:** for the key-press vibration strength setting.
 
 ## Deleting everything

@@ -23,6 +23,7 @@ my @icons = qw(
     swipe_up swipe_down swipe_left swipe_right touch_long touch_double gesture keyboard_capslock
     expand_less close_fullscreen stop mic:fill drag_indicator rotate_90_degrees_ccw
     swap_horiz g_translate
+    share bug_report new_releases system_update
 );
 
 my $out = 'keyboard-ui/src/main/res/drawable';

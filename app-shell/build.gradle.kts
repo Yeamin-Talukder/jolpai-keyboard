@@ -83,6 +83,7 @@ dependencies {
     implementation(project(":voice-input"))
     implementation(project(":media"))
     implementation(libs.kotlinx.serialization.json)
+    testImplementation(libs.junit)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.runtime.ktx)

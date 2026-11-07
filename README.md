@@ -91,7 +91,7 @@ English↔Bangla translation run **offline**.
 - **Everything stays on your phone**: no account, analytics, crash SDK or ads.
 - Learned words and clipboard live in an **encrypted database** (SQLCipher, key in the Android Keystore), excluded from cloud backups.
 - **Password and incognito fields**: no suggestions, no learning, no clipboard capture (🔒 shown).
-- Internet is used **only** for features you turn on (GIF search, downloading the translation pack).
+- Internet is used **only** for features you turn on (GIF search, downloading the translation pack, checking for updates).
 - Backup and restore to a file **you** choose. Read the [privacy policy](docs/PRIVACY.md).
 
 ## 📸 Screenshots
