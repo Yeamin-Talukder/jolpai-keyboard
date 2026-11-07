@@ -13,7 +13,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "LipiKeyboard"
+rootProject.name = "JolpaiKeyboard"
 
 include(":app-shell")
 include(":keyboard-core")

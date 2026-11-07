@@ -16,6 +16,7 @@ updated. Do not start the next phase while a critical issue from the current one
 - ✅ Architecture document
 - ✅ App name **Lipi Keyboard**, package id `com.yeamin.lipi` (chosen 2026-11-06; the display name can change any time, the package id only before the first Play Store upload)
 - ✅ Renamed to **Jolpai Keyboard (জলপাই)** by the user on 2026-11-07 (Play Store title "Jolpai — Bangla Keyboard", olive-green icon planned). Only user-visible text changed; the package id, Kotlin class names (`Lipi*`), database and the `lipi-theme-1` / `lipi-backup-1` file formats keep "lipi" so installs and old backups still work. New launcher icon (2026-11-07): an olive with stem and two leaves on cream #F3EFD9, adaptive with a separate monochrome layer for themed icons (app-shell res/drawable/ic_launcher_*.xml). Still to do: Play Store 512px icon and feature graphic; decide whether to change the package id before the first Play Store upload.
+- ✅ Full rename to `com.yeamin.jolpai` (user request, 2026-11-07, after v0.8.0): app ID, namespace, all Kotlin packages and folders, `JolpaiApplication` / `JolpaiDatabase` / `JolpaiImeService`, database `jolpai.db`, key alias `jolpai_data_key`, Gradle project `JolpaiKeyboard`. Android treats it as a NEW app: installs of 0.7.0/0.8.0 (`com.yeamin.lipi`) don't update to it; users back up in the old app, install the new one, restore, and uninstall the old one. Backup and theme file formats keep their `lipi-*-1` names so old files import.
 - ✅ Default keyboard theme ("System", used on a fresh install) is now **Material You**: wallpaper colours in the phone's light or dark mode (Android 12+; plain Light/Dark colours before that). User request 2026-11-07. `BuiltInThemes.forSystem()`; theme thumbnails now show the real wallpaper colours for Material You themes too.
 - ✅ Seven soft dark themes added 2026-11-07 (user request "cool and soft dark"): Olive night (Jolpai brand), Misty blue, Arctic night, Storm, Moonlight, Sage night, Periwinkle. Muted cool colours, pastel accents; listed first among the dark themes.
 - ✅ About screen (2026-11-07): header card (icon, name, version, developer), Check for updates (GitHub Releases API, only on tap; picks the APK for the phone's processor), What's new (`Changelog` in app-shell AppUpdates.kt: when releasing, give the "Next version" entry its version and date, matching the GitHub release notes), Report a problem (pre-filled GitHub issue with app/Android/phone/processor, never typed text), Share Jolpai. Privacy docs updated.
@@ -24,7 +25,7 @@ updated. Do not start the next phase while a critical issue from the current one
 Status 2026-11-06: builds, 79 unit tests pass (incl. the 413-case Avro corpus), lint clean. **Not yet run on a phone.**
 - ✅ Project scaffold: AGP 9.4.1, Gradle 9.6.1, Kotlin 2.3.20, Hilt 2.60.1, KSP, compile/target SDK 37, min SDK 26
 - ✅ Modules created so far: `bangla-engine` (JVM), `keyboard-core`, `keyboard-ui`, `app-shell` (others are added in the phase that needs them)
-- ✅ `LipiImeService` (`InputMethodService`) + IME declaration (English and Bangla subtypes)
+- ✅ `JolpaiImeService` (`InputMethodService`) + IME declaration (English and Bangla subtypes)
 - ✅ Setup app: enable/choose keyboard with live status, test fields for every input type, typing settings
 - ✅ `EditorSession`: InputConnection wrapper, selection tracking; `FieldClassifier` for password/email/URL/number/phone/multiline/no-learning fields
 - ✅ Canvas `KeyboardView`: multi-touch with in-order commit for fast typing, key preview, long-press choices, slide between keys
@@ -82,7 +83,7 @@ capture and image paste can only be checked there.
 
 Done:
 - ✅ New module `clipboard-manager`; Room database v2 (clip and snippet tables) with a 1→2 migration
-- ✅ Clipboard capture with `OnPrimaryClipChangedListener` while Lipi is the active keyboard (Android allows only the default IME and the focused app); no polling
+- ✅ Clipboard capture with `OnPrimaryClipChangedListener` while Jolpai is the active keyboard (Android allows only the default IME and the focused app); no polling
 - ✅ Never saved: copies while typing in a password/private field, and clips marked `EXTRA_IS_SENSITIVE` (password managers, banking apps)
 - ✅ Retention: 1 hour / 1 day (default) / 7 days / 30 days / until deleted; at most 100 unpinned items; pinned items are kept
 - ✅ Copying the same text again moves it to the top instead of adding a duplicate
@@ -119,7 +120,7 @@ Done:
 Not done / limits:
 - ⬜ Manual test on a phone (capture, image paste in WhatsApp/Gmail/Messages, gestures)
 - Search inside the keyboard's 📋 panel isn't possible yet (the keyboard can't type into its own panel). Search is in the app's clipboard screen
-- Android 12+ may show a "pasted from clipboard" notice when Lipi reads a copy; to be confirmed on a phone
+- Android 12+ may show a "pasted from clipboard" notice when Jolpai reads a copy; to be confirmed on a phone
 - Formatted (rich) text is saved as plain text
 
 ## Phase 5 — Voice, emoji, media 🔨

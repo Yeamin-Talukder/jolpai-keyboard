@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.yeamin.lipi.media"
+    namespace = "com.yeamin.jolpai.media"
     compileSdk = 37
     defaultConfig { minSdk = 26 }
     compileOptions {

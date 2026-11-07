@@ -7,14 +7,14 @@
     <application>
         <!-- Shows only the system microphone dialog for voice typing; no page of its own. -->
         <activity
-            android:name="com.yeamin.lipi.ui.MicPermissionActivity"
+            android:name="com.yeamin.jolpai.ui.MicPermissionActivity"
             android:excludeFromRecents="true"
             android:exported="false"
             android:noHistory="true"
             android:taskAffinity=""
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
         <service
-            android:name="com.yeamin.lipi.ui.LipiImeService"
+            android:name="com.yeamin.jolpai.ui.JolpaiImeService"
             android:directBootAware="false"
             android:exported="true"
             android:label="@string/ime_name"

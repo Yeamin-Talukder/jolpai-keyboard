@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <application
-        android:name=".LipiApplication"
+        android:name=".JolpaiApplication"
         android:enableOnBackInvokedCallback="true"
         tools:targetApi="33"
         android:allowBackup="true"

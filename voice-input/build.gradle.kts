@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.yeamin.lipi.voice"
+    namespace = "com.yeamin.jolpai.voice"
     compileSdk = 37
     defaultConfig { minSdk = 26 }
     compileOptions {

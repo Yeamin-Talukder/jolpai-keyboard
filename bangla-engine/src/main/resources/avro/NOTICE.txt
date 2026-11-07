@@ -6,4 +6,4 @@ Licence: Mozilla Public License 2.0 — see LICENSE-MPL-2.0.txt in this folder.
 Origin:  Avro Phonetic by OmicronLab (Mehdi Hasan Khan), ported by the OpenBangla project.
 
 This file is used unmodified. Under MPL 2.0 it stays under that licence; the rest of
-Lipi Keyboard is not affected (MPL is a file-level licence).
+Jolpai Keyboard is not affected (MPL is a file-level licence).

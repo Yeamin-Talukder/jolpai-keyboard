@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.yeamin.lipi.data"
+    namespace = "com.yeamin.jolpai.data"
     compileSdk = 37
     defaultConfig { minSdk = 26 }
     compileOptions {

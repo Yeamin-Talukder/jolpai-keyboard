@@ -16,11 +16,11 @@ plugins {
 }
 
 android {
-    namespace = "com.yeamin.lipi"
+    namespace = "com.yeamin.jolpai"
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "com.yeamin.lipi"
+        applicationId = "com.yeamin.jolpai"
         minSdk = 26
         targetSdk = 37
         versionCode = 3

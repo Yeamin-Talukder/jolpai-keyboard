@@ -1,11 +1,11 @@
-# Lipi Keyboard — Privacy policy
+# Jolpai Keyboard — Privacy policy
 
 Last updated: 2026-11-06
 
-Lipi is a keyboard. A keyboard can see everything you type, so Lipi is built to keep that
+Jolpai is a keyboard. A keyboard can see everything you type, so Jolpai is built to keep that
 on your phone. This page explains exactly what it stores, what it sends, and how to control it.
 
-## What Lipi stores on your phone
+## What Jolpai stores on your phone
 | Data | Why | Where | Your control |
 |---|---|---|---|
 | Words you type and which word usually follows which | Better suggestions and next-word predictions | App database on the phone | Settings → Privacy: turn off "Learn from my typing" or "Clear learned data" |
@@ -24,20 +24,20 @@ or marked sensitive by the app (password managers, banking apps on Android 13+).
 **Encrypted at rest:** the app database (learned words, clipboard text, snippets, dictionary,
 themes) is encrypted with SQLCipher (AES-256), and copied clipboard pictures with AES-GCM. The key
 is kept wrapped by a key in the Android Keystore (the phone's secure hardware where available),
-which no app or person can read out, so copying Lipi's files off the phone yields nothing
-readable. The key never leaves the phone and is not backed up; uninstalling Lipi destroys it.
+which no app or person can read out, so copying Jolpai's files off the phone yields nothing
+readable. The key never leaves the phone and is not backed up; uninstalling Jolpai destroys it.
 
 **One-time codes:** a copied 4–8 digit code (an OTP) is deleted from clipboard history one
 minute after it was copied, unless you pin it.
 
-## What Lipi sends over the internet
-- **Nothing by default.** Lipi has no account, no analytics, no crash reporting service and no ads.
+## What Jolpai sends over the internet
+- **Nothing by default.** Jolpai has no account, no analytics, no crash reporting service and no ads.
 - **GIF search**, only if you add your own GIPHY API key: the words you type into the GIF
   search box are sent to GIPHY to find GIFs, and the GIFs you pick are downloaded. GIPHY's
   privacy policy applies to those requests. Nothing you type in other apps is sent.
 - **Voice typing** uses your phone's speech recognition service (usually Google's). While the
   🎤 panel is listening, your voice goes to that service, which may process it online
-  depending on your phone and language. Lipi does not record or keep audio.
+  depending on your phone and language. Jolpai does not record or keep audio.
 - **Offline translation** (🌐 Translate in the top bar) runs on your phone with Google's ML Kit
   translator: the text you translate never leaves the phone. The Bangla language pack (about
   30 MB) is downloaded from Google once, only when you tap Download (or in Languages & layouts),
@@ -58,7 +58,7 @@ minute after it was copied, unless you pin it.
   never counted in password or private fields; reset them under Typing stats.
 
 ## Backups
-- Android's automatic cloud backup and phone-to-phone transfer **exclude** Lipi's database
+- Android's automatic cloud backup and phone-to-phone transfer **exclude** Jolpai's database
   (typing history, clipboard, personal dictionary, themes) and its clipboard pictures and stickers.
   Settings may be included. They contain no typed text.
 - "Backup & restore" in the app writes a file **you** choose where to save. It contains settings,
@@ -71,7 +71,7 @@ minute after it was copied, unless you pin it.
 - **Vibration:** for the key-press vibration strength setting.
 
 ## Deleting everything
-Clear learned data and clipboard history in the app, or uninstall Lipi: Android deletes all
+Clear learned data and clipboard history in the app, or uninstall Jolpai: Android deletes all
 of its data.
 
 ## Contact

@@ -6,7 +6,7 @@ Last updated: 2026-11-06 (Phase 3 added `suggestion-engine` and `core-data`, see
 > **Changes made while building Phase 2** (the sections below are updated to match):
 > - Toolchain: AGP **9.4.1** (the version bundled with Android Studio 2026.1.4) and Gradle **9.6.1**, so
 >   compile/target SDK is **37**, not 36.
-> - `LipiImeService` lives in `keyboard-ui`, not `keyboard-core`, because it creates the views.
+> - `JolpaiImeService` lives in `keyboard-ui`, not `keyboard-core`, because it creates the views.
 >   `keyboard-core` holds the `KeyboardController` state machine, which has no view code.
 > - Modules are created in the phase that first needs them. Phase 2 has `bangla-engine`,
 >   `keyboard-core`, `keyboard-ui` and `app-shell`.
@@ -72,7 +72,7 @@ The brief's suggested modules are kept, with two changes:
 ```
 :app-shell             Application class, Hilt root, the settings app (Compose), manifest + IME declaration
 :keyboard-core         KeyboardController state machine, EditorSession (InputConnection wrapper), input processors, layouts, settings
-:keyboard-ui           LipiImeService (InputMethodService), KeyboardView (Canvas), key popups, toolbar, later the suggestion strip and panels
+:keyboard-ui           JolpaiImeService (InputMethodService), KeyboardView (Canvas), key popups, toolbar, later the suggestion strip and panels
 :bangla-engine         [JVM] Avro phonetic transliterator, National-layout composer, Bangla Unicode utils
 :suggestion-engine     [JVM] dictionary trie, autocorrect, next-word model, candidate ranking
 :clipboard-manager     clipboard capture, history, pins, folders, snippets, image storage
@@ -205,7 +205,7 @@ Built in Phase 3 (modules `suggestion-engine`, pure Kotlin, and `core-data`, Roo
 | Next word | Word pairs the user typed (`UserHistory` bigrams). No built-in model yet. |
 | Learning | `UserHistory` keeps counts in memory for instant lookups and writes changes to Room through a queue on a background thread (`RoomHistoryStore`). Capped at 20k words per language. |
 | Personal dictionary | Room table. Words are always suggested and never autocorrected. Added from the strip or in the app. |
-| Privacy | No learning in password, no-learning (incognito) or no-suggestion fields; no suggestions in password, email or no-suggestion fields. `lipi.db` is excluded from cloud backup and device transfer. |
+| Privacy | No learning in password, no-learning (incognito) or no-suggestion fields; no suggestions in password, email or no-suggestion fields. `jolpai.db` is excluded from cloud backup and device transfer. |
 | Threading | English and জাতীয় suggestions are computed on `Dispatchers.Default`, and only the newest result is shown. Avro candidates are computed inline (~0.5 ms) because they decide the composing text. |
 
 Grammar correction, sentence rewriting and "smart compose" need a language model.

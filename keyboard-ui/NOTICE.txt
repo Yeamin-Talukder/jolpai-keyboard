@@ -1,4 +1,4 @@
-Lipi Keyboard — keyboard-ui third-party notices
+Jolpai Keyboard — keyboard-ui third-party notices
 
 Icons in src/main/res/drawable/ms_*.xml are Material Symbols (Rounded) by Google,
 https://fonts.google.com/icons, converted unmodified from SVG to Android vector drawables

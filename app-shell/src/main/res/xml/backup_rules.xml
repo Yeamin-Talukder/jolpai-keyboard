@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Android 11 and older: keep typing history (lipi.db) out of cloud backups. Settings are backed up. -->
+<!-- Android 11 and older: keep typing history (jolpai.db) out of cloud backups. Settings are backed up. -->
 <full-backup-content>
-    <exclude domain="database" path="lipi.db" />
-    <exclude domain="database" path="lipi.db-shm" />
-    <exclude domain="database" path="lipi.db-wal" />
+    <exclude domain="database" path="jolpai.db" />
+    <exclude domain="database" path="jolpai.db-shm" />
+    <exclude domain="database" path="jolpai.db-wal" />
     <exclude domain="file" path="clips/" />
     <exclude domain="sharedpref" path="touch.xml" />
     <exclude domain="sharedpref" path="db_key.xml" />

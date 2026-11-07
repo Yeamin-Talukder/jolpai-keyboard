@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace = "com.yeamin.lipi.clipboard"
+    namespace = "com.yeamin.jolpai.clipboard"
     compileSdk = 37
     defaultConfig { minSdk = 26 }
     compileOptions {

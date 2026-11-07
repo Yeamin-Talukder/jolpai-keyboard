@@ -5,7 +5,7 @@ bangla-words.txt, avro-patterns.tsv, common-suffix-patterns.txt
   data/source-words.txt, data/preprocessed-patterns.json, data/source-common-patterns.txt.
   Copyright (c) 2025 OpenBangla. MIT License — see LICENSE-MIT-upodesh.txt.
   Changes: words de-duplicated and sorted; patterns converted from JSON to tab-separated text
-  by tools/prepare-dictionaries.pl. Lipi's Kotlin search code follows upodesh's algorithm.
+  by tools/prepare-dictionaries.pl. Jolpai's Kotlin search code follows upodesh's algorithm.
 
 riti-suffix.json, riti-autocorrect.json
   From riti (https://github.com/OpenBangla/riti), commit e1fd5a809b0c3bf9c36e6f076ef6d558f9663fba:

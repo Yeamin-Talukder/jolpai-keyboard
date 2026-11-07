@@ -41,7 +41,7 @@ It aims for Gboard-level speed and features while keeping your data on your devi
 English↔Bangla translation run **offline**.
 
 > **Also known as:** Jolpai Bangla Keyboard · Jalpai Keyboard · জলপাই বাংলা কিবোর্ড · Jolpai Avro Keyboard
-> (package `com.yeamin.lipi`; the project was first called *Lipi Keyboard*).
+> (package `com.yeamin.jolpai`; the project was first called *Lipi Keyboard*, package `com.yeamin.lipi` up to v0.8.0).
 
 ## 🆕 What's new in 0.8.0
 
@@ -135,6 +135,11 @@ English↔Bangla translation run **offline**.
 Most phones need the **`arm64-v8a`** file; older 32-bit phones need `armeabi-v7a`. Android 8.0 or newer.
 Or [build it from source](#-build-from-source) (about 5 minutes with Android Studio).
 
+> **Coming from 0.7.0 or 0.8.0?** From the next release the app ID changes from `com.yeamin.lipi` to
+> `com.yeamin.jolpai`, so Android installs it as a new app instead of an update. To keep your words,
+> settings and themes: in the old app open **Backup & restore → Save backup**, install the new version,
+> restore the file there, then uninstall the old one.
+
 Releases are built and signed by GitHub Actions from the tagged source, with SHA-256 checksums in
 `SHA256SUMS.txt`. Every release uses the same signing key, so a new version **installs as an update**
 and keeps your words and settings. The next release adds **About → Check for updates**, which asks
@@ -155,7 +160,7 @@ so it is fast to unit-test on a PC.
 ```mermaid
 flowchart TD
     APP["app-shell<br/>Settings app (Compose), setup, backup"]
-    UI["keyboard-ui<br/>LipiImeService · Canvas key grid · panels"]
+    UI["keyboard-ui<br/>JolpaiImeService · Canvas key grid · panels"]
     CORE["keyboard-core<br/>KeyboardController state machine · layouts · EditorSession"]
     BN["bangla-engine (JVM)<br/>Avro phonetic · National composer"]
     SG["suggestion-engine (JVM)<br/>dictionaries · autocorrect · next-word"]
@@ -226,7 +231,7 @@ Full design notes, platform limits and the privacy model: **[docs/ARCHITECTURE.m
 | `media` | GIF search (GIPHY, with your key) and your own stickers |
 | `theme-engine` | Plain Kotlin. Theme model, 64 built-in themes, theme import/export |
 | `keyboard-core` | Keyboard state machine, layouts, field detection, text editing over `InputConnection`, suggestion strip logic, editing commands, calculator, settings |
-| `keyboard-ui` | The keyboard service (`LipiImeService`), the Canvas key grid, key popups, suggestion strip, gestures, panels, translation |
+| `keyboard-ui` | The keyboard service (`JolpaiImeService`), the Canvas key grid, key popups, suggestion strip, gestures, panels, translation |
 | `app-shell` | The app you open: setup, test fields, settings, personal dictionary, clipboard manager, snippets, themes, backup |
 | `tools/` | Perl scripts that regenerate dictionaries, emoji data and icons from upstream sources |
 

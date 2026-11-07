@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Declares Lipi as a system keyboard. Subtypes tell Android which languages it types. -->
+<!-- Declares Jolpai as a system keyboard. Subtypes tell Android which languages it types. -->
 <input-method xmlns:android="http://schemas.android.com/apk/res/android"
-    android:settingsActivity="com.yeamin.lipi.MainActivity"
+    android:settingsActivity="com.yeamin.jolpai.MainActivity"
     android:supportsSwitchingToNextInputMethod="true">
     <subtype
         android:imeSubtypeMode="keyboard"

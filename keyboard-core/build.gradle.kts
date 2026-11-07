@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.yeamin.lipi.core"
+    namespace = "com.yeamin.jolpai.core"
     compileSdk = 37
     defaultConfig {
         minSdk = 26
