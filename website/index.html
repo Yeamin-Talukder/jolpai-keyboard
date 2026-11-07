@@ -436,6 +436,45 @@
   .note { margin-top: 22px; border: 1px solid #5a4a1c; background: rgba(224,175,104,.07); border-radius: 16px; padding: 16px 20px; color: var(--muted); font-size: 16px; }
   .note b { color: var(--cream); }
 
+  /* ---- download picker (Install section) */
+  .picker { max-width: 780px; margin: 28px auto 0; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 26px; }
+  .picker h3 { margin: 0 0 4px; font-size: 21px; }
+  .picker > p { margin: 0 0 20px; color: var(--muted); font-size: 15.5px; }
+  .pick-field { margin-bottom: 18px; }
+  .pick-label { display: block; font-size: 12.5px; letter-spacing: .07em; text-transform: uppercase; color: var(--dim); font-weight: 700; margin: 0 0 8px; }
+  .pick-select {
+    width: 100%; appearance: none; -webkit-appearance: none; cursor: pointer;
+    background: var(--card-2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23b5c94a' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 16px center;
+    border: 1px solid var(--line); color: var(--text); border-radius: 14px; padding: 13px 44px 13px 16px; font: inherit; font-size: 16.5px;
+  }
+  .pick-select:hover { border-color: var(--olive-2); }
+  .pick-select option { background: var(--card-2); color: var(--text); }
+  .abis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+  .abi {
+    text-align: left; cursor: pointer; font: inherit; color: var(--text); background: var(--card-2);
+    border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; transition: border-color .2s, background .2s, transform .15s;
+  }
+  .abi b { display: block; font-size: 15.5px; }
+  .abi small { display: block; color: var(--dim); font-size: 12.5px; margin-top: 3px; font-family: var(--mono); }
+  .abi small span { white-space: nowrap; }
+  .abi:hover { border-color: var(--olive-2); transform: translateY(-1px); }
+  .abi[aria-checked="true"] { border-color: var(--olive); background: rgba(181,201,74,.12); box-shadow: inset 0 0 0 1px var(--olive); }
+  .abi .yours { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px; background: var(--olive); color: #18200b; font-size: 11px; font-weight: 700; vertical-align: 2px; }
+  .pick-go { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 4px; }
+  .pick-go .btn-primary { flex: 1 1 260px; }
+  .pick-meta { margin: 14px 0 0; color: var(--dim); font-size: 14px; display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; min-height: 1.4em; }
+  .pick-sha {
+    font-family: var(--mono); font-size: 12.5px; color: var(--muted); background: rgba(255,255,255,.04); border: 1px solid var(--line);
+    border-radius: 8px; padding: 3px 9px; cursor: pointer; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .pick-sha:hover { border-color: var(--olive-2); color: var(--cream); }
+  .pick-warn { margin-top: 14px; }
+  .pick-warn code { font-family: var(--mono); font-size: .88em; background: rgba(255,255,255,.06); padding: 1px 6px; border-radius: 6px; color: var(--cream); }
+  @media (max-width: 720px) {
+    .abis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .picker { padding: 20px; }
+  }
+
   .faq { max-width: 820px; margin: 0 auto; }
   .faq details { border: 1px solid var(--line); background: var(--card); border-radius: 16px; padding: 0 20px; }
   .faq details + details { margin-top: 10px; }
@@ -747,12 +786,34 @@
         <li class="reveal"><h3>Choose it and type</h3><p>Pick Jolpai as your keyboard, then tap the language button for English, অভ্র or জাতীয়.</p></li>
       </ol>
       <p class="note reveal"><b>Coming from 0.7 or 0.8?</b> Version 0.9 has a new app ID, so it installs next to the old one. Save a backup in the old app (Backup &amp; restore), restore it in the new one, then uninstall the old app. Later versions update normally.</p>
-      <div class="cta reveal" style="justify-content:center;margin-top:28px">
-        <a class="btn btn-primary js-download" href="https://github.com/Yeamin-Talukder/jolpai-keyboard/releases/latest">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0-5-5m5 5 5-5M5 21h14"/></svg>
-          <span>Download APK</span>
-        </a>
-        <a class="btn btn-ghost" href="https://github.com/Yeamin-Talukder/jolpai-keyboard/releases">All versions &amp; checksums</a>
+      <!-- Download picker: any release, any processor type (filled from GitHub by the script below) -->
+      <div class="picker reveal" id="download-picker">
+        <h3>Choose your download</h3>
+        <p>The newest version for most phones is already picked. Need an older version or another phone type? Change it here.</p>
+        <div class="pick-field">
+          <label class="pick-label" for="pick-version">Version</label>
+          <select class="pick-select" id="pick-version">
+            <option value="v0.10.1">0.10.1</option>
+          </select>
+        </div>
+        <div class="pick-field">
+          <span class="pick-label" id="pick-abi-label">Phone type</span>
+          <div class="abis" id="pick-abis" role="radiogroup" aria-labelledby="pick-abi-label">
+            <button type="button" class="abi" role="radio" aria-checked="true" data-abi="arm64-v8a"><b>Most phones</b><small>64-bit · <span>arm64-v8a</span></small></button>
+            <button type="button" class="abi" role="radio" aria-checked="false" data-abi="armeabi-v7a" tabindex="-1"><b>Older phones</b><small>32-bit · <span>armeabi-v7a</span></small></button>
+            <button type="button" class="abi" role="radio" aria-checked="false" data-abi="x86_64" tabindex="-1"><b>Intel / emulator</b><small>64-bit · <span>x86_64</span></small></button>
+            <button type="button" class="abi" role="radio" aria-checked="false" data-abi="x86" tabindex="-1"><b>Old Intel</b><small>32-bit · <span>x86</span></small></button>
+          </div>
+        </div>
+        <div class="pick-go">
+          <a class="btn btn-primary" id="pick-download" href="https://github.com/Yeamin-Talukder/jolpai-keyboard/releases/latest">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0-5-5m5 5 5-5M5 21h14"/></svg>
+            <span id="pick-download-text">Download APK</span>
+          </a>
+          <a class="btn btn-ghost" href="https://github.com/Yeamin-Talukder/jolpai-keyboard/releases">All releases</a>
+        </div>
+        <p class="pick-meta" id="pick-meta" aria-live="polite"></p>
+        <p class="note pick-warn" id="pick-warn" hidden></p>
       </div>
     </div>
   </section>
@@ -854,6 +915,121 @@
       document.querySelectorAll('.js-version').forEach(s => { s.textContent = `Version ${rel.tag_name.replace(/^v/, '')} · ${mb} MB`; });
     })
     .catch(() => {});
+
+  // ---------------------------------------------------------------- download picker
+  // Every release and every processor type. Releases come from GitHub's API; when it can't be
+  // reached (60 requests an hour per connection), the known versions and the release workflow's
+  // file names (jolpai-keyboard-<version>-<abi>.apk) are used instead.
+  (() => {
+    const REPO = 'https://github.com/Yeamin-Talukder/jolpai-keyboard';
+    const KNOWN = ['v0.10.1', 'v0.10.0', 'v0.9.0', 'v0.8.0', 'v0.7.0'];
+    const ABI_NAME = { 'arm64-v8a': '64-bit', 'armeabi-v7a': '32-bit', 'x86_64': 'x86_64', 'x86': 'x86' };
+    const sel = document.getElementById('pick-version');
+    const group = document.getElementById('pick-abis');
+    if (!sel || !group) return;
+    const btns = [...group.querySelectorAll('.abi')];
+    const dl = document.getElementById('pick-download'), dlText = document.getElementById('pick-download-text');
+    const meta = document.getElementById('pick-meta'), warn = document.getElementById('pick-warn');
+    const ver = tag => tag.replace(/^v/, '');
+    const num = tag => ver(tag).split('.').map(n => parseInt(n, 10) || 0);
+    const older = (tag, than) => { const a = num(tag), b = num(than); for (let i = 0; i < 3; i++) if (a[i] !== b[i]) return a[i] < b[i]; return false; };
+    const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+    let releases = KNOWN.map(tag => ({ tag, date: null, page: `${REPO}/releases/tag/${tag}`, apks: null }));
+    let fromApi = false, abi = 'arm64-v8a';
+
+    function fillVersions() {
+      const keep = sel.value;
+      sel.innerHTML = releases.map((r, i) =>
+        `<option value="${esc(r.tag)}">${esc(ver(r.tag))}${i === 0 && fromApi ? ' · latest' : ''}${older(r.tag, 'v0.9.0') ? ' · old app ID' : ''}</option>`).join('');
+      if (releases.some(r => r.tag === keep)) sel.value = keep;
+    }
+
+    function render() {
+      const r = releases.find(x => x.tag === sel.value) || releases[0];
+      const v = ver(r.tag);
+      const file = `jolpai-keyboard-${v}-${abi}.apk`;
+      const apk = r.apks && r.apks[abi];
+      dl.href = apk ? apk.url : `${REPO}/releases/download/${r.tag}/${file}`;
+      dl.setAttribute('download', file);
+      const mb = apk && apk.size ? ` · ${(apk.size / 1048576).toFixed(1)} MB` : '';
+      dlText.textContent = `Download ${v} · ${ABI_NAME[abi]}${mb}`;
+      const bits = [];
+      if (r.date) bits.push(`Released ${new Date(r.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`);
+      bits.push(`<a href="${esc(r.page)}">Release notes</a>`);
+      if (apk && apk.sha) bits.push(`<button type="button" class="pick-sha" title="Copy SHA-256" data-sha="${esc(apk.sha)}">SHA-256 ${esc(apk.sha.slice(0, 16))}…</button>`);
+      else bits.push(`<a href="${REPO}/releases/download/${r.tag}/SHA256SUMS.txt">SHA-256 checksums</a>`);
+      meta.innerHTML = bits.map(b => `<span>${b}</span>`).join('');
+      // Version notes: the old app ID, and in-app updates from 0.10 on.
+      if (older(r.tag, 'v0.9.0')) {
+        warn.innerHTML = `<b>Old app ID.</b> ${esc(v)} uses <code>com.yeamin.lipi</code>, so it installs as a separate app and can't update to newer versions. Pick the newest version unless you need this one.`;
+        warn.hidden = false;
+      } else if (older(r.tag, 'v0.10.0')) {
+        warn.innerHTML = `<b>No in-app updates.</b> ${esc(v)} can't update itself; versions from 0.10.0 download their own updates.`;
+        warn.hidden = false;
+      } else warn.hidden = true;
+    }
+
+    function setAbi(a, focus) {
+      abi = a;
+      btns.forEach(b => {
+        const on = b.dataset.abi === a;
+        b.setAttribute('aria-checked', String(on));
+        b.tabIndex = on ? 0 : -1;
+        if (on && focus) b.focus();
+      });
+      render();
+    }
+    btns.forEach((b, i) => {
+      b.addEventListener('click', () => setAbi(b.dataset.abi));
+      b.addEventListener('keydown', e => {
+        const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
+        if (!step) return;
+        e.preventDefault();
+        setAbi(btns[(i + step + btns.length) % btns.length].dataset.abi, true);
+      });
+    });
+    sel.addEventListener('change', render);
+    meta.addEventListener('click', e => {
+      const b = e.target.closest('.pick-sha');
+      if (!b || !navigator.clipboard) return;
+      navigator.clipboard.writeText(b.dataset.sha).then(() => {
+        const t = b.textContent; b.textContent = 'Copied SHA-256'; setTimeout(() => { b.textContent = t; }, 1400);
+      });
+    });
+
+    // On an Android phone, pick its own processor type and mark it.
+    if (/Android/i.test(navigator.userAgent) && navigator.userAgentData && navigator.userAgentData.getHighEntropyValues) {
+      navigator.userAgentData.getHighEntropyValues(['architecture', 'bitness']).then(h => {
+        const a = h.architecture === 'x86' ? (h.bitness === '32' ? 'x86' : 'x86_64') : (h.bitness === '32' ? 'armeabi-v7a' : 'arm64-v8a');
+        const b = btns.find(x => x.dataset.abi === a);
+        if (!b) return;
+        b.querySelector('b').insertAdjacentHTML('beforeend', '<span class="yours">Your phone</span>');
+        setAbi(a);
+      }).catch(() => {});
+    }
+
+    fillVersions();
+    render();
+    fetch('https://api.github.com/repos/Yeamin-Talukder/jolpai-keyboard/releases?per_page=30')
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(list => {
+        const got = list.filter(r => !r.draft && !r.prerelease).map(r => {
+          const apks = {};
+          r.assets.filter(a => /\.apk$/.test(a.name)).forEach(a => {
+            const m = a.name.match(/-(arm64-v8a|armeabi-v7a|x86_64|x86)\.apk$/);
+            if (m) apks[m[1]] = { url: a.browser_download_url, size: a.size, sha: (a.digest || '').replace(/^sha256:/, '') };
+          });
+          return { tag: r.tag_name, date: r.published_at, page: r.html_url, apks };
+        }).sort((a, b) => (older(a.tag, b.tag) ? 1 : -1));
+        if (!got.length) return;
+        releases = got;
+        fromApi = true;
+        fillVersions();
+        sel.value = releases[0].tag;
+        render();
+      })
+      .catch(() => {});
+  })();
 
   // ---------------------------------------------------------------- feature demo
   // A working copy of the keyboard (Olive night theme, real layouts and top bar), played by a
