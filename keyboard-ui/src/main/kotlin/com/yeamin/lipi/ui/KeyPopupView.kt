@@ -36,6 +36,11 @@ class KeyPopupView(context: Context, private val palette: KeyboardPalette) : Vie
         textAlign = Paint.Align.CENTER
     }
 
+    /** The key font, so the preview bubble matches the keys. */
+    fun setKeyFont(fonts: Pair<android.graphics.Typeface, android.graphics.Typeface>?) {
+        fonts?.let { textPaint.typeface = it.first }
+    }
+
     private var previewRect: RectF? = null
     private var previewLabel = ""
     private var previewShownAt = 0L

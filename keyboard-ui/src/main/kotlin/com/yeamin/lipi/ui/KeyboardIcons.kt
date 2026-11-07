@@ -48,6 +48,9 @@ enum class KeyboardIcon(@DrawableRes val res: Int) {
     TRANSLATE(R.drawable.ms_translate),
     SWAP(R.drawable.ms_swap_horiz),
     DOWNLOAD(R.drawable.ms_download),
+    SPELLCHECK(R.drawable.ms_spellcheck),
+    RESTART(R.drawable.ms_restart_alt),
+    CHECK_CIRCLE(R.drawable.ms_check_circle_fill),
     ;
 
     /** A tinted copy of this icon, drawn [sizePx] square in the middle of whatever bounds it gets. */

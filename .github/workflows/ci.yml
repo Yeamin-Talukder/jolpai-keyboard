@@ -1,0 +1,60 @@
+# Builds Jolpai, runs every unit test and Android lint on each push and pull request, and keeps
+# the APKs as a downloadable artifact. These APKs are signed with the runner's throwaway debug
+# key: fine for trying a build, but they can't update an install signed with another key.
+name: Build and test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Gradle (with build cache)
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Unit tests
+        run: ./gradlew test --stacktrace
+
+      - name: Release build
+        run: ./gradlew :app-shell:assembleRelease --stacktrace
+
+      - name: Lint
+        run: ./gradlew :keyboard-ui:lintDebug :app-shell:lintRelease --stacktrace
+
+      - name: Upload test and lint reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports
+          path: |
+            **/build/reports/tests/
+            **/build/test-results/
+            **/build/reports/lint-results-*.html
+          if-no-files-found: ignore
+
+      - name: Upload APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: jolpai-apks-${{ github.sha }}
+          path: app-shell/build/outputs/apk/release/*.apk
+          if-no-files-found: error

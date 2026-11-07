@@ -79,6 +79,9 @@ data class KeyboardSettings(
     /** A row of digits above the letters. */
     val numberRow: Boolean = false,
     val oneHanded: OneHanded = OneHanded.OFF,
+    val keyFont: KeyFont = KeyFont.SYSTEM,
+    val soundPack: SoundPack = SoundPack.SYSTEM,
+    val splitKeys: SplitKeys = SplitKeys.OFF,
     /** Floating keyboard (a movable, smaller keyboard over the app), with its position. */
     val floating: Boolean = false,
     val floatX: Float = 0.5f,
@@ -97,6 +100,31 @@ data class KeyboardSettings(
 }
 
 enum class OneHanded(val storageKey: String) { OFF("off"), LEFT("left"), RIGHT("right") }
+
+/** The typeface on the keys (bundled Bangla fonts, SIL Open Font License). */
+enum class KeyFont(val storageKey: String, val label: String) {
+    SYSTEM("system", "Phone default"),
+    HIND_SILIGURI("hind", "Hind Siliguri"),
+    TIRO_BANGLA("tiro", "Tiro Bangla"),
+    GALADA("galada", "Galada"),
+    ATMA("atma", "Atma"),
+}
+
+/** How key presses sound: the phone's click, or one of Jolpai's own sounds (made in code, no files). */
+enum class SoundPack(val storageKey: String, val label: String) {
+    SYSTEM("system", "Phone's click"),
+    SOFT("soft", "Soft tap"),
+    TYPEWRITER("typewriter", "Typewriter"),
+    BUBBLE("bubble", "Bubble"),
+    WOOD("wood", "Wooden"),
+}
+
+/** Splitting the keys into two halves (for thumbs on a wide screen). */
+enum class SplitKeys(val storageKey: String, val label: String) {
+    OFF("off", "Never"),
+    LANDSCAPE("landscape", "In landscape"),
+    ALWAYS("always", "Always"),
+}
 
 /** Default hold time (ms) before a key shows its hidden characters. */
 const val DEFAULT_LONG_PRESS_MS = 350
@@ -173,6 +201,9 @@ class KeyboardSettingsRepository @Inject constructor(
                 heightLandscape = (p[HEIGHT_LANDSCAPE] ?: 100).coerceIn(70, 140),
                 numberRow = p[NUMBER_ROW] ?: false,
                 oneHanded = OneHanded.entries.firstOrNull { it.storageKey == p[ONE_HANDED] } ?: OneHanded.OFF,
+                keyFont = KeyFont.entries.firstOrNull { it.storageKey == p[KEY_FONT] } ?: KeyFont.SYSTEM,
+                soundPack = SoundPack.entries.firstOrNull { it.storageKey == p[SOUND_PACK] } ?: SoundPack.SYSTEM,
+                splitKeys = SplitKeys.entries.firstOrNull { it.storageKey == p[SPLIT_KEYS] } ?: SplitKeys.OFF,
                 floating = p[FLOATING] ?: false,
                 floatX = (p[FLOAT_X] ?: 0.5f).coerceIn(0f, 1f),
                 floatY = (p[FLOAT_Y] ?: 0f).coerceIn(0f, 1f),
@@ -227,6 +258,9 @@ class KeyboardSettingsRepository @Inject constructor(
     }
     suspend fun setNumberRow(value: Boolean) = dataStore.edit { it[NUMBER_ROW] = value }
     suspend fun setOneHanded(value: OneHanded) = dataStore.edit { it[ONE_HANDED] = value.storageKey }
+    suspend fun setKeyFont(value: KeyFont) = dataStore.edit { it[KEY_FONT] = value.storageKey }
+    suspend fun setSoundPack(value: SoundPack) = dataStore.edit { it[SOUND_PACK] = value.storageKey }
+    suspend fun setSplitKeys(value: SplitKeys) = dataStore.edit { it[SPLIT_KEYS] = value.storageKey }
     suspend fun setFloating(value: Boolean) = dataStore.edit { it[FLOATING] = value }
     suspend fun setFloatPosition(x: Float, y: Float) = dataStore.edit {
         it[FLOAT_X] = x.coerceIn(0f, 1f)
@@ -299,6 +333,9 @@ class KeyboardSettingsRepository @Inject constructor(
         val HEIGHT_LANDSCAPE = intPreferencesKey("height_landscape")
         val NUMBER_ROW = booleanPreferencesKey("number_row")
         val ONE_HANDED = stringPreferencesKey("one_handed")
+        val KEY_FONT = stringPreferencesKey("key_font")
+        val SOUND_PACK = stringPreferencesKey("sound_pack")
+        val SPLIT_KEYS = stringPreferencesKey("split_keys")
         val FLOATING = booleanPreferencesKey("floating")
         val FLOAT_X = floatPreferencesKey("float_x")
         val FLOAT_Y = floatPreferencesKey("float_y")
@@ -312,6 +349,7 @@ class KeyboardSettingsRepository @Inject constructor(
             SHOW_SUGGESTIONS, AUTO_CORRECT, NEXT_WORD, LEARNING, BLOCK_OFFENSIVE, CLIPBOARD_HISTORY, CLIPBOARD_IMAGES,
             CLIPBOARD_RETENTION, CURSOR_SWIPE, TRACKPAD_VERTICAL, LONG_PRESS, PREDICTIVE_TOUCH, TOUCH_CALIBRATION, GESTURES, TOOLBAR, TOOLBAR_SEEN, EMOJI_TONE, EMOJI_SUGGESTIONS, VOICE_LANGUAGE, THEME_ID,
             HEIGHT_PORTRAIT, HEIGHT_LANDSCAPE, NUMBER_ROW, ONE_HANDED, FLOATING, FLOAT_X, FLOAT_Y, HAPTICS, KEY_SOUND, SOUND_VOLUME,
+            KEY_FONT, SOUND_PACK, SPLIT_KEYS,
         ).map { it.name }.toSet()
     }
 }

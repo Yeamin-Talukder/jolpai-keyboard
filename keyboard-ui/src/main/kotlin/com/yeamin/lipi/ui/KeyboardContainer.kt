@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.animation.togetherWith
 import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.drawable.toDrawable
 import androidx.core.view.ViewCompat
@@ -68,6 +69,8 @@ class KeyboardContainer(
     private val onVoice: (VoiceCommand) -> Unit = {},
     /** The translate card asks for the offline Bangla pack to be downloaded. */
     private val onTranslateDownload: () -> Unit = {},
+    /** The Check card asks for on-device AI proofreading of this text. */
+    private val onAiCheck: (String) -> Unit = {},
 ) : FrameLayout(context) {
 
     /** Size and position options that change the keyboard's structure. */
@@ -77,6 +80,10 @@ class KeyboardContainer(
         val floating: Boolean = false,
         val floatX: Float = 0.5f,
         val floatY: Float = 0f,
+        /** The typeface on the keys. */
+        val keyFont: com.yeamin.lipi.core.settings.KeyFont = com.yeamin.lipi.core.settings.KeyFont.SYSTEM,
+        /** Keys split into two halves (worked out from the setting and the orientation). */
+        val split: Boolean = false,
     )
 
     sealed interface ModeChange {
@@ -114,10 +121,27 @@ class KeyboardContainer(
         override fun onClear() = onAction(KeyAction.ClearTranslate)
         override fun onInsert(text: String) = onAction(KeyAction.CommitTranslation(text))
         override fun onDownload() = onTranslateDownload()
+        override fun onApplySpelling() = onAction(KeyAction.ApplyTranslateSpelling)
     })
     private var translateUi: com.yeamin.lipi.core.TranslateUi? = null
+
+    /** The Check card (spelling, punctuation, grammar) above the toolbar. */
+    private val checkCard = CheckCardView(context, palette, object : CheckCardView.Listener {
+        override fun onClose() = onAction(KeyAction.EndCheck)
+        override fun onRecheck() = onAction(KeyAction.Recheck)
+        override fun onFix(issue: com.yeamin.lipi.suggest.TextIssue) = onAction(KeyAction.FixIssue(issue))
+        override fun onFixAll() = onAction(KeyAction.FixAllIssues)
+        override fun onIgnore(issue: com.yeamin.lipi.suggest.TextIssue) = onAction(KeyAction.IgnoreIssue(issue))
+        override fun onAiCheck() = onAiCheck(checkUi?.text.orEmpty())
+        override fun onAiApply(original: String, replacement: String) = onAction(KeyAction.ApplyRewrite(original, replacement))
+    })
+    private var checkUi: com.yeamin.lipi.core.CheckUi? = null
+    private var shownChecking = false
     private var translateStatus = TranslateStatus.CHECKING
     private var translateBusy = false
+
+    /** The service reports the on-device AI proofreading state for the Check card. */
+    fun setAi(state: CheckCardView.Ai) = checkCard.setAi(state)
 
     /** The service reports whether offline translation is ready (or downloading, …). */
     fun setTranslateStatus(status: TranslateStatus) {
@@ -139,7 +163,7 @@ class KeyboardContainer(
             return
         }
         if (!translateCard.isShowing) translateCard.show()
-        translateCard.render(TranslateCardModel(t.source, t.toBangla, t.translation, translateStatus, translateBusy && t.translation == null))
+        translateCard.render(TranslateCardModel(t.source, t.toBangla, t.translation, translateStatus, translateBusy && t.translation == null, t.corrected))
     }
 
     private val uiState = mutableStateOf<KeyboardUiState?>(null)
@@ -150,11 +174,102 @@ class KeyboardContainer(
         setContent {
             val s = uiState.value ?: return@setContent
             when (s.panel) {
-                Panel.NONE -> Unit
+                Panel.NONE, Panel.EMOJI, Panel.CLIPBOARD -> Unit // emoji and clipboard open above the toolbar
                 Panel.EDITING -> EditingPanel(s.selecting, panelColors, onAction)
                 else -> servicePanel(s.panel, panelColors, s)
             }
         }
+    }
+
+    // ------------------------------------------------------------------ upper section (emoji, clipboard)
+
+    /** Which panel the section above the toolbar shows (kept while it animates away). */
+    private val upperPanel = mutableStateOf<Panel?>(null)
+
+    /** Emoji and clipboard, drawn with Compose above the toolbar; switching between them crossfades. */
+    private val upperView = ComposeView(context).apply {
+        setContent {
+            val p = upperPanel.value
+            val s = uiState.value
+            if (p != null && s != null) {
+                androidx.compose.animation.AnimatedContent(
+                    targetState = p,
+                    transitionSpec = {
+                        (androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(220, delayMillis = 40)) +
+                            androidx.compose.animation.slideInVertically(androidx.compose.animation.core.tween(260)) { it / 10 }) togetherWith
+                            androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(120))
+                    },
+                    label = "upper",
+                ) { panel -> servicePanel(panel, panelColors, s) }
+            }
+        }
+    }
+
+    /**
+     * The section above the toolbar for emoji and clipboard. The keys stay where they are and
+     * stay usable: pressing one closes the section and types (see [keyFromKeyboard]).
+     */
+    private val upperSection = FrameLayout(context).apply {
+        visibility = View.GONE
+        addView(upperView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
+    }
+    private var upperHiding = false
+
+    /** Rises into place from just above the toolbar. */
+    private fun showUpper() {
+        upperHiding = false
+        upperSection.animate().cancel()
+        if (upperSection.isVisible && upperSection.alpha >= 1f) return
+        val fresh = upperSection.visibility != View.VISIBLE
+        upperSection.visibility = View.VISIBLE
+        upperSection.pivotY = UPPER_HEIGHT_DP * density
+        if (fresh) {
+            upperSection.alpha = 0f
+            upperSection.translationY = 28 * density
+            upperSection.scaleX = 0.97f
+            upperSection.scaleY = 0.97f
+        }
+        upperSection.animate()
+            .alpha(1f).translationY(0f).scaleX(1f).scaleY(1f)
+            .setDuration(300).setInterpolator(UPPER_SETTLE)
+            .withEndAction(null)
+            .start()
+    }
+
+    /** Sinks back towards the toolbar and fades, then gives the space back to the app. */
+    private fun hideUpper() {
+        if (upperSection.visibility != View.VISIBLE || upperHiding) return
+        upperHiding = true
+        upperSection.animate().cancel()
+        upperSection.animate()
+            .alpha(0f).translationY(20 * density).scaleX(0.98f).scaleY(0.98f)
+            .setDuration(170).setInterpolator(android.view.animation.DecelerateInterpolator())
+            .withEndAction {
+                upperSection.visibility = View.GONE
+                upperSection.alpha = 1f
+                upperSection.translationY = 0f
+                upperSection.scaleX = 1f
+                upperSection.scaleY = 1f
+                upperHiding = false
+                upperPanel.value = null
+            }
+            .start()
+    }
+
+    private val upperOpen: Boolean
+        get() = uiState.value?.panel.let { it == Panel.EMOJI || it == Panel.CLIPBOARD }
+
+    /**
+     * A key pressed on the keyboard while emoji or clipboard is open above it: the section
+     * closes first, then the key types as usual. (Not while typing a search for that panel,
+     * and not for keys that open a panel themselves.)
+     */
+    private fun keyFromKeyboard(action: KeyAction) {
+        val opensSomething = action is KeyAction.ShowPanel || action is KeyAction.OpenEmojiTab ||
+            action is KeyAction.StartSearch || action is KeyAction.Host || action is KeyAction.StartTranslate ||
+            action is KeyAction.StartCheck
+        if (upperOpen && uiState.value?.search == null && !opensSomething) onAction(KeyAction.ShowPanel(Panel.NONE))
+        onAction(action)
     }
 
     @SuppressLint("SetTextI18n")
@@ -217,9 +332,14 @@ class KeyboardContainer(
 
     val keyboardView = KeyboardView(context, palette).apply {
         popup = popupView
-        listener = KeyboardView.Listener { onAction(it) }
+        listener = KeyboardView.Listener { keyFromKeyboard(it) }
         this.feedback = feedback
         heightScale = options.heightScale
+        split = options.split && !options.floating && options.oneHanded == OneHanded.OFF
+        KeyFonts.load(context, options.keyFont).let { fonts ->
+            setKeyFont(fonts)
+            popupView.setKeyFont(fonts)
+        }
     }
 
     /** Toolbar + keys: the whole keyboard (the movable card in floating mode). */
@@ -264,6 +384,12 @@ class KeyboardContainer(
     private companion object {
         /** Bottom padding last worked out from the system's insets (-1 until known). */
         var lastBottomPadding = -1
+
+        /** Height of the emoji / clipboard section above the toolbar. */
+        const val UPPER_HEIGHT_DP = 236f
+
+        /** Quick start, long gentle settle (as the translate and check cards). */
+        val UPPER_SETTLE = android.view.animation.PathInterpolator(0.2f, 0.9f, 0.25f, 1f)
 
         /** Radius of the keyboard's rounded top corners. */
         const val TOP_CORNER_DP = 18f
@@ -414,6 +540,8 @@ class KeyboardContainer(
         if (options.floating) column.addView(floatingHandle(), LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, (28 * density).toInt()))
         // Translate opens above the toolbar, so the window grows upward and the keys don't move.
         column.addView(translateCard, LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
+        column.addView(checkCard, LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
+        column.addView(upperSection, LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, (UPPER_HEIGHT_DP * density).toInt()))
         // The top bar: the toolbar, with the voice bar laid over it while dictating.
         toolbarRow = toolbar
         topBar.addView(toolbar, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
@@ -628,17 +756,37 @@ class KeyboardContainer(
 
         if (uiState.value?.panel != state.panel && state.panel != Panel.NONE) keyboardView.cancelTouches()
         uiState.value = state
-        val showPanel = state.panel != Panel.NONE
+        // Emoji and clipboard open above the toolbar (the keys stay); editing and voice cover the keys.
+        val upper = state.panel == Panel.EMOJI || state.panel == Panel.CLIPBOARD
+        val showPanel = state.panel != Panel.NONE && !upper
         panelView.visibility = if (showPanel) View.VISIBLE else View.GONE
         keyboardView.visibility = if (showPanel) View.INVISIBLE else View.VISIBLE
+        if (upper) {
+            upperPanel.value = state.panel
+            showUpper()
+        } else {
+            hideUpper()
+        }
         // Password fields hide the clipboard, voice and emoji shortcuts.
         val items = if (state.field.isPassword) state.toolbar.filter { it == ToolbarItem.EDIT } else state.toolbar
         val translating = state.translate != null
-        if (items != shownToolbar || state.panel != shownPanel || translating != shownTranslating) {
+        val checking = state.check != null
+        if (items != shownToolbar || state.panel != shownPanel || translating != shownTranslating || checking != shownChecking) {
             shownToolbar = items
             shownPanel = state.panel
             shownTranslating = translating
-            renderToolbar(items, state.panel, translating)
+            shownChecking = checking
+            renderToolbar(items, state.panel, translating, checking)
+        }
+        if (state.check != checkUi) {
+            checkUi = state.check
+            val c = state.check
+            if (c == null) {
+                checkCard.hide()
+            } else {
+                if (!checkCard.isShowing) checkCard.show()
+                checkCard.render(c)
+            }
         }
         if (state.translate != translateUi) {
             translateUi = state.translate
@@ -669,20 +817,29 @@ class KeyboardContainer(
      * voice typing (always second from the right, next to the language button). Each tool
      * toggles: tap to open its panel, tap again to go back to the keys; the open one is highlighted.
      */
-    private fun renderToolbar(items: List<ToolbarItem>, open: Panel, translating: Boolean) {
+    private fun renderToolbar(items: List<ToolbarItem>, open: Panel, translating: Boolean, checking: Boolean) {
         toolbarButtons.removeAllViews()
         toolbarButtons.addView(
             toolbarButton(KeyboardIcon.SETTINGS, "Keyboard settings", false) { onAction(KeyAction.Host(HostCommand.OPEN_SETTINGS)) },
             LinearLayout.LayoutParams(0, LayoutParams.MATCH_PARENT, 1f),
         )
         fun add(item: ToolbarItem) {
-            val active = if (item == ToolbarItem.TRANSLATE) translating else item.panel == open
+            val active = when (item) {
+                ToolbarItem.TRANSLATE -> translating
+                ToolbarItem.CHECK -> checking
+                else -> item.panel == open
+            }
             val description = if (active) "${item.title}. Tap to go back to the keys" else item.title
             toolbarButtons.addView(
                 if (item == ToolbarItem.VOICE) {
                     // Tap: dictate in the top bar with the keys still usable. Hold: the full voice panel.
                     toolbarButton(iconFor(item), if (active) description else "Voice typing. Hold for the voice panel", active, onLongClick = { onVoice(VoiceCommand.OPEN_PANEL) }) {
                         if (active) onAction(KeyAction.ShowPanel(Panel.NONE)) else onVoice(VoiceCommand.START)
+                    }
+                } else if (item == ToolbarItem.CHECK) {
+                    // Opens the Check card above the toolbar with what is wrong in the text.
+                    toolbarButton(iconFor(item), description, active) {
+                        onAction(if (active) KeyAction.EndCheck else KeyAction.StartCheck)
                     }
                 } else if (item == ToolbarItem.TRANSLATE) {
                     // Opens the translate box above the toolbar; the keys stay for typing into it.
@@ -707,6 +864,7 @@ class KeyboardContainer(
         ToolbarItem.VOICE -> KeyboardIcon.MIC
         ToolbarItem.EDIT -> KeyboardIcon.EDIT
         ToolbarItem.TRANSLATE -> KeyboardIcon.TRANSLATE
+        ToolbarItem.CHECK -> KeyboardIcon.SPELLCHECK
     }
 
     /**

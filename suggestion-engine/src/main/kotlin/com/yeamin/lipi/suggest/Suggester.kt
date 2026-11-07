@@ -39,6 +39,9 @@ class Suggester(
     /** Next-character probabilities for predictive touch targets. */
     val nextChars = NextCharPredictor(english, bangla, avro, history)
 
+    /** Offline spelling, punctuation and grammar checking (the ✓ Check tool). */
+    val checker = TextChecker(english, bangla, history)
+
     // ------------------------------------------------------------------ English
 
     fun english(typed: String, options: SuggestOptions = SuggestOptions()): WordSuggestions {

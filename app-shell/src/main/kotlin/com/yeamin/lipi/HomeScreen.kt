@@ -96,6 +96,11 @@ fun HomeScreen(
                 "$personalWordCount word${if (personalWordCount == 1) "" else "s"}",
                 UiR.drawable.ms_menu_book,
             ) { onOpen(Destination.DICTIONARY) }
+            SettingsItem(
+                "Typing stats",
+                "Words typed, by day and language",
+                UiR.drawable.ms_history,
+            ) { onOpen(Destination.STATS) }
         }
 
         if (themes.isNotEmpty()) QuickThemes(themes, activeThemeId, onSelectTheme)

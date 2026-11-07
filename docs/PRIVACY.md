@@ -38,6 +38,18 @@ minute after it was copied, unless you pin it.
 - **Voice typing** uses your phone's speech recognition service (usually Google's). While the
   🎤 panel is listening, your voice goes to that service, which may process it online
   depending on your phone and language. Lipi does not record or keep audio.
+- **Offline translation** (🌐 Translate in the top bar) runs on your phone with Google's ML Kit
+  translator: the text you translate never leaves the phone. The Bangla language pack (about
+  30 MB) is downloaded from Google once, only when you tap Download (or in Languages & layouts),
+  and can be deleted there. When translation is used, the ML Kit library may send Google
+  diagnostic data about the library itself (app and phone model, Android version, how long
+  translation took, a per-install identifier); it does not send the text.
+- **✨ AI proofreading** (Check card, only on phones with Google's on-device AI, Gemini Nano):
+  the text is proofread on the phone by Android's AICore system app; it is not sent to a server.
+  The AI model is managed and downloaded by AICore when you first use it. The button only
+  appears on phones that support it, and only for English text.
+- **Typing stats** are counts only (how many words, corrections, emoji), kept on the phone,
+  never counted in password or private fields; reset them under Typing stats.
 
 ## Backups
 - Android's automatic cloud backup and phone-to-phone transfer **exclude** Lipi's database
@@ -49,7 +61,7 @@ minute after it was copied, unless you pin it.
 
 ## Permissions
 - **Microphone:** only for voice typing; asked for in the app with an explanation.
-- **Internet:** only for GIF search with your own key.
+- **Internet:** only for GIF search with your own key and for downloading the offline translation pack when you ask.
 - **Vibration:** for the key-press vibration strength setting.
 
 ## Deleting everything

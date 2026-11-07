@@ -2,27 +2,42 @@ package com.yeamin.lipi.ui
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -35,9 +50,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yeamin.lipi.clipboard.PanelColors
@@ -84,17 +104,28 @@ class EmojiPanelData(
 )
 
 private sealed interface Tab {
-    data object Recent : Tab
-    data object Favorites : Tab
-    data class Group(val group: EmojiGroup) : Tab
-    data object Kaomoji : Tab
-    data object Stickers : Tab
-    data object Gifs : Tab
+    val icon: String
+    val title: String
+
+    data object Recent : Tab { override val icon = "🕘"; override val title = "Recent" }
+    data object Favorites : Tab { override val icon = "⭐"; override val title = "Favourites" }
+    data class Group(val group: EmojiGroup) : Tab {
+        override val icon get() = group.icon
+        override val title get() = group.title
+    }
+    data object Kaomoji : Tab { override val icon = "(^_^)"; override val title = "Kaomoji" }
+    data object Stickers : Tab { override val icon = "🖼"; override val title = "Stickers" }
+    data object Gifs : Tab { override val icon = "GIF"; override val title = "GIFs" }
 }
 
 /**
  * Emoji (with skin tones, recents, favourites and search in English and Bangla), kaomoji,
- * the user's stickers, and GIFs. Long-press an emoji for skin tones and favourite.
+ * the user's stickers, and GIFs, shown above the keys (the keys stay usable: pressing one
+ * closes the panel and types).
+ *
+ * Layout: a search bar with backspace on top, the emoji grid with the category's name, and a
+ * category bar at the bottom whose highlight slides to the chosen tab. Emoji spring when
+ * tapped; long-press opens a floating bar with skin tones and favourite.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -117,35 +148,47 @@ fun EmojiPanel(data: EmojiPanelData, query: String, colors: PanelColors, actions
         }
     }
     val searching = query.isNotBlank()
+    val tabs: List<Tab> = buildList {
+        add(Tab.Recent)
+        add(Tab.Favorites)
+        EmojiGroup.entries.forEach { add(Tab.Group(it)) }
+        add(Tab.Kaomoji)
+        add(Tab.Stickers)
+        add(Tab.Gifs)
+    }
 
-    Column(Modifier.fillMaxSize().background(colors.background)) {
-        // Tabs (scrolling), with backspace fixed at the end. The toolbar's emoji button returns to the keys.
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Row(
-                Modifier.weight(1f).horizontalScroll(rememberScrollState()).padding(horizontal = 4.dp, vertical = 2.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-            TabIcon("🔍", false, colors) { actions.startSearch() }
-            TabIcon("🕘", tab == Tab.Recent && !searching, colors) { tab = Tab.Recent; actions.clearSearch() }
-            TabIcon("⭐", tab == Tab.Favorites && !searching, colors) { tab = Tab.Favorites; actions.clearSearch() }
-            EmojiGroup.entries.forEach { g -> TabIcon(g.icon, tab == Tab.Group(g) && !searching, colors) { tab = Tab.Group(g); actions.clearSearch() } }
-            TabIcon("(^_^)", tab == Tab.Kaomoji, colors) { tab = Tab.Kaomoji; actions.clearSearch() }
-            TabIcon("🖼", tab == Tab.Stickers, colors) { tab = Tab.Stickers; actions.clearSearch() }
-                TabIcon("GIF", tab == Tab.Gifs, colors) { tab = Tab.Gifs }
-            }
-            TabIcon("⌫", false, colors) { actions.backspace() }
+    Column(Modifier.fillMaxSize().padding(horizontal = 8.dp).padding(top = 6.dp)) {
+        // Search bar + backspace.
+        Row(Modifier.fillMaxWidth().height(38.dp), verticalAlignment = Alignment.CenterVertically) {
+            SearchPill(
+                hint = if (tab == Tab.Gifs) "Search GIFs" else "Search emoji · ইমোজি খুঁজুন",
+                query = query,
+                colors = colors,
+                modifier = Modifier.weight(1f),
+                onClick = { actions.startSearch() },
+                onClear = { actions.clearSearch() },
+            )
+            Spacer(Modifier.width(8.dp))
+            RoundButton(R.drawable.ms_backspace, "Delete", colors) { actions.backspace() }
         }
 
-        menuFor?.let { e -> EmojiMenu(e, data, colors, actions) { menuFor = null } }
-        notice?.let { Text(it, color = colors.hint, fontSize = 12.sp, modifier = Modifier.padding(horizontal = 12.dp)) }
-        if (searching && tab != Tab.Gifs) {
-            Row(Modifier.padding(horizontal = 12.dp, vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("Results for “$query”", color = colors.hint, fontSize = 12.sp, modifier = Modifier.weight(1f))
-                Text("✕", color = colors.text, modifier = Modifier.clickable { actions.clearSearch() }.padding(8.dp))
-            }
+        // Title of what is showing, or the notice.
+        val title = when {
+            notice != null -> notice!!
+            searching && tab != Tab.Gifs -> "Results for “$query”"
+            else -> tab.title
         }
+        Text(
+            title,
+            color = colors.hint,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Medium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(start = 6.dp, top = 6.dp, bottom = 2.dp),
+        )
 
-        Box(Modifier.weight(1f)) {
+        Box(Modifier.weight(1f).fillMaxWidth()) {
             when {
                 tab == Tab.Gifs -> GifGrid(data.gifsEnabled, query, colors, actions) { notice = it }
                 tab == Tab.Stickers -> StickerGrid(data.stickers, colors, actions) { notice = it }
@@ -165,32 +208,147 @@ fun EmojiPanel(data: EmojiPanelData, query: String, colors: PanelColors, actions
                             when {
                                 data.emoji == null -> "Loading emoji…"
                                 searching -> "No emoji found for “$query”."
-                                tab == Tab.Favorites -> "Long-press an emoji and tap ☆ to add favourites."
+                                tab == Tab.Favorites -> "Long-press an emoji and tap ☆ to keep it here."
                                 else -> "Emoji you use appear here."
                             },
                             colors,
                         )
                     } else {
-                        LazyVerticalGrid(columns = GridCells.Adaptive(44.dp), modifier = Modifier.fillMaxSize().padding(horizontal = 4.dp)) {
+                        val grid = rememberLazyGridState()
+                        LaunchedEffect(tab, query) { grid.scrollToItem(0) }
+                        LazyVerticalGrid(
+                            columns = GridCells.Adaptive(44.dp),
+                            state = grid,
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(bottom = 4.dp),
+                        ) {
                             items(list) { e ->
-                                Text(
-                                    e,
-                                    fontSize = 26.sp,
-                                    textAlign = TextAlign.Center,
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .combinedClickable(
-                                            onClick = { actions.insert(e) },
-                                            onLongClick = { menuFor = data.emoji?.find(e) },
-                                        )
-                                        .padding(vertical = 6.dp),
-                                )
+                                EmojiCell(e, onClick = { actions.insert(e) }, onLongClick = { menuFor = data.emoji?.find(e) })
                             }
                         }
                     }
                 }
             }
+            // Long-press: floating bar with skin tones and favourite.
+            menuFor?.let { e ->
+                // Pops in from the top of the grid.
+                val shown = remember(e) { androidx.compose.animation.core.Animatable(0f) }
+                LaunchedEffect(e) { shown.animateTo(1f, spring(dampingRatio = 0.6f, stiffness = Spring.StiffnessMediumLow)) }
+                Box(
+                    Modifier.align(Alignment.TopCenter).graphicsLayer {
+                        alpha = shown.value
+                        translationY = (1f - shown.value) * -24f
+                        scaleX = 0.9f + 0.1f * shown.value
+                        scaleY = 0.9f + 0.1f * shown.value
+                    },
+                ) { EmojiMenu(e, data, colors, actions) { menuFor = null } }
+            }
         }
+
+        // Category bar.
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .height(40.dp)
+                .padding(vertical = 3.dp)
+                .clip(RoundedCornerShape(20.dp))
+                .background(colors.surface.copy(alpha = colors.surface.alpha * 0.7f))
+                .horizontalScroll(rememberScrollState())
+                .padding(horizontal = 3.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            tabs.forEach { t ->
+                val selected = tab == t && !(searching && t != Tab.Gifs)
+                CategoryTab(t.icon, selected, colors) {
+                    tab = t
+                    if (t != Tab.Gifs) actions.clearSearch()
+                }
+            }
+        }
+    }
+}
+
+/** One emoji: springs down a little while pressed. */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun EmojiCell(e: String, onClick: () -> Unit, onLongClick: () -> Unit) {
+    val source = remember { MutableInteractionSource() }
+    val pressed by source.collectIsPressedAsState()
+    val scale by animateFloatAsState(if (pressed) 0.78f else 1f, spring(dampingRatio = 0.45f, stiffness = Spring.StiffnessMedium), label = "emoji")
+    Box(
+        Modifier
+            .aspectRatio(1f)
+            .clip(RoundedCornerShape(12.dp))
+            .combinedClickable(interactionSource = source, indication = androidx.compose.material3.ripple(), onClick = onClick, onLongClick = onLongClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(e, fontSize = 26.sp, textAlign = TextAlign.Center, modifier = Modifier.graphicsLayer { scaleX = scale; scaleY = scale })
+    }
+}
+
+/** A tab in the category bar: the chosen one sits on an accent pill that fades in. */
+@Composable
+private fun CategoryTab(label: String, selected: Boolean, colors: PanelColors, onClick: () -> Unit) {
+    val bg by animateColorAsState(if (selected) colors.accent else Color.Transparent, label = "tab")
+    val scale by animateFloatAsState(if (selected) 1.08f else 1f, spring(dampingRatio = 0.5f), label = "tabScale")
+    Box(
+        Modifier
+            .padding(horizontal = 1.dp)
+            .height(32.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(bg)
+            .clickable(onClick = onClick)
+            .padding(horizontal = if (label.length > 2) 10.dp else 8.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            label,
+            fontSize = if (label.length > 2) 12.sp else 18.sp,
+            fontWeight = if (label.length > 2) FontWeight.Bold else FontWeight.Normal,
+            color = if (selected) colors.onAccent else colors.text,
+            modifier = Modifier.graphicsLayer { scaleX = scale; scaleY = scale },
+        )
+    }
+}
+
+/** A rounded search field look-alike: tapping it types the search with the keys. */
+@Composable
+internal fun SearchPill(hint: String, query: String, colors: PanelColors, modifier: Modifier, onClick: () -> Unit, onClear: () -> Unit) {
+    Row(
+        modifier
+            .fillMaxHeight()
+            .clip(RoundedCornerShape(19.dp))
+            .background(colors.surface)
+            .border(1.dp, colors.hint.copy(alpha = 0.25f), RoundedCornerShape(19.dp))
+            .clickable(onClick = onClick)
+            .padding(start = 12.dp, end = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(painterResource(R.drawable.ms_search), null, tint = colors.hint, modifier = Modifier.size(18.dp))
+        Spacer(Modifier.width(8.dp))
+        Text(
+            query.ifBlank { hint },
+            color = if (query.isBlank()) colors.hint else colors.text,
+            fontSize = 14.sp,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
+        )
+        if (query.isNotBlank()) {
+            Box(Modifier.size(30.dp).clip(CircleShape).clickable(onClick = onClear), contentAlignment = Alignment.Center) {
+                Icon(painterResource(R.drawable.ms_close), "Clear search", tint = colors.hint, modifier = Modifier.size(16.dp))
+            }
+        }
+    }
+}
+
+@Composable
+internal fun RoundButton(icon: Int, description: String, colors: PanelColors, onClick: () -> Unit) {
+    Box(
+        Modifier.size(38.dp).clip(CircleShape).background(colors.surface).clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(painterResource(icon), description, tint = colors.text, modifier = Modifier.size(20.dp))
     }
 }
 
@@ -199,9 +357,15 @@ private fun EmojiMenu(e: Emoji, data: EmojiPanelData, colors: PanelColors, actio
     val current = e.withTone(data.skinTone)
     val isFavorite = current in data.favorites || e.value in data.favorites
     Row(
-        Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).background(colors.surface).padding(4.dp),
+        Modifier
+            .padding(4.dp)
+            .clip(RoundedCornerShape(22.dp))
+            .background(colors.popupSurface())
+            .border(1.dp, colors.hint.copy(alpha = 0.25f), RoundedCornerShape(22.dp))
+            .horizontalScroll(rememberScrollState())
+            .padding(horizontal = 6.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         if (e.hasTones) {
             (0..5).forEach { tone ->
@@ -209,8 +373,8 @@ private fun EmojiMenu(e: Emoji, data: EmojiPanelData, colors: PanelColors, actio
                     e.withTone(tone),
                     fontSize = 26.sp,
                     modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(if (tone == data.skinTone) colors.accent else colors.surface)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(if (tone == data.skinTone) colors.accent.copy(alpha = 0.35f) else Color.Transparent)
                         .clickable {
                             actions.setSkinTone(tone)
                             actions.insert(e.withTone(tone))
@@ -219,20 +383,33 @@ private fun EmojiMenu(e: Emoji, data: EmojiPanelData, colors: PanelColors, actio
                         .padding(4.dp),
                 )
             }
+        } else {
+            Text(current, fontSize = 26.sp, modifier = Modifier.padding(4.dp))
         }
         Text(
-            if (isFavorite) "★ Unfavourite" else "☆ Favourite",
-            color = colors.text,
-            modifier = Modifier.clip(RoundedCornerShape(12.dp)).clickable { actions.toggleFavorite(current); dismiss() }.padding(8.dp),
+            if (isFavorite) "★" else "☆",
+            color = colors.accent,
+            fontSize = 22.sp,
+            modifier = Modifier.clip(CircleShape).clickable { actions.toggleFavorite(current); dismiss() }.padding(horizontal = 8.dp, vertical = 2.dp),
         )
-        data.emoji?.banglaName(e)?.let { Text(it, color = colors.hint, fontSize = 12.sp) }
-        Text("✕", color = colors.text, modifier = Modifier.clickable { dismiss() }.padding(8.dp))
+        data.emoji?.banglaName(e)?.let { Text(it, color = colors.hint, fontSize = 12.sp, modifier = Modifier.padding(horizontal = 4.dp)) }
+        Box(Modifier.size(30.dp).clip(CircleShape).clickable { dismiss() }, contentAlignment = Alignment.Center) {
+            Icon(painterResource(R.drawable.ms_close), "Close", tint = colors.hint, modifier = Modifier.size(16.dp))
+        }
     }
 }
 
+/** An opaque surface for floating bars (theme keys can be see-through). */
+private fun PanelColors.popupSurface(): Color = Color(
+    red = surface.red * 0.9f + background.red * 0.1f,
+    green = surface.green * 0.9f + background.green * 0.1f,
+    blue = surface.blue * 0.9f + background.blue * 0.1f,
+    alpha = 1f,
+)
+
 @Composable
 private fun KaomojiList(colors: PanelColors, actions: EmojiPanelActions) {
-    LazyVerticalGrid(columns = GridCells.Adaptive(96.dp), modifier = Modifier.fillMaxSize().padding(4.dp)) {
+    LazyVerticalGrid(columns = GridCells.Adaptive(96.dp), modifier = Modifier.fillMaxSize()) {
         Kaomoji.groups.forEach { (title, faces) ->
             item(span = { GridItemSpan(maxLineSpan) }) {
                 Text(title, color = colors.hint, fontSize = 12.sp, modifier = Modifier.padding(6.dp))
@@ -244,7 +421,7 @@ private fun KaomojiList(colors: PanelColors, actions: EmojiPanelActions) {
                     fontSize = 15.sp,
                     maxLines = 1,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(2.dp).clip(RoundedCornerShape(8.dp)).background(colors.surface)
+                    modifier = Modifier.padding(3.dp).clip(RoundedCornerShape(12.dp)).background(colors.surface)
                         .clickable { actions.insert(face) }.padding(vertical = 10.dp),
                 )
             }
@@ -260,13 +437,13 @@ private fun StickerGrid(stickers: List<Sticker>, colors: PanelColors, actions: E
         }
         return
     }
-    LazyVerticalGrid(columns = GridCells.Adaptive(76.dp), modifier = Modifier.fillMaxSize().padding(4.dp)) {
+    LazyVerticalGrid(columns = GridCells.Adaptive(76.dp), modifier = Modifier.fillMaxSize()) {
         items(stickers, key = { it.file.name }) { s ->
             val bitmap by produceState<Bitmap?>(null, s.file) {
                 value = withContext(Dispatchers.IO) { thumbnail(s.file.absolutePath, 160) }
             }
             Box(
-                Modifier.padding(3.dp).aspectRatio(1f).clip(RoundedCornerShape(8.dp)).background(colors.surface)
+                Modifier.padding(3.dp).aspectRatio(1f).clip(RoundedCornerShape(14.dp)).background(colors.surface)
                     .clickable { actions.sendSticker(s)?.let(notify) },
                 contentAlignment = Alignment.Center,
             ) {
@@ -293,13 +470,8 @@ private fun GifGrid(enabled: Boolean, query: String, colors: PanelColors, action
     }
     val scope = rememberCoroutineScope()
     Column(Modifier.fillMaxSize()) {
-        Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                if (query.isBlank()) "Trending" else "“$query”",
-                color = colors.hint,
-                fontSize = 12.sp,
-                modifier = Modifier.weight(1f),
-            )
+        Row(Modifier.fillMaxWidth().padding(horizontal = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(if (query.isBlank()) "Trending" else "“$query”", color = colors.hint, fontSize = 12.sp, modifier = Modifier.weight(1f))
             Text("Powered by GIPHY", color = colors.hint, fontSize = 10.sp)
         }
         val r = result
@@ -307,11 +479,11 @@ private fun GifGrid(enabled: Boolean, query: String, colors: PanelColors, action
             r == null -> Empty("Loading GIFs…", colors)
             r.isFailure -> Empty(r.exceptionOrNull()?.message ?: "Couldn't load GIFs. Check your internet connection.", colors)
             r.getOrThrow().isEmpty() -> Empty("No GIFs found.", colors)
-            else -> LazyVerticalGrid(columns = GridCells.Fixed(3), modifier = Modifier.fillMaxSize().padding(4.dp)) {
+            else -> LazyVerticalGrid(columns = GridCells.Fixed(3), modifier = Modifier.fillMaxSize()) {
                 items(r.getOrThrow(), key = { it.id }) { gif ->
                     val preview by produceState<Bitmap?>(null, gif.id) { value = actions.gifPreview(gif) }
                     Box(
-                        Modifier.padding(2.dp).height(84.dp).clip(RoundedCornerShape(6.dp)).background(colors.surface)
+                        Modifier.padding(2.dp).height(84.dp).clip(RoundedCornerShape(10.dp)).background(colors.surface)
                             .clickable {
                                 notify("Sending GIF…")
                                 scope.launch { actions.sendGif(gif)?.let(notify) }
@@ -329,29 +501,17 @@ private fun GifGrid(enabled: Boolean, query: String, colors: PanelColors, action
 
 @Composable
 private fun Empty(message: String, colors: PanelColors, action: (() -> Unit)? = null) {
-    Column(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
         Text(message, color = colors.hint, fontSize = 14.sp, textAlign = TextAlign.Center)
         action?.let {
             Text(
                 "Open Jolpai settings",
                 color = colors.onAccent,
-                modifier = Modifier.padding(top = 10.dp).clip(RoundedCornerShape(14.dp)).background(colors.accent)
+                modifier = Modifier.padding(top = 10.dp).clip(RoundedCornerShape(16.dp)).background(colors.accent)
                     .clickable(onClick = it).padding(horizontal = 14.dp, vertical = 8.dp),
             )
         }
     }
-}
-
-@Composable
-private fun TabIcon(label: String, selected: Boolean, colors: PanelColors, onClick: () -> Unit) {
-    Text(
-        label,
-        fontSize = if (label.length > 2) 13.sp else 20.sp,
-        color = if (selected) colors.onAccent else colors.text,
-        modifier = Modifier.padding(horizontal = 2.dp).clip(RoundedCornerShape(10.dp))
-            .background(if (selected) colors.accent else colors.background)
-            .clickable(onClick = onClick).padding(horizontal = 8.dp, vertical = 4.dp),
-    )
 }
 
 /** Decodes an image file scaled down to roughly [size] pixels. */

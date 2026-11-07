@@ -13,6 +13,7 @@ import android.view.View
 import com.yeamin.lipi.core.model.KeyStyle
 import com.yeamin.lipi.core.settings.HapticLevel
 import com.yeamin.lipi.core.settings.KeyboardSettings
+import com.yeamin.lipi.core.settings.SoundPack
 
 /**
  * Vibration and click sounds for key presses, following the user's settings and the phone's:
@@ -68,6 +69,16 @@ class KeyFeedback(context: Context, private val settings: () -> KeyboardSettings
         val a = audio ?: return
         if (a.ringerMode != AudioManager.RINGER_MODE_NORMAL) return
         if (notifications != null && notifications.currentInterruptionFilter > NotificationManager.INTERRUPTION_FILTER_ALL) return
+        if (s.soundPack != SoundPack.SYSTEM) {
+            val kind = when (style) {
+                KeyStyle.DELETE -> SoundPackPlayer.Kind.DELETE
+                KeyStyle.SPACE -> SoundPackPlayer.Kind.SPACE
+                KeyStyle.ENTER, KeyStyle.ENTER_ACTION -> SoundPackPlayer.Kind.ENTER
+                else -> SoundPackPlayer.Kind.STANDARD
+            }
+            packs.play(s.soundPack, kind, s.soundVolume)
+            return
+        }
         val effect = when (style) {
             KeyStyle.DELETE -> AudioManager.FX_KEYPRESS_DELETE
             KeyStyle.SPACE -> AudioManager.FX_KEYPRESS_SPACEBAR
@@ -75,5 +86,14 @@ class KeyFeedback(context: Context, private val settings: () -> KeyboardSettings
             else -> AudioManager.FX_KEYPRESS_STANDARD
         }
         a.playSoundEffect(effect, s.soundVolume)
+    }
+
+    /** Jolpai's own sound packs (made on first use). */
+    private val packs by lazy { SoundPackPlayer(appContext) }
+
+    /** Gets the chosen pack ready, so the first key press already sounds. */
+    fun prepareSounds() {
+        val s = settings()
+        if (s.keySound && s.soundPack != SoundPack.SYSTEM) packs.prepare(s.soundPack)
     }
 }

@@ -214,6 +214,7 @@ class MainActivity : ComponentActivity() {
                         Destination.BACKUP -> BackupScreen(viewModel, back)
                         Destination.ABOUT -> AboutScreen(back)
                         Destination.TEST_FIELDS -> TestFieldsScreen(back)
+                        Destination.STATS -> TypingStatsScreen(back)
                     }
                     }
                 }
@@ -260,5 +261,5 @@ private val PageEasing = CubicBezierEasing(0.2f, 0.9f, 0.25f, 1f)
 
 enum class Destination {
     HOME, LANGUAGES, TYPING, GESTURES, SUGGESTIONS, DICTIONARY, THEMES, THEME_EDITOR, SIZE, SOUND,
-    CLIPBOARD_SETTINGS, CLIPBOARD, SNIPPETS, TOOLBAR, VOICE, MEDIA, PRIVACY, BACKUP, ABOUT, TEST_FIELDS,
+    CLIPBOARD_SETTINGS, CLIPBOARD, SNIPPETS, TOOLBAR, VOICE, MEDIA, PRIVACY, BACKUP, ABOUT, TEST_FIELDS, STATS,
 }

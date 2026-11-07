@@ -1,0 +1,13 @@
+Fonts for the keyboard's keys (Size & layout → Key font), in keyboard-ui/src/main/res/font.
+All from Google Fonts (https://github.com/google/fonts, branch main, folder ofl/), unmodified.
+Each is licensed under the SIL Open Font License, Version 1.1 — see OFL.txt.
+
+hind_siliguri_regular.ttf, hind_siliguri_medium.ttf
+  Hind Siliguri. Copyright (c) 2015 Indian Type Foundry (info@indiantypefoundry.com).
+tiro_bangla_regular.ttf
+  Tiro Bangla. Copyright 2020 The Indigo Project Authors (https://github.com/TiroTypeworks/Indigo).
+galada_regular.ttf
+  Galada. Copyright (c) 2010 by Pablo Impallari (www.impallari.com).
+  Copyright (c) 2015 by black foundry (www.black-foundry.com).
+atma_regular.ttf, atma_medium.ttf
+  Atma. Copyright 2015 The Atma Project Authors (www.black-foundry.com).

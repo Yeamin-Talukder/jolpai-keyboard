@@ -461,6 +461,50 @@ fun SizeScreen(vm: MainViewModel, settings: KeyboardSettings, theme: KeyboardThe
             }
         }
         SettingsNote("In one-handed mode the keys move to one side; the arrows beside them switch sides or return to full width.")
+
+        SettingsGroup("Split keyboard") {
+            com.yeamin.lipi.core.settings.SplitKeys.entries.forEach { mode ->
+                SettingsRadio(mode.label, selected = settings.splitKeys == mode) { vm.setSplitKeys(mode) }
+            }
+        }
+        SettingsNote("Split keys move the two halves of the keyboard to the sides, for typing with both thumbs on a wide screen or tablet. Not in one-handed or floating mode.")
+
+        SettingsGroup("Key font") {
+            com.yeamin.lipi.core.settings.KeyFont.entries.forEach { font ->
+                KeyFontRow(font, selected = settings.keyFont == font) { vm.setKeyFont(font) }
+            }
+        }
+        SettingsNote("Bangla fonts from Google Fonts (SIL Open Font License). They change the letters on the keys, not the text you type.")
+    }
+}
+
+/** A key font choice, previewed in that font: "অ আ ক খ  Aa". */
+@Composable
+private fun KeyFontRow(font: com.yeamin.lipi.core.settings.KeyFont, selected: Boolean, onSelect: () -> Unit) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val family = remember(font) {
+        com.yeamin.lipi.ui.KeyFonts.load(context, font)?.first?.let { androidx.compose.ui.text.font.FontFamily(it) }
+    }
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .selectable(selected, role = Role.RadioButton, onClick = onSelect)
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        androidx.compose.material3.RadioButton(selected = selected, onClick = null)
+        Spacer(Modifier.width(16.dp))
+        Column(Modifier.weight(1f)) {
+            Text(font.label, style = MaterialTheme.typography.bodyLarge)
+            Text(
+                "অ আ ক খ গ  ধন্যবাদ  Aa",
+                style = MaterialTheme.typography.titleMedium,
+                fontFamily = family,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+            )
+        }
     }
 }
 
@@ -481,6 +525,32 @@ fun SoundScreen(vm: MainViewModel, settings: KeyboardSettings, onBack: () -> Uni
                     LabeledSlider("Volume", settings.soundVolume, 0f..1f, "${(settings.soundVolume * 100).toInt()} %") { vm.setSoundVolume(it) }
                 }
             }
+        }
+        if (settings.keySound) {
+            val context = androidx.compose.ui.platform.LocalContext.current
+            val player = remember { com.yeamin.lipi.ui.SoundPackPlayer(context) }
+            androidx.compose.runtime.DisposableEffect(player) { onDispose { player.release() } }
+            SettingsGroup("Sound") {
+                com.yeamin.lipi.core.settings.SoundPack.entries.forEach { pack ->
+                    SettingsRadio(pack.label, selected = settings.soundPack == pack) {
+                        vm.setSoundPack(pack)
+                        // A short preview: letter, letter, space.
+                        if (pack == com.yeamin.lipi.core.settings.SoundPack.SYSTEM) {
+                            context.getSystemService(android.media.AudioManager::class.java)
+                                ?.playSoundEffect(android.media.AudioManager.FX_KEYPRESS_STANDARD, settings.soundVolume)
+                        } else {
+                            player.prepare(pack)
+                            val handler = android.os.Handler(android.os.Looper.getMainLooper())
+                            listOf(120L, 260L, 400L).forEachIndexed { i, delay ->
+                                handler.postDelayed({
+                                    player.play(pack, if (i == 2) com.yeamin.lipi.ui.SoundPackPlayer.Kind.SPACE else com.yeamin.lipi.ui.SoundPackPlayer.Kind.STANDARD, settings.soundVolume.coerceAtLeast(0.3f))
+                                }, delay)
+                            }
+                        }
+                    }
+                }
+            }
+            SettingsNote("Jolpai's own sounds are made on the phone, not downloaded. Tap one to hear it.")
         }
         SettingsNote("Sounds stay silent when the phone is on silent, vibrate or Do Not Disturb.")
         Spacer(Modifier.height(8.dp))

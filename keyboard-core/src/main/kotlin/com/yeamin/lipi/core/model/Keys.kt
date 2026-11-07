@@ -87,11 +87,38 @@ sealed interface KeyAction {
     /** Turn the translation round (English → Bangla ⇄ Bangla → English), keeping the typed text. */
     data object SwapTranslate : KeyAction
 
+    /** Replace the translate box's text with its spelling corrected ("Did you mean …"). */
+    data object ApplyTranslateSpelling : KeyAction
+
     /** Empty the translate box. */
     data object ClearTranslate : KeyAction
 
     /** Put [text] (the translation) into the app and empty the translate box. */
     data class CommitTranslation(val text: String) : KeyAction
+
+    /** Open the Check card: spelling, punctuation and grammar in the text field, checked offline. */
+    data object StartCheck : KeyAction
+
+    /** Close the Check card. */
+    data object EndCheck : KeyAction
+
+    /** Check the text again (after typing more). */
+    data object Recheck : KeyAction
+
+    /** Apply one suggestion from the Check card. */
+    data class FixIssue(val issue: com.yeamin.lipi.suggest.TextIssue) : KeyAction
+
+    /** Apply every suggestion. */
+    data object FixAllIssues : KeyAction
+
+    /**
+     * Replace the checked text with an AI proofreading suggestion — only if the field still
+     * holds exactly [original] where it was checked.
+     */
+    data class ApplyRewrite(val original: String, val replacement: String) : KeyAction
+
+    /** Hide this suggestion (and the same word elsewhere) until the card is closed. */
+    data class IgnoreIssue(val issue: com.yeamin.lipi.suggest.TextIssue) : KeyAction
 
     /** Actions the keyboard service handles itself (they need Android framework calls). */
     data class Host(val command: HostCommand) : KeyAction
@@ -107,10 +134,13 @@ enum class ToolbarItem(val storageKey: String, val icon: String, val title: Stri
     EDIT("edit", "✎", "Text editing tools", Panel.EDITING),
 
     /** Translate English ⇄ Bangla offline in a box above the keys (not a panel: the keys stay). */
-    TRANSLATE("translate", "🌐", "Translate English ⇄ Bangla", Panel.NONE);
+    TRANSLATE("translate", "🌐", "Translate English ⇄ Bangla", Panel.NONE),
+
+    /** Check spelling, punctuation and grammar offline in a card above the keys. */
+    CHECK("check", "✓", "Check spelling and grammar", Panel.NONE);
 
     companion object {
-        val DEFAULT = listOf(EMOJI, CLIPBOARD, VOICE, EDIT, TRANSLATE)
+        val DEFAULT = listOf(EMOJI, CLIPBOARD, VOICE, EDIT, TRANSLATE, CHECK)
         fun fromStorageKey(key: String): ToolbarItem? = entries.firstOrNull { it.storageKey == key }
     }
 }

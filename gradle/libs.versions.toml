@@ -16,6 +16,7 @@ sqlcipher = "4.19.1"
 savedstate = "1.5.0"
 customview = "1.2.0"
 mlkitTranslate = "17.0.3"
+mlkitProofreading = "1.0.0-beta1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -41,6 +42,7 @@ room-compiler = { group = "androidx.room", name = "room-compiler", version.ref =
 sqlcipher-android = { group = "net.zetetic", name = "sqlcipher-android", version.ref = "sqlcipher" }
 androidx-savedstate = { group = "androidx.savedstate", name = "savedstate-ktx", version.ref = "savedstate" }
 androidx-customview = { group = "androidx.customview", name = "customview", version.ref = "customview" }
+mlkit-genai-proofreading = { group = "com.google.mlkit", name = "genai-proofreading", version.ref = "mlkitProofreading" }
 mlkit-translate = { group = "com.google.mlkit", name = "translate", version.ref = "mlkitTranslate" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "serialization" }
 

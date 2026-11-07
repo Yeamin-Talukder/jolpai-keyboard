@@ -1,5 +1,8 @@
 package com.yeamin.lipi
 
+import android.content.Context
+import android.content.Intent
+import androidx.core.net.toUri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.animateContentSize
@@ -82,12 +85,26 @@ private val NOTICES = listOf(
     Notice("Bangla word list and Avro search (OpenBangla upodesh) — MIT; suffixes and autocorrect (OpenBangla riti) — MPL-2.0", "/bn/NOTICE.txt", "/bn/LICENSE-MIT-upodesh.txt"),
     Notice("Emoji data (Unicode Emoji 17.0, CLDR 49) — Unicode License V3", "/emoji/NOTICE.txt", "/emoji/LICENSE-UNICODE-V3.txt"),
     Notice("Icons (Material Symbols by Google) — Apache-2.0", "/icons/NOTICE.txt", "/en/LICENSE-APACHE-2.0.txt"),
+    Notice("Bangla word frequencies (FrequencyWords, OpenSubtitles) — CC BY-SA 4.0; code MIT", "/bn/NOTICE.txt", "/bn/LICENSE-MIT-FrequencyWords.txt"),
+    Notice("Key fonts: Hind Siliguri, Tiro Bangla, Galada, Atma (Google Fonts) — SIL Open Font License 1.1", "/fonts/NOTICE.txt", "/fonts/OFL.txt"),
 )
 
+// Read through one of the app's own classes: NOTICES::class.java is a system List class whose
+// class loader can't see the app's files, so every notice showed "(not found …)" on the phone.
 private fun resourceText(path: String): String =
-    NOTICES::class.java.getResourceAsStream(path)?.use { it.readBytes().decodeToString() } ?: "(not found: $path)"
+    Notice::class.java.getResourceAsStream(path)?.use { it.readBytes().decodeToString() } ?: "(not found: $path)"
 
-/** Version, privacy summary, permissions, and the licences of everything Lipi includes. */
+private const val DEVELOPER_GITHUB = "https://github.com/Yeamin-Talukder"
+private const val SOURCE_CODE = "https://github.com/Yeamin-Talukder/jolpai-keyboard"
+
+/** Opens [url] in the browser; does nothing if the phone has no app for links. */
+private fun openLink(context: Context, url: String) {
+    runCatching {
+        context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    }
+}
+
+/** Version, developer, privacy summary, permissions, and the licences of everything Jolpai includes. */
 @Composable
 fun AboutScreen(onBack: () -> Unit) {
     val context = LocalContext.current
@@ -100,17 +117,27 @@ fun AboutScreen(onBack: () -> Unit) {
             SettingsItem("Jolpai Keyboard", "Version $version · English, বাংলা (অভ্র) and বাংলা (জাতীয়)", UiR.drawable.ms_keyboard, showChevron = false) {}
         }
 
+        SettingsGroup("Developer") {
+            SettingsItem("Md Yeamin Talukder", "Made in Bangladesh 🇧🇩", UiR.drawable.ms_code, showChevron = false) {}
+            SettingsItem("GitHub", DEVELOPER_GITHUB.removePrefix("https://"), UiR.drawable.ms_open_in_new) {
+                openLink(context, DEVELOPER_GITHUB)
+            }
+            SettingsItem("Source code", "Open source under Apache-2.0 · report a problem", UiR.drawable.ms_link) {
+                openLink(context, SOURCE_CODE)
+            }
+        }
+
         SettingsGroup("Privacy") {
             Bullet(UiR.drawable.ms_lock, "Everything you type stays on this phone. No account, no analytics, no ads, and no logs of what you type.")
             Bullet(UiR.drawable.ms_auto_awesome, "Learning never happens in password, private (incognito) or no-suggestion fields. You can turn it off or clear it.")
             Bullet(UiR.drawable.ms_content_paste, "Clipboard history is saved only while Jolpai is your keyboard, never from password fields or sensitive copies, and is deleted on your schedule.")
             Bullet(UiR.drawable.ms_backup, "Typing data, clipboard pictures and stickers are left out of Android's cloud backup and device transfer.")
-            Bullet(UiR.drawable.ms_gif_box, "The internet is used only if you add a GIPHY key. Voice typing uses your phone's speech service, which may work online.")
+            Bullet(UiR.drawable.ms_gif_box, "The internet is used only for GIF search with your own GIPHY key and to download the offline translation pack when you ask. Translation itself runs on the phone. Voice typing uses your phone's speech service, which may work online.")
         }
 
         SettingsGroup("Permissions") {
             Bullet(UiR.drawable.ms_mic, "Microphone — only for voice typing, asked for on the Voice typing screen.")
-            Bullet(UiR.drawable.ms_language, "Internet — only for GIF search with your own GIPHY key.")
+            Bullet(UiR.drawable.ms_language, "Internet — only for GIF search with your own GIPHY key and for downloading the offline translation pack.")
             Bullet(UiR.drawable.ms_vibration, "Vibration — for the key-press strengths you choose.")
         }
 

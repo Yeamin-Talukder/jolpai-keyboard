@@ -198,6 +198,7 @@ class LipiImeService : InputMethodService(), LifecycleOwner, SavedStateRegistryO
         touchCalibration.decode(touchPrefs.getString(KEY_CALIBRATION, "").orEmpty())
         controller.onLayoutChosen = { id -> scope.launch { settingsRepository.setLastLayout(id) } }
         controller.onEmojiUsed = ::recordEmoji
+        controller.stats = com.yeamin.lipi.core.stats.TypingStats(this) // counts only, shown in Typing stats
         controller.onHostCommand = ::handleHost
         scope.launch {
             settingsRepository.settings.collect {
@@ -271,6 +272,7 @@ class LipiImeService : InputMethodService(), LifecycleOwner, SavedStateRegistryO
             touchCalibration = touchCalibration,
             onVoice = ::onVoiceCommand,
             onTranslateDownload = { translator().download() },
+            onAiCheck = ::runAiCheck,
         )
         container = view
         translateWatch?.let { view.setTranslateStatus(translator().status.value) }
@@ -282,9 +284,69 @@ class LipiImeService : InputMethodService(), LifecycleOwner, SavedStateRegistryO
                 view.render(s)
                 onPanelShown(s)
                 onTranslateState(s.translate)
+                onCheckState(s.check)
             }
         }
         return view
+    }
+
+    // ------------------------------------------------------------------ on-device AI proofreading
+
+    private var aiProofreader: AiProofreader? = null
+    private var aiStatus: AiStatus? = null
+    private var checkOpen = false
+
+    private fun ai(): AiProofreader = aiProofreader ?: AiProofreader(this).also { aiProofreader = it }
+
+    /** When the Check card opens, offer ✨ AI if this phone has on-device AI and the text is English. */
+    private fun onCheckState(check: com.yeamin.lipi.core.CheckUi?) {
+        val open = check != null
+        if (open == checkOpen) return
+        checkOpen = open
+        if (!open) {
+            container?.setAi(CheckCardView.Ai.Hidden)
+            return
+        }
+        if (!mostlyEnglish(check?.text.orEmpty())) return
+        ai().status { st ->
+            aiStatus = st
+            if (!checkOpen) return@status
+            container?.setAi(
+                when (st) {
+                    AiStatus.AVAILABLE -> CheckCardView.Ai.Ready(needsDownload = false)
+                    AiStatus.DOWNLOADABLE, AiStatus.DOWNLOADING -> CheckCardView.Ai.Ready(needsDownload = true)
+                    AiStatus.UNAVAILABLE -> CheckCardView.Ai.Hidden
+                },
+            )
+        }
+    }
+
+    /** Proofreads the end of [text] (the model takes ~256 tokens); downloads the model first if needed. */
+    private fun runAiCheck(text: String) {
+        val part = text.takeLast(AiProofreader.MAX_CHARS).let { t ->
+            if (t.length < text.length) t.substring((t.indexOfFirst { it in ".!?\n" } + 1).coerceAtMost(t.length)) else t
+        }.trim()
+        if (part.isEmpty()) return
+        container?.setAi(CheckCardView.Ai.Working)
+        val run = {
+            ai().proofread(part) { result ->
+                if (!checkOpen) return@proofread
+                container?.setAi(
+                    when {
+                        result == null -> CheckCardView.Ai.Failed
+                        result.trim() == part -> CheckCardView.Ai.NothingToChange
+                        else -> CheckCardView.Ai.Suggestion(part, result.trim())
+                    },
+                )
+            }
+        }
+        if (aiStatus == AiStatus.AVAILABLE) run() else ai().download { ok -> if (ok) { aiStatus = AiStatus.AVAILABLE; run() } else container?.setAi(CheckCardView.Ai.Failed) }
+    }
+
+    private fun mostlyEnglish(text: String): Boolean {
+        val latin = text.count { it in 'a'..'z' || it in 'A'..'Z' }
+        val bangla = text.count { it in '\u0980'..'\u09FF' }
+        return latin >= 3 && latin > bangla
     }
 
     // ------------------------------------------------------------------ translate
@@ -358,6 +420,12 @@ class LipiImeService : InputMethodService(), LifecycleOwner, SavedStateRegistryO
             floating = settings.floating,
             floatX = settings.floatX,
             floatY = settings.floatY,
+            keyFont = settings.keyFont,
+            split = when (settings.splitKeys) {
+                com.yeamin.lipi.core.settings.SplitKeys.OFF -> false
+                com.yeamin.lipi.core.settings.SplitKeys.LANDSCAPE -> landscape
+                com.yeamin.lipi.core.settings.SplitKeys.ALWAYS -> true
+            },
         )
     }
 
@@ -366,6 +434,7 @@ class LipiImeService : InputMethodService(), LifecycleOwner, SavedStateRegistryO
 
     /** Rebuilds the keyboard right away when the theme, size or mode changes. */
     private fun rebuildIfAppearanceChanged() {
+        feedback.prepareSounds() // a newly chosen sound pack is ready for the next key press
         if (container == null || builtAppearance == appearanceKey()) return
         setInputView(onCreateInputView())
     }
@@ -781,6 +850,7 @@ class LipiImeService : InputMethodService(), LifecycleOwner, SavedStateRegistryO
     override fun onDestroy() {
         translateHandler.removeCallbacksAndMessages(null)
         offlineTranslator?.close()
+        aiProofreader?.close()
         clipboardWatcher.stop()
         voice.destroy()
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)

@@ -221,6 +221,18 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch { repository.setNumberRow(v) }
     }
 
+    fun setKeyFont(v: com.yeamin.lipi.core.settings.KeyFont) {
+        viewModelScope.launch { repository.setKeyFont(v) }
+    }
+
+    fun setSoundPack(v: com.yeamin.lipi.core.settings.SoundPack) {
+        viewModelScope.launch { repository.setSoundPack(v) }
+    }
+
+    fun setSplitKeys(v: com.yeamin.lipi.core.settings.SplitKeys) {
+        viewModelScope.launch { repository.setSplitKeys(v) }
+    }
+
     fun setOneHanded(v: OneHanded) {
         viewModelScope.launch { repository.setOneHanded(v) }
     }

@@ -50,7 +50,7 @@ class SuggestionResources @Inject constructor(private val store: RoomHistoryStor
         val b = BanglaDictionary.load()
         bangla = b
         onProgress()
-        avro = AvroSuggester.load(phonetic.value, AvroDictionarySearch.load(b))
+        avro = AvroSuggester.load(phonetic.value, AvroDictionarySearch.load(b), b::frequency)
         onProgress()
     }
 }

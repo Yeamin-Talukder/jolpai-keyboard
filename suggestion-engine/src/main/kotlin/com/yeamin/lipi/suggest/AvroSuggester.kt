@@ -34,6 +34,8 @@ class AvroSuggester(
     private val suffixes: Map<String, String>,
     /** Roman word → corrected Roman word, e.g. common misspellings. */
     private val autocorrect: Map<String, String>,
+    /** How common a Bangla word is (0–255): breaks ties between equally close candidates. */
+    private val frequency: (String) -> Int = { 0 },
 ) {
     private sealed class Ranked(val text: String) {
         class First(text: String) : Ranked(text)
@@ -79,7 +81,8 @@ class AvroSuggester(
         pushChecked(wrapped, Ranked.Last(preceding + wordPhonetic + trailing, 2))
         if (includeEnglish && term != split.preceding) wrapped += Ranked.Last(term, 3)
 
-        val sorted = wrapped.sortedWith(compareBy<Ranked> { it.order }.thenBy { it.value })
+        // Equally close candidates: the more common word first (from the frequency list).
+        val sorted = wrapped.sortedWith(compareBy<Ranked> { it.order }.thenBy { it.value }.thenByDescending { frequency(it.text) })
         val candidates = sorted.map { it.text }.distinct()
 
         val previous = previousSelection(split.word, selections)
@@ -161,12 +164,13 @@ class AvroSuggester(
         private fun isVowelOrKar(c: Char) = VOWELS_AND_KARS.indexOf(c) >= 0
         private fun isKar(c: Char) = KARS.indexOf(c) >= 0
 
-        fun load(phonetic: PhoneticEngine, search: AvroDictionarySearch): AvroSuggester =
+        fun load(phonetic: PhoneticEngine, search: AvroDictionarySearch, frequency: (String) -> Int = { 0 }): AvroSuggester =
             AvroSuggester(
                 phonetic,
                 search,
                 readJsonMap("/bn/riti-suffix.json"),
                 readJsonMap("/bn/riti-autocorrect.json"),
+                frequency,
             )
 
         private fun readJsonMap(path: String): Map<String, String> =

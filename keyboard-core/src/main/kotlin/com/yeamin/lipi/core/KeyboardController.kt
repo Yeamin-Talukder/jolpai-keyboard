@@ -49,7 +49,27 @@ import kotlinx.coroutines.flow.asStateFlow
  * The translate box: what has been typed ([source]), the direction, and its translation once the
  * service has one for exactly this text (null while translating, or when it failed).
  */
-data class TranslateUi(val source: String, val toBangla: Boolean, val translation: String?)
+data class TranslateUi(
+    val source: String,
+    val toBangla: Boolean,
+    val translation: String?,
+    /** [source] with its misspelt words corrected, offered as "Did you mean …", or null. */
+    val corrected: String? = null,
+)
+
+/**
+ * The Check card: the [issues] found in the text field (in text order). [stale]: the text has
+ * changed since it was checked (the card offers to check again). [fixed]: how many suggestions
+ * were applied since the card opened. [empty]: there was no text to check.
+ */
+data class CheckUi(
+    val issues: List<com.yeamin.lipi.suggest.TextIssue>,
+    val stale: Boolean,
+    val fixed: Int,
+    val empty: Boolean,
+    /** The text that was checked (for the optional on-device AI proofreading). */
+    val text: String = "",
+)
 
 /** One entry in the suggestion strip. */
 data class StripItem(val label: String, val action: KeyAction, val emphasized: Boolean = false)
@@ -87,6 +107,8 @@ data class KeyboardUiState(
     val search: Panel? = null,
     /** While non-null, the keys type into the translate box above the toolbar. */
     val translate: TranslateUi? = null,
+    /** While non-null, the Check card (spelling, punctuation, grammar) is open above the toolbar. */
+    val check: CheckUi? = null,
     val searchQuery: String = "",
     /** The last search for the panel being shown ("" for none). */
     val panelQuery: String = "",
@@ -155,6 +177,11 @@ class KeyboardController(
     /** Called when an emoji is inserted, so it can be added to the recents. */
     var onEmojiUsed: ((String) -> Unit)? = null
 
+    /** Typing statistics (counts only), or null. Never told about password, private or box typing. */
+    var stats: com.yeamin.lipi.core.stats.TypingEvents? = null
+
+    private val countStats: Boolean get() = stats != null && !typingInBox && !editorField.isSensitive
+
     // ------------------------------------------------------------------ search mode
 
     /** The search box of a panel; the keys type here while [searchPanel] is set. */
@@ -173,6 +200,19 @@ class KeyboardController(
     /** The latest translation and the text it belongs to (set by the service, which translates). */
     private var translatedSource: String? = null
     private var translatedText: String? = null
+
+    // ------------------------------------------------------------------ check mode
+
+    private var checking = false
+    private var checkIssues: List<com.yeamin.lipi.suggest.TextIssue> = emptyList()
+    private var checkStale = false
+    private var checkFixed = 0
+    private var checkEmpty = false
+    private val checkIgnored = HashSet<String>()
+
+    /** Where the checked text starts in the field (absolute position), and the text itself. */
+    private var checkBase = 0
+    private var checkText = ""
 
     /** Typing goes into one of the keyboard's own boxes, not the app. */
     private val typingInBox: Boolean get() = searchPanel != null || translating
@@ -283,6 +323,7 @@ class KeyboardController(
         editorField = newField
         if (!restarting) {
             endTranslate()
+            endCheck()
             processors.values.forEach { it.reset() }
             if (settingsLoaded && !settings.rememberLastLayout) userLayout = settings.startLayout
             activeLayout = layoutForField(newField)
@@ -456,6 +497,7 @@ class KeyboardController(
             is KeyAction.ShowPanel -> {
                 emojiTab = null
                 if (searchPanel != null) endSearch(keepQuery = false)
+                if (checking && action.panel != Panel.NONE) endCheck()
                 if (translating && action.panel != Panel.NONE) endTranslate()
                 if (action.panel != Panel.NONE) endComposing()
                 panel = action.panel
@@ -469,9 +511,11 @@ class KeyboardController(
                 val needsSpace = action.afterWord && before.isNotEmpty() && !before[0].isWhitespace()
                 appEditor.commit(if (needsSpace) " ${action.emoji}" else action.emoji)
                 onEmojiUsed?.invoke(action.emoji)
+                if (countStats) stats?.emoji()
             }
             is KeyAction.StartSearch -> {
                 if (translating) endTranslate()
+                if (checking) endCheck()
                 endComposing()
                 searchPanel = action.panel
                 searchBuffer.clear()
@@ -496,9 +540,80 @@ class KeyboardController(
                 val text = action.text.trim()
                 if (text.isEmpty()) appEditor.finishComposing() else appEditor.commit("$text ")
             }
+            KeyAction.StartCheck -> {
+                if (searchPanel != null) endSearch(keepQuery = false)
+                if (translating) endTranslate()
+                endComposing()
+                panel = Panel.NONE
+                checking = true
+                checkFixed = 0
+                checkIgnored.clear()
+                runCheck()
+            }
+            KeyAction.EndCheck -> endCheck()
+            KeyAction.Recheck -> if (checking) {
+                endComposing()
+                runCheck()
+            }
+            is KeyAction.FixIssue -> if (checking) {
+                endComposing()
+                if (checkStale) runCheck()
+                val current = checkIssues.firstOrNull { it == action.issue }
+                    ?: checkIssues.firstOrNull { it.original == action.issue.original && it.replacement == action.issue.replacement }
+                if (current != null) {
+                    applyFixes(listOf(current))
+                    checkFixed++
+                }
+                runCheck()
+            }
+            KeyAction.FixAllIssues -> if (checking) {
+                endComposing()
+                if (checkStale) runCheck()
+                // A fix can uncover the next one ("its better then"): check again, up to 3 rounds.
+                var rounds = 0
+                while (checkIssues.isNotEmpty() && rounds < 3) {
+                    checkFixed += checkIssues.size
+                    applyFixes(checkIssues)
+                    runCheck()
+                    rounds++
+                }
+            }
+            is KeyAction.ApplyRewrite -> if (checking) {
+                endComposing()
+                if (checkStale) runCheck()
+                val original = action.original
+                // Rewrite the part that was proofread (the checked text ends where it ends).
+                val at = checkText.lastIndexOf(original)
+                if (original.isNotEmpty() && at >= 0 && action.replacement != original) {
+                    applyFixes(listOf(com.yeamin.lipi.suggest.TextIssue(at, at + original.length, original, action.replacement, com.yeamin.lipi.suggest.IssueKind.GRAMMAR, "AI suggestion")))
+                    checkFixed++
+                }
+                runCheck()
+            }
+            is KeyAction.IgnoreIssue -> if (checking) {
+                checkIgnored += action.issue.original
+                checkIssues = checkIssues.filter { it.original != action.issue.original }
+                // A "misspelled" word the user keeps (a name, a rare word) joins their dictionary,
+                // so it is never flagged again, in the checker or in suggestions.
+                if (action.issue.kind == com.yeamin.lipi.suggest.IssueKind.SPELLING) {
+                    val word = action.issue.original.trim()
+                    val lang = if (word.any { it in 'ঀ'..'৿' }) Language.BANGLA else Language.ENGLISH
+                    if (word.isNotEmpty()) suggester?.history?.addPersonal(lang, word)
+                }
+            }
             is KeyAction.StartTranslate -> startTranslate(action.toBangla)
             KeyAction.EndTranslate -> endTranslate()
             KeyAction.SwapTranslate -> swapTranslate()
+            KeyAction.ApplyTranslateSpelling -> if (translating) {
+                processor.finishComposing(translateBuffer)
+                val fixed = translateSpelling(translateBuffer.text)
+                if (fixed != null) {
+                    processors.values.forEach { it.reset() }
+                    translateBuffer.clear()
+                    translateBuffer.commit(fixed)
+                    wordSuggestions = WordSuggestions.EMPTY
+                }
+            }
             KeyAction.ClearTranslate -> if (translating) {
                 processor.finishComposing(translateBuffer)
                 processor.reset()
@@ -510,10 +625,15 @@ class KeyboardController(
             }
             is KeyAction.Host -> Unit // handled by the service before it reaches here
         }
+        if (checking && !action.isCheckAction()) checkStale = true
         updateAutoShift()
         refreshSuggestions(force = false)
         publish()
     }
+
+    private fun KeyAction.isCheckAction() = this is KeyAction.StartCheck || this is KeyAction.Recheck || this is KeyAction.ApplyRewrite ||
+        this is KeyAction.FixIssue || this is KeyAction.FixAllIssues || this is KeyAction.IgnoreIssue ||
+        this is KeyAction.EndCheck || this is KeyAction.ShowPanel
 
     /** Leaves search mode and shows the panel again, with the typed query if [keepQuery]. */
     private fun endSearch(keepQuery: Boolean) {
@@ -527,12 +647,63 @@ class KeyboardController(
     }
 
     /**
+     * Reads the text around the cursor (up to [CHECK_WINDOW] characters each way, starting at a
+     * sentence boundary) and checks it. Positions are kept as absolute offsets in the field, so
+     * fixes can be applied anywhere in it.
+     */
+    private fun runCheck() {
+        val before = appEditor.textBeforeCursor(CHECK_WINDOW).toString()
+        val after = appEditor.textAfterCursor(CHECK_WINDOW).toString()
+        var cut = 0
+        if (before.length >= CHECK_WINDOW) {
+            // Start at a sentence boundary so the first words aren't judged out of context.
+            val boundary = before.indexOfFirst { it in ".!?।\n" }
+            cut = if (boundary in 0 until before.length - 1) boundary + 1 else 0
+        }
+        val text = before.substring(cut) + after
+        val cursor = appEditor.selectionStart().takeIf { it >= 0 } ?: before.length
+        checkBase = cursor - before.length + cut
+        checkText = text
+        checkEmpty = text.isBlank()
+        checkIssues = suggester?.checker?.check(text, checkIgnored, endsAtFieldEnd = after.length < CHECK_WINDOW).orEmpty()
+        checkStale = false
+    }
+
+    /** Applies [issues] (positions in [checkText]) from last to first, then puts the cursor back. */
+    private fun applyFixes(issues: List<com.yeamin.lipi.suggest.TextIssue>) {
+        var cursor = appEditor.selectionStart().takeIf { it >= 0 } ?: (checkBase + checkText.length)
+        issues.sortedByDescending { it.start }.forEach { issue ->
+            val start = checkBase + issue.start
+            val end = checkBase + issue.end
+            appEditor.setSelection(start, end)
+            appEditor.commit(issue.replacement)
+            val delta = issue.replacement.length - (issue.end - issue.start)
+            cursor = when {
+                cursor >= end -> cursor + delta
+                cursor > start -> start + issue.replacement.length
+                else -> cursor
+            }
+        }
+        appEditor.setSelection(cursor, cursor)
+    }
+
+    private fun endCheck() {
+        if (!checking) return
+        checking = false
+        checkIssues = emptyList()
+        checkIgnored.clear()
+        checkStale = false
+        checkFixed = 0
+    }
+
+    /**
      * Opens the translate box. The keys switch to the language being typed (English keys for
      * English to Bangla, the user's Bangla layout for Bangla to English) without changing the
      * saved layout; closing the box brings the previous layout back.
      */
     private fun startTranslate(toBangla: Boolean) {
         if (searchPanel != null) endSearch(keepQuery = false)
+        if (checking) endCheck()
         endComposing()
         panel = Panel.NONE
         if (!translating) layoutBeforeTranslate = activeLayout
@@ -581,6 +752,24 @@ class KeyboardController(
         page = KeyboardPage.LETTERS
         shift = ShiftState.OFF
         shiftIsAutomatic = false
+    }
+
+    /**
+     * [text] with its spelling mistakes corrected (the offline checker's spelling suggestions),
+     * or null when there is nothing to correct. The word still being typed is left alone.
+     */
+    private fun translateSpelling(text: String): String? {
+        if (text.isBlank()) return null
+        val checker = suggester?.checker ?: return null
+        // Only finished words: the last one may still be half typed.
+        val done = if (text.last().isWhitespace() || text.last() in ".,!?।") text.length else text.trimEnd().lastIndexOf(' ').let { if (it < 0) 0 else it }
+        if (done == 0) return null
+        val issues = checker.check(text.substring(0, done), endsAtFieldEnd = false)
+            .filter { it.kind == com.yeamin.lipi.suggest.IssueKind.SPELLING }
+        if (issues.isEmpty()) return null
+        val sb = StringBuilder(text)
+        issues.sortedByDescending { it.start }.forEach { sb.replace(it.start, it.end, it.replacement) }
+        return sb.toString()
     }
 
     /** Puts the translation into the app (with a space either side as needed) and empties the box. */
@@ -719,17 +908,24 @@ class KeyboardController(
 
     /** Suggestions are shown in normal text and address fields, never in password or no-suggestion fields. */
     private val suggestionsEnabled: Boolean
-        get() = !typingInBox && suggester != null && settings.showSuggestions &&
-            !editorField.isPassword && !editorField.noSuggestions &&
-            (editorField.kind == FieldKind.TEXT || editorField.kind == FieldKind.URI)
+        get() = if (translating) {
+            // The translate box is plain text: suggestions help spell what is being translated.
+            searchPanel == null && suggester != null && !editorField.isPassword
+        } else {
+            !typingInBox && suggester != null && settings.showSuggestions &&
+                !editorField.isPassword && !editorField.noSuggestions &&
+                (editorField.kind == FieldKind.TEXT || editorField.kind == FieldKind.URI)
+        }
 
     /** Learning never happens in password, private (incognito) or no-suggestion fields. */
     private val learningEnabled: Boolean
         get() = !typingInBox && suggester != null && settings.personalizedLearning && !editorField.isSensitive &&
             !editorField.noSuggestions && editorField.kind == FieldKind.TEXT
 
+    /** Autocorrect: as set for normal typing, and always on in the translate box (a misspelt word translates badly). */
     private val autoCorrectEnabled: Boolean
-        get() = suggestionsEnabled && settings.autoCorrect && editorField.kind == FieldKind.TEXT && activeLayout == LayoutId.ENGLISH
+        get() = suggestionsEnabled && activeLayout == LayoutId.ENGLISH &&
+            (translating || settings.autoCorrect && editorField.kind == FieldKind.TEXT)
 
     private fun suggestOptions(typed: String) = SuggestOptions(
         autoCorrect = autoCorrectEnabled && typed != rejectedWord,
@@ -765,6 +961,7 @@ class KeyboardController(
                 editor.replaceBefore(word.length, fix)
                 correction = AutoCorrection(word, fix)
                 word = fix
+                if (countStats) stats?.autocorrected()
             }
         }
         learn(language, word, ctx.previous)
@@ -791,6 +988,7 @@ class KeyboardController(
             return
         }
         val ctx = readContext()
+        if (countStats) stats?.suggestionPicked(action.text.length - ctx.current.length)
         if (ctx.current.isNotEmpty()) editor.replaceBefore(ctx.current.length, action.text) else editor.commit(action.text)
         processor.onSpace(editor, clock())
         learn(language, action.text, ctx.previous)
@@ -802,11 +1000,13 @@ class KeyboardController(
     }
 
     private fun learn(language: Language, word: String, previous: String?) {
+        if (countStats && word.isNotBlank()) stats?.word(language == Language.BANGLA)
         if (!learningEnabled || word.isBlank()) return
         suggester?.history?.recordWord(language, word, previous)
     }
 
     private fun learnAvro(composition: Composition, committed: String, previous: String?) {
+        if (countStats && committed.isNotBlank()) stats?.word(committed.any { it in 'ঀ'..'৿' })
         if (!learningEnabled) return
         val s = suggester ?: return
         s.recordAvroSelection(composition.roman, committed)
@@ -821,10 +1021,12 @@ class KeyboardController(
     private fun refreshSuggestions(force: Boolean): Boolean {
         val textPage = page == KeyboardPage.LETTERS || page == KeyboardPage.SYMBOLS
         val composition = processor.composition
-        val before: CharSequence = if (toolsAllowed && textPage && composition == null) editor.textBeforeCursor(CONTEXT_CHARS) else ""
+        // The translate box also gets word suggestions (but not the calculator or snippets).
+        val readText = toolsAllowed || translating && searchPanel == null
+        val before: CharSequence = if (readText && textPage && composition == null) editor.textBeforeCursor(CONTEXT_CHARS) else ""
         val oldCalculation = calculation
         val oldSnippet = pendingSnippet
-        calculation = if (before.isNotEmpty()) Calculator.resultFor(before) else null
+        calculation = if (toolsAllowed && before.isNotEmpty()) Calculator.resultFor(before) else null
         pendingSnippet = when {
             !toolsAllowed || !textPage -> null
             composition != null -> composition.roman.takeIf { snippetFor(it) != null }
@@ -1064,9 +1266,10 @@ class KeyboardController(
         touchCalibration = settings.touchCalibration && !editorField.isSensitive,
         search = searchPanel,
         searchQuery = if (searchPanel != null) searchBuffer.text else "",
+        check = if (checking) CheckUi(checkIssues, checkStale, checkFixed, checkEmpty, checkText) else null,
         translate = if (translating) {
             val source = translateBuffer.text
-            TranslateUi(source, translateToBangla, translatedText.takeIf { translatedSource == source })
+            TranslateUi(source, translateToBangla, translatedText.takeIf { translatedSource == source }, translateSpelling(source))
         } else {
             null
         },
@@ -1083,5 +1286,8 @@ class KeyboardController(
         const val DOUBLE_TAP_MS = 350L
         const val CONTEXT_CHARS = 64
         const val SEARCH_RESULTS = 16
+
+        /** Characters read on each side of the cursor for the Check card. */
+        const val CHECK_WINDOW = 1500
     }
 }

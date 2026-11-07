@@ -36,6 +36,8 @@ dependencies {
     implementation(libs.androidx.customview)
     // Offline English/Bangla translation (on-device; the Bangla pack is downloaded on request).
     implementation(libs.mlkit.translate)
+    // Deeper English proofreading with Gemini Nano on phones that have it (AICore); beta.
+    implementation(libs.mlkit.genai.proofreading)
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
     implementation(libs.compose.material3)

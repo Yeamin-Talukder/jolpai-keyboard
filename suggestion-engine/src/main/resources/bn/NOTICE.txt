@@ -11,3 +11,13 @@ riti-suffix.json, riti-autocorrect.json
   From riti (https://github.com/OpenBangla/riti), commit e1fd5a809b0c3bf9c36e6f076ef6d558f9663fba:
   data/suffix.json, data/autocorrect.json. Used unmodified.
   Mozilla Public License 2.0 — see LICENSE-MPL-2.0.txt. MPL covers these two files only.
+
+bangla-frequency.tsv
+  From FrequencyWords (https://github.com/hermitdave/FrequencyWords), content/2018/bn/bn_50k.txt:
+  Bangla word counts from the OpenSubtitles 2018 corpus.
+  Copyright (c) 2016 Hermit Dave. Code MIT License — see LICENSE-MIT-FrequencyWords.txt.
+  The word counts are derived from OpenSubtitles (http://www.opensubtitles.org) and are shared
+  under the Creative Commons Attribution-ShareAlike 4.0 licence (CC BY-SA 4.0); this file is
+  shared under the same licence.
+  Changes: য় ড় ঢ় written as single characters, only Bangla words kept, words seen fewer than
+  3 times dropped, counts turned into a 1-255 weight by tools/prepare-bangla-frequency.pl.

@@ -120,8 +120,30 @@ class KeyboardView(context: Context, private val palette: KeyboardPalette) : Vie
     }
     // Colour roles for icons: 0 = label, 1 = on the accent colour, 2 = accent.
     private val icons = KeyIconCache(context, intArrayOf(palette.text, palette.onAccent, palette.accent))
-    private val regular: Typeface = if (palette.boldLabels) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
-    private val medium: Typeface = if (palette.boldLabels) Typeface.DEFAULT_BOLD else Typeface.create("sans-serif-medium", Typeface.NORMAL)
+    private var regular: Typeface = if (palette.boldLabels) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
+    private var medium: Typeface = if (palette.boldLabels) Typeface.DEFAULT_BOLD else Typeface.create("sans-serif-medium", Typeface.NORMAL)
+
+    /** Uses a chosen key font (regular for letters, medium for labels); bold labels stay bold. */
+    fun setKeyFont(fonts: Pair<Typeface, Typeface>?) {
+        val (r, m) = fonts ?: return
+        regular = if (palette.boldLabels) Typeface.create(r, Typeface.BOLD) else r
+        medium = if (palette.boldLabels) Typeface.create(m, Typeface.BOLD) else m
+        hintPaint.typeface = r
+        invalidate()
+    }
+
+    /**
+     * Split keys: the left half of every row moves left and the right half moves right, leaving a
+     * gap in the middle for wide screens (keys that cross the middle, like space, span the gap).
+     */
+    var split: Boolean = false
+        set(value) {
+            if (field != value) {
+                field = value
+                computeCells()
+                invalidate()
+            }
+        }
 
     /** Keyboard height relative to normal (from the size setting), e.g. 1.1 = 10 % taller. */
     var heightScale: Float = 1f
@@ -343,12 +365,17 @@ class KeyboardView(context: Context, private val palette: KeyboardPalette) : Vie
         val unit = (width - 2 * padH) / layout.units
         val rh = rowHeight
         val out = ArrayList<Cell>()
+        // Split: squeeze each half towards its side, opening a gap in the middle.
+        val gap = if (split) width * SPLIT_GAP else 0f
+        val squeeze = (width - gap) / width
+        val middle = width / 2f
+        fun fx(x: Float): Float = if (!split) x else if (x <= middle) x * squeeze else x * squeeze + gap
         layout.rows.forEachIndexed { r, row ->
             val top = padV + r * rh
             var x = padH + (layout.units - row.units) / 2f * unit
             row.keys.forEachIndexed { i, key ->
-                val left = x
-                val right = x + key.width * unit
+                val left = fx(x)
+                val right = fx(x + key.width * unit)
                 // Edge keys own the margin beside them, so a tap near the edge still hits a key.
                 val hitLeft = if (i == 0) 0f else left
                 val hitRight = if (i == row.keys.lastIndex) width.toFloat() else right
@@ -357,7 +384,7 @@ class KeyboardView(context: Context, private val palette: KeyboardPalette) : Vie
                     hit = RectF(hitLeft, if (r == 0) 0f else top, hitRight, if (r == layout.rows.lastIndex) height.toFloat().coerceAtLeast(top + rh) else top + rh),
                     draw = RectF(left + gapH, top + gapV, right - gapH, top + rh - gapV),
                 )
-                x = right
+                x += key.width * unit
             }
         }
         cells = out
@@ -813,6 +840,9 @@ class KeyboardView(context: Context, private val palette: KeyboardPalette) : Vie
 
     private companion object {
         const val LONG_PRESS_MS = 350L
+
+        /** Width of the middle gap of a split keyboard, as a share of the keyboard's width. */
+        const val SPLIT_GAP = 0.22f
         const val REPEAT_START_MS = 400L
         const val REPEAT_INTERVAL_MS = 50L
         const val TRACKPAD_MS = 400L

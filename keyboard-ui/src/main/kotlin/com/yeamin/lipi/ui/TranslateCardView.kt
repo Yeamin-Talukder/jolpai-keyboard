@@ -35,6 +35,8 @@ data class TranslateCardModel(
     val status: TranslateStatus,
     /** A translation of the current text is being worked out. */
     val busy: Boolean,
+    /** The typed text with its spelling corrected ("Did you mean …"), or null. */
+    val corrected: String? = null,
 )
 
 /**
@@ -59,6 +61,9 @@ class TranslateCardView(
         fun onClear()
         fun onInsert(text: String)
         fun onDownload()
+
+        /** Use the spelling-corrected text ("Did you mean …"). */
+        fun onApplySpelling()
     }
 
     private val density = resources.displayMetrics.density
@@ -121,6 +126,33 @@ class TranslateCardView(
     }
     private val progress = ProgressLine()
 
+    /** "Did you mean …": the typed text with its spelling corrected, one tap to use it. */
+    private val didYouMean = TextView(context).apply {
+        setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+        setTextColor(palette.text)
+        isSingleLine = true
+        ellipsize = TextUtils.TruncateAt.START
+        gravity = Gravity.CENTER_VERTICAL
+        setPadding(dp(12f), 0, dp(12f), 0)
+        compoundDrawablePadding = dp(6f)
+        setCompoundDrawablesRelative(KeyboardIcon.SPELLCHECK.drawable(context, palette.accent, 16 * density).apply { setBounds(0, 0, dp(16f), dp(16f)) }, null, null, null)
+        background = RippleDrawable(
+            ColorStateList.valueOf(palette.keyPressed),
+            GradientDrawable().apply {
+                cornerRadius = 100 * density
+                setColor(ColorUtils.setAlphaComponent(palette.accent, 0x1F))
+                setStroke(dp(1f).coerceAtLeast(1), ColorUtils.setAlphaComponent(palette.accent, 0x55))
+            },
+            null,
+        )
+        contentDescription = "Use the corrected spelling"
+        visibility = GONE
+        setOnClickListener {
+            bounce(this)
+            listener.onApplySpelling()
+        }
+    }
+
     private val header: LinearLayout
     private val inputBox: FrameLayout
     private val resultBox: FrameLayout
@@ -158,6 +190,7 @@ class TranslateCardView(
             addView(clearButton, FrameLayout.LayoutParams(dp(36f), dp(36f), Gravity.END or Gravity.CENTER_VERTICAL).apply { rightMargin = dp(2f) })
         }
         addView(inputBox, LayoutParams(LayoutParams.MATCH_PARENT, dp(40f)).apply { topMargin = dp(6f) })
+        addView(didYouMean, LayoutParams(LayoutParams.WRAP_CONTENT, dp(28f)).apply { topMargin = dp(6f) })
 
         resultBox = FrameLayout(context).apply {
             background = GradientDrawable().apply {
@@ -236,6 +269,28 @@ class TranslateCardView(
         if (old != null && old.toBangla != m.toBangla) swapLabels(m) else setLabels(m)
         renderSource()
         renderResult(m)
+        renderSpelling(m)
+    }
+
+    /** Shows (sliding in) or hides the "Did you mean …" chip. */
+    private fun renderSpelling(m: TranslateCardModel) {
+        val fix = m.corrected?.trim()?.takeIf { it.isNotEmpty() }
+        if (fix == null) {
+            didYouMean.isVisible = false
+            return
+        }
+        val sb = SpannableStringBuilder("Did you mean  ")
+        sb.setSpan(ForegroundColorSpan(palette.hint), 0, sb.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        val start = sb.length
+        sb.append(fix)
+        sb.setSpan(android.text.style.StyleSpan(Typeface.BOLD), start, sb.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        didYouMean.text = sb
+        if (didYouMean.visibility != VISIBLE) {
+            didYouMean.visibility = VISIBLE
+            didYouMean.alpha = 0f
+            didYouMean.translationX = -10 * density
+            didYouMean.animate().alpha(1f).translationX(0f).setDuration(220).setInterpolator(SETTLE).start()
+        }
     }
 
     private fun setLabels(m: TranslateCardModel) {
