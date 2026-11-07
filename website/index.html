@@ -1320,7 +1320,7 @@
       if (!cell) return;
       const b = cell.querySelector('b');
       cell.querySelector('span').textContent = word;
-      b.textContent = '0';
+      b.textContent = fmt(total); // right even if the count-up below never runs
       const count = () => {
         if (matchMedia('(prefers-reduced-motion: reduce)').matches) { b.textContent = fmt(total); return; }
         const t0 = performance.now(), dur = 1300;
