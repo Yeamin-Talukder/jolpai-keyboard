@@ -520,7 +520,7 @@
           <div class="phone">
             <div class="screen">
               <div class="status"><span>9:41</span><span>●●● ▮</span></div>
-              <div class="appbar"><span class="av"></span><span><b>Nusrat</b><small>online</small></span></div>
+              <div class="appbar"><span class="av"></span><span><b>Yeamin</b><small>online</small></span></div>
               <div class="msgs" id="msgs"><div class="msg in" lang="bn">কেমন আছো? 🙂</div></div>
               <div class="composer"><div class="field" id="field"></div><div class="sendb" id="send" data-ic="send:20"></div></div>
               <div class="upper" id="upper"></div>
@@ -813,10 +813,10 @@
     keyFor = { ' ': K.space };
     L.rows.forEach((row, ri) => row.forEach((c, i) => {
       const k = letterKeys[ri][i];
-      label(k, SIGNS.has(c) ? '◌' + c : c);
+      label(k, shown(c));
       k.querySelector('sup')?.remove();
       const h = L.hints[ri]?.[i];
-      if (h) { const s = document.createElement('sup'); s.textContent = h; k.appendChild(s); }
+      if (h) { const s = document.createElement('sup'); s.textContent = shown(h); k.appendChild(s); }
       keyFor[c] = k;
     }));
     label(K.space, L.space); label(K.dot, L.dot); label(K.num, L.num);
@@ -948,7 +948,9 @@
       await wait(40);
     }
   }
-  const shown = c => (SIGNS.has(c[0]) ? '◌' + c : c);
+  // As the app's DisplayLabel: a vowel sign alone gets an invisible no-break space as its base,
+  // so it is drawn on its own instead of on a dotted circle.
+  const shown = c => (/\p{M}/u.test(c[0]) ? ' ' + c : c);
   async function hold(el, choices, note) {
     const [x, y] = at(el);
     await moveTo(x, y, 300);
