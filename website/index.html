@@ -482,6 +482,63 @@
     .caret { animation: none; }
     .card, .btn { transition: none; }
   }
+
+  /* ---------------------------------------------------------------- phones */
+  .swipe { display: none; }
+  .demo-tabs { position: relative; }
+  @media (max-width: 720px) {
+    body { font-size: 16.5px; }
+    section { padding: 48px 0; }
+    .hero { padding: 28px 0 36px; }
+    .hero-grid { gap: 32px; grid-template-columns: minmax(0, 1fr); }
+    .hero-grid > *, .demo { min-width: 0; width: 100%; }
+    .lead { margin: 14px 0 22px; }
+    .chips { margin-top: 18px; }
+    .section-head { margin-bottom: 26px; }
+    .section-head p { font-size: 16.5px; }
+
+    /* Cards: icon beside the text, not above it */
+    .grid, .privacy { gap: 12px; }
+    .grid .card, .privacy .card { display: grid; grid-template-columns: 44px minmax(0, 1fr); column-gap: 14px; padding: 16px 16px 18px; }
+    .card .ic { grid-row: span 2; width: 44px; height: 44px; margin: 2px 0 0; font-size: 21px; }
+    .card h3 { font-size: 18px; margin-bottom: 3px; }
+    .card p { font-size: 15.5px; }
+    .card:hover { transform: none; }
+
+    /* Install steps: number beside the text */
+    .steps { gap: 12px; }
+    .steps li { display: grid; grid-template-columns: 36px minmax(0, 1fr); column-gap: 14px; padding: 16px 16px 18px; }
+    .steps li::before { grid-row: span 2; margin: 0; }
+
+    /* Swipeable rows: the three layouts and the theme gallery */
+    .layouts, .themes {
+      display: grid; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory;
+      margin: 0 -20px; padding: 2px 20px 10px; scroll-padding: 0 20px; scrollbar-width: none; max-width: none;
+    }
+    .layouts::-webkit-scrollbar, .themes::-webkit-scrollbar { display: none; }
+    .layouts { grid-auto-flow: column; grid-template-columns: none; grid-auto-columns: 88%; gap: 14px; }
+    .lay { scroll-snap-align: start; }
+    .themes { grid-auto-flow: column; grid-template-columns: none; grid-template-rows: auto auto; grid-auto-columns: 46%; gap: 16px 12px; }
+    .tcard { scroll-snap-align: start; }
+    .swipe { display: block; text-align: center; color: var(--dim); font-size: 14px; margin: 6px 0 0; }
+
+    /* Demo: one scrolling row of tabs, a slightly shorter phone */
+    .demo-tabs { flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; width: calc(100% + 40px); margin: 0 -20px; padding: 2px 20px 6px; scrollbar-width: none; }
+    .demo-tabs::-webkit-scrollbar { display: none; }
+    .demo-tabs button { flex: none; padding: 6px 13px; font-size: 14px; }
+    .check-demo .text { font-size: 17px; }
+    .check-demo { padding: 16px; }
+    .issue { gap: 8px; padding: 10px 12px; font-size: 15px; }
+    .issue > span:nth-child(2) { flex: 1; min-width: 0; }
+    .issue .fix { flex: none; margin-left: 0; }
+    .note { font-size: 15px; }
+    .final { padding: 56px 0; }
+  }
+  @media (max-width: 420px) {
+    .screen { height: 580px; }
+    .upper.open, .up-in { height: 186px; }
+    h1 { font-size: 34px; }
+  }
 </style>
 </head>
 <body>
@@ -625,8 +682,10 @@
           <figcaption><h3>National (জাতীয়)</h3><p>Ridmik-style keys · hold for the corner letter</p></figcaption>
         </figure>
       </div>
+      <p class="swipe">Swipe for অভ্র and জাতীয় →</p>
       <figure class="reveal" style="margin:48px 0 0">
         <div class="themes" id="themes" role="img" aria-label="20 Jolpai Keyboard themes: Material You, light pastel themes and soft dark themes for the Android Bangla keyboard"></div>
+        <p class="swipe">Swipe to see all 20 →</p>
         <figcaption>20 of the 64 built-in themes. Material You follows your wallpaper colours.</figcaption>
       </figure>
     </div>
@@ -1324,6 +1383,9 @@
       for (;;) {
         const sc = SCENES[current];
         [...tabs.children].forEach((b, j) => b.setAttribute('aria-pressed', String(j === current)));
+        // Keep the playing scene's tab in view when the tabs scroll sideways (phones).
+        const on = tabs.children[current];
+        if (tabs.scrollWidth > tabs.clientWidth) tabs.scrollTo({ left: on.offsetLeft - (tabs.clientWidth - on.offsetWidth) / 2, behavior: 'smooth' });
         caption(sc);
         sub(sc.s);
         await sc.run();
