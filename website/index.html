@@ -181,27 +181,163 @@
   .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 26px; padding: 0; list-style: none; }
   .chips li { border: 1px solid var(--line); background: var(--bg-2); border-radius: 999px; padding: 5px 14px; font-size: 14.5px; color: var(--muted); }
 
-  /* Phone demo */
-  .phone {
-    width: min(340px, 100%); margin: 0 auto; background: #0b0e08; border-radius: 40px; padding: 14px;
-    border: 1px solid #2b3420; box-shadow: 0 40px 80px -30px rgba(0,0,0,.8), 0 0 0 8px #161c10, 0 0 60px -10px rgba(181,201,74,.2);
+  /* Phone demo: a working copy of the keyboard, played by a virtual finger */
+  .demo { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .demo-cap {
+    display: flex; align-items: center; gap: 12px; width: min(380px, 100%); min-height: 62px;
+    background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 10px 14px;
   }
-  .screen { background: var(--bg-2); border-radius: 28px; overflow: hidden; }
-  .app-bar { display: flex; align-items: center; gap: 10px; padding: 16px 16px 10px; color: var(--muted); font-size: 14px; }
-  .app-bar .dot { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, #8fa83a, #4e6120); flex: none; }
-  .bubble { margin: 6px 16px; padding: 10px 14px; background: var(--card-2); border-radius: 16px 16px 16px 4px; font-size: 15px; color: var(--muted); max-width: 80%; }
-  .field { margin: 14px 12px 10px; border: 1.5px solid var(--olive); border-radius: 14px; padding: 12px 14px; min-height: 52px; font-size: 20px; color: var(--text); }
-  .caret { display: inline-block; width: 2px; height: 1.1em; background: var(--olive); vertical-align: -3px; margin-left: 1px; animation: blink 1s steps(1) infinite; }
-  @keyframes blink { 50% { opacity: 0; } }
-  .strip { display: flex; justify-content: space-around; align-items: center; padding: 8px 10px; border-top: 1px solid var(--line); color: var(--muted); font-size: 15px; min-height: 42px; }
-  .strip b { color: var(--olive); }
-  .typed { font-family: var(--mono); color: var(--dim); font-size: 13px; text-align: center; padding: 0 12px 8px; min-height: 26px; }
-  .typed span { color: var(--olive); }
-  .keys { padding: 8px 6px 12px; display: grid; gap: 7px; background: #141a0f; }
-  .row { display: flex; gap: 5px; justify-content: center; }
-  .k { flex: 1; max-width: 30px; height: 38px; border-radius: 8px; background: #252e1c; color: var(--text); display: grid; place-items: center; font-size: 15px; transition: background .1s, transform .1s; }
-  .k.wide { max-width: 46px; } .k.space { max-width: 150px; flex: 5; font-size: 12px; color: var(--dim); } .k.enter { background: var(--olive); color: #18200b; max-width: 46px; }
-  .k.hit { background: var(--olive-2); transform: translateY(1px); }
+  .cap-ic { width: 40px; height: 40px; flex: none; border-radius: 12px; display: grid; place-items: center; font-size: 20px; background: rgba(181,201,74,.14); color: var(--olive); font-weight: 700; }
+  .cap-txt { display: flex; flex-direction: column; line-height: 1.3; min-width: 0; }
+  .cap-txt b { font-size: 16.5px; }
+  .cap-txt span { color: var(--muted); font-size: 14.5px; }
+  .cap-anim { animation: capIn .35s ease; }
+  @keyframes capIn { from { opacity: 0; transform: translateY(6px); } }
+
+  .stage { position: relative; width: min(360px, 100%); }
+  .phone {
+    background: #0b0e08; border-radius: 42px; padding: 12px;
+    border: 1px solid #2b3420; box-shadow: 0 40px 80px -30px rgba(0,0,0,.8), 0 0 0 7px #161c10, 0 0 70px -12px rgba(181,201,74,.22);
+  }
+  .screen { background: #12170e; border-radius: 31px; overflow: hidden; height: 640px; display: flex; flex-direction: column; position: relative; }
+  .status { display: flex; justify-content: space-between; padding: 10px 22px 2px; font-size: 12px; color: var(--muted); }
+  .appbar { display: flex; align-items: center; gap: 10px; padding: 8px 14px 10px; border-bottom: 1px solid #1f2717; }
+  .appbar .av { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, #8fa83a, #4e6120); flex: none; }
+  .appbar b { font-size: 14.5px; display: block; line-height: 1.2; }
+  .appbar small { color: var(--dim); font-size: 12px; }
+  .msgs { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; gap: 6px; padding: 10px 12px; }
+  .msg { max-width: 78%; padding: 7px 12px; border-radius: 16px; font-size: 14.5px; line-height: 1.4; animation: msgIn .35s ease; }
+  .msg.in { background: #232c1b; color: var(--text); border-bottom-left-radius: 5px; align-self: flex-start; }
+  .msg.out { background: #4e6120; color: #f4f7e6; border-bottom-right-radius: 5px; align-self: flex-end; }
+  @keyframes msgIn { from { opacity: 0; transform: translateY(10px) scale(.96); } }
+  .composer { display: flex; align-items: flex-end; gap: 8px; padding: 6px 10px 8px; }
+  .field {
+    flex: 1; min-height: 40px; max-height: 64px; overflow: hidden; border-radius: 20px; background: #1d2417; border: 1.5px solid #3b4a28;
+    padding: 8px 14px; font-size: 16px; line-height: 1.45; color: var(--text); word-break: break-word; white-space: pre-wrap; transition: border-color .2s;
+  }
+  .field.focus { border-color: var(--olive); }
+  .field .ph { color: var(--dim); }
+  .field .comp { text-decoration: underline; text-underline-offset: 4px; text-decoration-color: var(--olive); }
+  .field .sel { background: rgba(181,201,74,.38); border-radius: 3px; }
+  .field .wavy { text-decoration: underline wavy #e5484d; text-underline-offset: 4px; }
+  .field .flash { background: rgba(181,201,74,.28); border-radius: 4px; transition: background .8s; }
+  .caret { display: inline-block; width: 2px; height: 1.15em; background: var(--olive); vertical-align: -3px; margin: 0 -1px; animation: blink 1s steps(1) infinite; }
+  .sendb { width: 40px; height: 40px; border-radius: 50%; background: var(--olive); color: #18200b; display: grid; place-items: center; font-size: 16px; flex: none; transition: transform .12s; }
+  .sendb.down { transform: scale(.88); }
+
+  /* Section above the toolbar (translate, check, clipboard, emoji) */
+  .upper { height: 0; overflow: hidden; background: #171e11; border-top: 1px solid transparent; transition: height .38s cubic-bezier(.2,.8,.2,1), border-color .2s; }
+  .upper.open { height: 198px; border-top-color: #2b3620; }
+  .up-in { padding: 10px 12px; height: 198px; display: flex; flex-direction: column; gap: 8px; font-size: 14px; }
+  .up-head { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
+  .up-head b { color: var(--text); font-size: 14px; }
+  .up-head .x { margin-left: auto; color: var(--dim); }
+  .tbox { background: #1d2417; border: 1px solid #2f3a22; border-radius: 12px; padding: 8px 10px; min-height: 38px; }
+  .tout { background: rgba(181,201,74,.08); border: 1px solid #3b4a28; border-radius: 12px; padding: 8px 10px; min-height: 38px; display: flex; align-items: center; gap: 8px; }
+  .tout .t { flex: 1; font-size: 15.5px; }
+  .ins { width: 32px; height: 32px; border-radius: 50%; background: var(--olive); color: #18200b; display: grid; place-items: center; flex: none; font-size: 14px; transition: transform .12s; }
+  .ins.down { transform: scale(.85); }
+  .dots span { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--olive); margin-right: 4px; animation: dot 1s infinite ease-in-out; }
+  .dots span:nth-child(2) { animation-delay: .15s; } .dots span:nth-child(3) { animation-delay: .3s; }
+  @keyframes dot { 0%, 80%, 100% { opacity: .25; transform: scale(.8); } 40% { opacity: 1; transform: none; } }
+  .iss { display: flex; align-items: center; gap: 8px; border: 1px solid #2f3a22; background: #1d2417; border-radius: 12px; padding: 7px 10px; transition: opacity .3s, transform .3s; }
+  .iss.gone { opacity: 0; transform: scale(.9); }
+  .iss .kd { font-size: 11px; font-weight: 600; border-radius: 99px; padding: 1px 8px; flex: none; }
+  .iss s { color: var(--dim); } .iss .alt { color: var(--dim); font-size: 12.5px; }
+  .fixall { align-self: flex-end; background: var(--olive); color: #18200b; border-radius: 99px; padding: 5px 14px; font-weight: 600; font-size: 13px; transition: transform .12s; }
+  .fixall.down { transform: scale(.9); }
+  .good { margin: auto; color: var(--olive); font-weight: 600; font-size: 16px; animation: msgIn .35s ease; }
+  .chiprow { display: flex; gap: 6px; }
+  .chiprow span { border: 1px solid #2f3a22; border-radius: 99px; padding: 2px 10px; font-size: 12.5px; color: var(--muted); }
+  .chiprow span.on { background: rgba(181,201,74,.16); border-color: var(--olive-deep); color: var(--olive); }
+  .clips { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+  .clip { background: #1d2417; border: 1px solid #2f3a22; border-radius: 12px; padding: 7px 10px; font-size: 13.5px; transition: transform .12s, border-color .2s; }
+  .clip small { display: block; color: var(--dim); font-size: 11.5px; }
+  .clip.down { transform: scale(.94); border-color: var(--olive); }
+  .esearch { background: #1d2417; border-radius: 99px; padding: 5px 12px; color: var(--dim); font-size: 13px; }
+  .egrid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px; font-size: 21px; text-align: center; }
+  .egrid span { border-radius: 8px; padding: 2px 0; transition: transform .15s, background .15s; }
+  .egrid span.down { transform: scale(1.3); background: rgba(181,201,74,.2); }
+
+  /* Top bar of the keyboard: tools, suggestions or the voice bar */
+  .tb { display: flex; align-items: center; height: 44px; padding: 0 6px; background: #151b10; border-top: 1px solid #1f2717; }
+  .tb-lead { width: 34px; color: var(--muted); text-align: center; font-size: 17px; flex: none; }
+  .tb-mid { flex: 1; position: relative; height: 100%; min-width: 0; }
+  .tb-layer { position: absolute; inset: 0; display: flex; align-items: center; justify-content: space-around; transition: opacity .2s, transform .2s; }
+  .tb-layer.off { opacity: 0; transform: translateY(6px); pointer-events: none; }
+  .tool { width: 34px; height: 30px; border-radius: 10px; display: grid; place-items: center; font-size: 16px; transition: background .15s; color: var(--text); }
+  .tool.on { background: rgba(181,201,74,.22); }
+  .strip span, .strip b { flex: 1; text-align: center; font-size: 14.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 2px; }
+  .strip span { color: var(--muted); }
+  .strip b { color: var(--olive); font-weight: 700; border-left: 1px solid #2b3620; border-right: 1px solid #2b3620; }
+  .strip b.hl { background: rgba(181,201,74,.14); border-radius: 8px; }
+  .voice { justify-content: flex-start; gap: 10px; padding-left: 4px; }
+  .mic { width: 30px; height: 30px; border-radius: 50%; background: #e5484d; display: grid; place-items: center; font-size: 14px; animation: micp 1.2s ease-in-out infinite; flex: none; }
+  @keyframes micp { 50% { box-shadow: 0 0 0 7px rgba(229,72,77,.18); } }
+  .wave { display: flex; align-items: center; gap: 3px; height: 26px; }
+  .wave i { width: 3px; border-radius: 2px; background: var(--olive); height: 6px; animation: wv .9s ease-in-out infinite; }
+  .wave i:nth-child(2) { animation-delay: .1s; } .wave i:nth-child(3) { animation-delay: .25s; } .wave i:nth-child(4) { animation-delay: .4s; } .wave i:nth-child(5) { animation-delay: .15s; } .wave i:nth-child(6) { animation-delay: .3s; } .wave i:nth-child(7) { animation-delay: .05s; }
+  @keyframes wv { 50% { height: 22px; } }
+  .vtext { color: var(--muted); font-size: 13px; white-space: nowrap; }
+  .lang { flex: none; display: flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 99px; background: #232c1b; font-size: 12.5px; color: var(--text); transition: transform .12s, background .2s; min-width: 58px; justify-content: center; }
+  .lang.down { transform: scale(.9); background: #3b4a28; }
+
+  /* Keys */
+  .kb { background: #12170e; padding: 6px 4px 10px; display: grid; gap: 8px; }
+  .krow { display: flex; gap: 5px; justify-content: center; padding: 0 2px; }
+  .krow.mid { padding: 0 14px; }
+  .key {
+    position: relative; flex: 1; height: 42px; border-radius: 9px; background: #262f1d; color: var(--text);
+    display: grid; place-items: center; font-size: 17px; box-shadow: 0 1.5px 0 #0b0f08; transition: background .1s, transform .1s;
+    perspective: 400px;
+  }
+  .key .lb { display: block; transition: transform .18s ease, opacity .18s; }
+  .key.flip .lb { transform: rotateX(90deg); opacity: 0; }
+  .key sup { position: absolute; top: 2px; right: 4px; font-size: 9px; color: var(--dim); line-height: 1; }
+  .key.fn { background: #1d2516; font-size: 14px; color: var(--muted); }
+  .key.wide { flex: 1.5; }
+  .key.space { flex: 4.6; font-size: 12.5px; color: var(--dim); }
+  .key.enter { flex: 1.5; background: var(--olive); color: #18200b; }
+  .key.down { background: #3d4c2a; transform: translateY(1px); }
+  .key.enter.down { background: #c9da62; }
+  .key.grow::after {
+    content: ""; position: absolute; inset: -9px -10px; border-radius: 13px;
+    border: 2px solid rgba(181,201,74,.85); background: rgba(181,201,74,.1); box-shadow: 0 0 18px rgba(181,201,74,.35); animation: grow .4s ease;
+  }
+  .key.grow2::after { content: ""; position: absolute; inset: -4px -4px; border-radius: 11px; border: 1.5px dashed rgba(181,201,74,.5); animation: grow .4s ease; }
+  .key.dim { opacity: .55; }
+  @keyframes grow { from { transform: scale(.7); opacity: 0; } }
+  .pop {
+    position: absolute; z-index: 5; width: 46px; height: 56px; border-radius: 12px; background: #3a472a; color: #fff;
+    display: grid; place-items: center; font-size: 24px; pointer-events: none; transform: translate(-50%, -100%);
+    box-shadow: 0 8px 18px rgba(0,0,0,.45); animation: pop .16s ease;
+  }
+  @keyframes pop { from { opacity: 0; transform: translate(-50%, -85%) scale(.7); } }
+  .hint {
+    position: absolute; z-index: 6; background: #f4f1df; color: #18200b; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 99px;
+    transform: translate(-50%, -100%); white-space: nowrap; pointer-events: none; animation: msgIn .3s ease; box-shadow: 0 6px 16px rgba(0,0,0,.4);
+  }
+  .tapdot { position: absolute; z-index: 6; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; background: #ff8a3d; box-shadow: 0 0 0 4px rgba(255,138,61,.3); pointer-events: none; }
+
+  /* The finger */
+  .finger {
+    position: absolute; left: 0; top: 0; z-index: 7; width: 38px; height: 38px; margin: -19px 0 0 -19px; border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%, rgba(255,255,255,.55), rgba(255,255,255,.18)); border: 2px solid rgba(255,255,255,.55);
+    box-shadow: 0 6px 18px rgba(0,0,0,.35); pointer-events: none; opacity: 0;
+    transition: transform .26s cubic-bezier(.3,.7,.3,1), opacity .25s, scale .12s;
+  }
+  .finger.show { opacity: 1; }
+  .finger.press { scale: .82; }
+  .finger.drag { transition: opacity .25s, scale .12s; }
+
+  .demo-tabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; width: min(420px, 100%); }
+  .demo-tabs button {
+    font: inherit; font-size: 13.5px; color: var(--muted); background: var(--bg-2); border: 1px solid var(--line); border-radius: 99px;
+    padding: 4px 11px; cursor: pointer; transition: all .2s;
+  }
+  .demo-tabs button:hover { color: var(--text); border-color: var(--olive-deep); }
+  .demo-tabs button[aria-pressed="true"] { background: rgba(181,201,74,.16); color: var(--olive); border-color: var(--olive-2); }
+
 
   /* Sections */
   section { padding: 76px 0; }
@@ -358,17 +494,36 @@
         </ul>
       </div>
 
-      <div aria-hidden="true">
-        <div class="phone">
-          <div class="screen">
-            <div class="app-bar"><span class="dot"></span><span>Chat</span></div>
-            <div class="bubble" lang="bn">কেমন আছো? 🙂</div>
-            <div class="field" lang="bn"><span id="out"></span><span class="caret"></span></div>
-            <div class="typed">you type: <span id="roman"></span></div>
-            <div class="strip" lang="bn" id="strip"><span>…</span><b>…</b><span>…</span></div>
-            <div class="keys" id="keys"></div>
-          </div>
+      <div class="demo">
+        <div class="demo-cap" aria-live="polite">
+          <span class="cap-ic" id="capI">অ</span>
+          <span class="cap-txt"><b id="capT">অভ্র phonetic</b><span id="capS">Type how it sounds: ami → আমি</span></span>
         </div>
+        <div class="stage" id="stage" aria-hidden="true">
+          <div class="phone">
+            <div class="screen">
+              <div class="status"><span>9:41</span><span>●●● ▮</span></div>
+              <div class="appbar"><span class="av"></span><span><b>Nusrat</b><small>online</small></span></div>
+              <div class="msgs" id="msgs"><div class="msg in" lang="bn">কেমন আছো? 🙂</div></div>
+              <div class="composer"><div class="field" id="field"></div><div class="sendb" id="send">➤</div></div>
+              <div class="upper" id="upper"></div>
+              <div class="tb">
+                <div class="tb-lead">⊞</div>
+                <div class="tb-mid">
+                  <div class="tb-layer tools" id="tools">
+                    <span class="tool" data-t="emoji">😊</span><span class="tool" data-t="clip">📋</span><span class="tool" data-t="mic">🎤</span><span class="tool" data-t="edit">✎</span><span class="tool" data-t="tr">🌐</span><span class="tool" data-t="check">✓</span>
+                  </div>
+                  <div class="tb-layer strip off" id="strip"><span></span><b></b><span></span></div>
+                  <div class="tb-layer voice off" id="voice"><span class="mic" id="mic">🎤</span><span class="wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="vtext" lang="bn">শুনছি… বাংলা</span></div>
+                </div>
+                <div class="lang" id="lang">🌐 EN</div>
+              </div>
+              <div class="kb" id="kb"></div>
+            </div>
+          </div>
+          <div class="finger" id="finger"></div>
+        </div>
+        <div class="demo-tabs" id="tabs" role="group" aria-label="Show a feature"></div>
       </div>
     </div>
   </section>
@@ -590,64 +745,460 @@
     })
     .catch(() => {});
 
-  // Typing demo: roman letters in, Bangla out (Avro phonetic)
-  const rows = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'];
-  const keys = document.getElementById('keys');
-  const keyEls = {};
-  rows.forEach((r, i) => {
-    const row = document.createElement('div'); row.className = 'row';
-    if (i === 2) { const s = document.createElement('div'); s.className = 'k wide'; s.textContent = '⇧'; row.appendChild(s); }
-    [...r].forEach(c => { const k = document.createElement('div'); k.className = 'k'; k.textContent = c; keyEls[c] = k; row.appendChild(k); });
-    if (i === 2) { const s = document.createElement('div'); s.className = 'k wide'; s.textContent = '⌫'; row.appendChild(s); }
-    keys.appendChild(row);
+  // ---------------------------------------------------------------- feature demo
+  // A working copy of the keyboard (Olive night theme, real layouts and top bar), played by a
+  // virtual finger through ten scenes. Visitors can jump to a scene with the tabs under the phone.
+  const $ = id => document.getElementById(id);
+  const stage = $('stage'), finger = $('finger'), fieldEl = $('field'), kbEl = $('kb'), upper = $('upper');
+  const STOP = 'stop';
+  let run = 0;
+  const wait = ms => { const r = run; return new Promise((ok, no) => setTimeout(() => (r === run ? ok() : no(STOP)), ms)); };
+  const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  // ---- keyboard
+  const SIGNS = new Set(['ৃ', 'ু', 'ি', '্', 'া', 'ঁ', 'ো', 'ে']);
+  const LATIN = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'].map(r => [...r]);
+  const LAYOUTS = {
+    en: { rows: LATIN, hints: '1234567890', space: 'English', dot: '.', pill: '🌐 EN', num: '?123' },
+    avro: { rows: LATIN, hints: '1234567890', space: 'বাংলা (অভ্র)', dot: '.', pill: '🌐 অভ্র', num: '?123' },
+    nat: {
+      rows: [['ঙ', 'য', 'ড', 'প', 'ট', 'চ', 'জ', 'হ', 'গ', 'ড়'], ['ৃ', 'ু', 'ি', 'ব', '্', 'া', 'ক', 'ত', 'দ'], ['ঁ', 'ো', 'ে', 'র', 'ন', 'স', 'ম']],
+      hints: '১২৩৪৫৬৭৮৯০', space: 'বাংলা (জাতীয়)', dot: '।', pill: '🌐 জাতীয়', num: '?১২৩',
+    },
+  };
+  const mk = (cls, label) => { const k = document.createElement('div'); k.className = 'key ' + cls; k.innerHTML = `<span class="lb">${label}</span>`; return k; };
+  const letterKeys = [[], [], []];
+  const rowEls = [0, 1, 2, 3].map(i => { const r = document.createElement('div'); r.className = 'krow' + (i === 1 ? ' mid' : ''); kbEl.appendChild(r); return r; });
+  const K = {};
+  K.shift = mk('fn wide', '⇧'); K.back = mk('fn wide', '⌫');
+  [10, 9, 7].forEach((n, ri) => {
+    if (ri === 2) rowEls[2].appendChild(K.shift);
+    for (let i = 0; i < n; i++) { const k = mk('', ''); letterKeys[ri].push(k); rowEls[ri].appendChild(k); }
+    if (ri === 2) rowEls[2].appendChild(K.back);
   });
-  const last = document.createElement('div'); last.className = 'row';
-  last.innerHTML = '<div class="k wide">?123</div><div class="k">,</div><div class="k space" lang="bn">বাংলা (অভ্র)</div><div class="k">.</div><div class="k enter">↵</div>';
-  keys.appendChild(last);
-  keyEls[' '] = last.querySelector('.space');
+  K.num = mk('fn wide', '?123'); K.emoji = mk('fn', '😊'); K.comma = mk('fn', ','); K.space = mk('fn space', 'English'); K.dot = mk('fn', '.'); K.enter = mk('enter', '↵');
+  [K.num, K.emoji, K.comma, K.space, K.dot, K.enter].forEach(k => rowEls[3].appendChild(k));
+  let layout = 'en', keyFor = {};
+  const label = (k, t) => { k.querySelector('.lb').textContent = t; };
+  function applyLayout(name) {
+    const L = LAYOUTS[name];
+    keyFor = { ' ': K.space };
+    L.rows.forEach((row, ri) => row.forEach((c, i) => {
+      const k = letterKeys[ri][i];
+      label(k, SIGNS.has(c) ? '◌' + c : c);
+      k.querySelector('sup')?.remove();
+      if (ri === 0) { const s = document.createElement('sup'); s.textContent = L.hints[i]; k.appendChild(s); }
+      keyFor[c] = k;
+    }));
+    label(K.space, L.space); label(K.dot, L.dot); label(K.num, L.num);
+    $('lang').textContent = L.pill;
+    keyFor[L.dot] = K.dot;
+    layout = name;
+  }
+  async function setLayout(name) {
+    if (name === layout) return;
+    const flipping = LAYOUTS[name].rows !== LAYOUTS[layout].rows;
+    const ks = flipping ? letterKeys.flat() : [];
+    [...ks, K.space].forEach(k => k.classList.add('flip'));
+    await wait(170);
+    applyLayout(name);
+    [...ks, K.space].forEach(k => k.classList.remove('flip'));
+    await wait(200);
+  }
 
-  const demos = [
-    { words: [['ami', 'আমি'], ['bhalo', 'ভালো'], ['achhi', 'আছি']], strip: [['আমি', 'আমী'], ['ভালো', 'ভাল'], ['আছি', 'আছে']] },
-    { words: [['ami', 'আমি'], ['banglay', 'বাংলায়'], ['likhi', 'লিখি']], strip: [['আমি', 'আমী'], ['বাংলায়', 'বাংলা'], ['লিখি', 'লিখী']] },
-    { words: [['dhonnobad', 'ধন্যবাদ']], strip: [['ধন্যবাদ', 'ধন্নবাদ']] },
-  ];
-  const out = document.getElementById('out'), roman = document.getElementById('roman'), strip = document.getElementById('strip');
-  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const wait = ms => new Promise(r => setTimeout(r, ms));
-  const press = c => { const k = keyEls[c]; if (!k) return; k.classList.add('hit'); setTimeout(() => k.classList.remove('hit'), 120); };
-  const setStrip = (a, b, c) => { strip.innerHTML = `<span>${a}</span><b>${b}</b><span>${c}</span>`; };
-
-  async function run() {
-    if (reduce) { out.textContent = 'আমি বাংলায় লিখি'; roman.textContent = 'ami banglay likhi'; setStrip('আমি', 'বাংলায়', 'লিখি'); return; }
-    for (;;) {
-      for (const d of demos) {
-        let done = '', typedLine = '';
-        for (let w = 0; w < d.words.length; w++) {
-          const [rom, bn] = d.words[w];
-          let cur = '';
-          for (const c of rom) {
-            cur += c; press(c);
-            roman.textContent = (typedLine + cur);
-            out.textContent = done + cur;
-            setStrip(rom.startsWith(cur) ? cur : cur, d.strip[w][0], d.strip[w][1]);
-            await wait(150);
-          }
-          await wait(250);
-          press(' ');
-          done += bn + ' ';
-          typedLine += rom + ' ';
-          out.textContent = done;
-          roman.textContent = typedLine;
-          setStrip(d.strip[w][1], bn, rom);
-          await wait(420);
-        }
-        await wait(1800);
-        out.textContent = ''; roman.textContent = ''; setStrip('…', '…', '…');
-        await wait(500);
+  // ---- text field
+  const F = { t: '', c: 0, sel: null, comp: null, wavy: null, flash: null, focus: false };
+  function render() {
+    const t = F.t, n = t.length;
+    const rs = [['sel', F.sel], ['comp', F.comp], ['wavy', F.wavy], ['flash', F.flash]].filter(x => x[1]);
+    if (!n) { fieldEl.innerHTML = (F.focus ? '<span class="caret"></span>' : '') + '<span class="ph">Message</span>'; return; }
+    const pts = new Set([0, n]);
+    rs.forEach(([, r]) => { pts.add(r[0]); pts.add(r[1]); });
+    if (!F.sel) pts.add(F.c);
+    const ps = [...pts].filter(p => p >= 0 && p <= n).sort((a, b) => a - b);
+    let h = '';
+    ps.forEach((p, i) => {
+      if (!F.sel && F.focus && p === F.c) h += '<span class="caret"></span>';
+      if (i + 1 < ps.length) {
+        const q = ps[i + 1], seg = esc(t.slice(p, q));
+        const cls = rs.filter(([, r]) => r[0] <= p && q <= r[1]).map(x => x[0]).join(' ');
+        h += cls ? `<span class="${cls}">${seg}</span>` : seg;
       }
+    });
+    fieldEl.innerHTML = h;
+  }
+  function setText(t, c = t.length) { Object.assign(F, { t, c, sel: null, comp: null, wavy: null, flash: null }); render(); }
+  function insert(s) { F.t = F.t.slice(0, F.c) + s + F.t.slice(F.c); F.c += s.length; render(); }
+  function flash(s, e, ms = 900) { F.flash = [s, e]; render(); setTimeout(() => { F.flash = null; render(); }, ms); }
+  function focus(on) { F.focus = on; fieldEl.classList.toggle('focus', on); render(); }
+
+  // ---- top bar
+  function bar(mode, words, hl) {
+    $('tools').classList.toggle('off', mode !== 'tools');
+    $('strip').classList.toggle('off', mode !== 'strip');
+    $('voice').classList.toggle('off', mode !== 'voice');
+    if (mode === 'strip') {
+      const [a, b, c] = $('strip').children;
+      a.textContent = words[0] || ''; b.textContent = words[1] || ''; c.textContent = words[2] || '';
+      b.classList.toggle('hl', !!hl);
     }
   }
-  run();
+  const tool = t => document.querySelector(`.tool[data-t="${t}"]`);
+  const toolOn = (t, on) => tool(t).classList.toggle('on', on);
+
+  // ---- finger
+  function at(el, dx = 0, dy = 0) {
+    const a = el.getBoundingClientRect(), s = stage.getBoundingClientRect();
+    return [a.left - s.left + a.width * (0.5 + dx), a.top - s.top + a.height * (0.5 + dy)];
+  }
+  async function moveTo(x, y, ms = 280) {
+    finger.style.transitionDuration = `${ms}ms, .25s, .12s`;
+    finger.style.transform = `translate(${x}px, ${y}px)`;
+    finger.classList.add('show');
+    await wait(ms);
+  }
+  async function tap(el, { fast = false, dx = 0, dy = 0, pop = null, hold = 110 } = {}) {
+    const [x, y] = at(el, dx, dy);
+    await moveTo(x, y, fast ? 150 : 300);
+    finger.classList.add('press');
+    el.classList.add('down');
+    let p = null;
+    if (pop && el.classList.contains('key')) {
+      p = document.createElement('div');
+      p.className = 'pop';
+      p.textContent = pop;
+      const [cx] = at(el), r = el.getBoundingClientRect(), s = stage.getBoundingClientRect();
+      p.style.left = `${cx}px`; p.style.top = `${r.top - s.top - 4}px`;
+      stage.appendChild(p);
+    }
+    await wait(hold);
+    finger.classList.remove('press');
+    el.classList.remove('down');
+    if (p) setTimeout(() => p.remove(), 70);
+  }
+  function hint(el, text, ms = 1500, dy = -6) {
+    const h = document.createElement('div');
+    h.className = 'hint';
+    h.textContent = text;
+    const r = el.getBoundingClientRect(), s = stage.getBoundingClientRect();
+    h.style.left = `${r.left - s.left + r.width / 2}px`; h.style.top = `${r.top - s.top + dy}px`;
+    stage.appendChild(h);
+    setTimeout(() => h.remove(), ms);
+  }
+  function caption(sc) {
+    $('capI').textContent = sc.ic; $('capT').textContent = sc.t; $('capS').textContent = sc.s;
+    const cap = document.querySelector('.demo-cap');
+    cap.classList.remove('cap-anim'); void cap.offsetWidth; cap.classList.add('cap-anim');
+  }
+  const sub = s => { $('capS').textContent = s; };
+
+  // ---- the section above the top bar
+  async function openUpper(html) { upper.innerHTML = `<div class="up-in">${html}</div>`; upper.classList.add('open'); await wait(420); }
+  async function closeUpper() { upper.classList.remove('open'); await wait(380); upper.innerHTML = ''; }
+
+  // ---- typing helpers
+  async function avroWord(rom, parts, best, alt) {
+    const base = F.t;
+    for (let i = 0; i < rom.length; i++) {
+      await tap(keyFor[rom[i]], { fast: true, pop: rom[i] });
+      const part = parts[i];
+      F.t = base + part; F.c = F.t.length; F.comp = [base.length, F.t.length]; render();
+      bar('strip', [i === rom.length - 1 ? alt : '', part, rom.slice(0, i + 1)]);
+      await wait(40);
+    }
+    await wait(200);
+    await tap(K.space, { fast: true });
+    F.t = base + best + ' '; F.c = F.t.length; F.comp = null; render();
+  }
+  async function typeKeys(chars, strip) {
+    for (const ch of chars) {
+      await tap(keyFor[ch], { fast: true, pop: ch === ' ' ? null : (SIGNS.has(ch) ? '◌' + ch : ch) });
+      insert(ch);
+      if (strip) strip();
+      await wait(40);
+    }
+  }
+  const lastWord = () => F.t.slice(0, F.c).split(' ').pop();
+
+  // ---- scenes
+  const SCENES = [
+    {
+      tab: 'অভ্র', ic: 'অ', t: 'অভ্র phonetic', s: 'Type how it sounds: ami → আমি',
+      async run() {
+        await setLayout('avro'); setText(''); focus(true);
+        await tap(fieldEl);
+        await avroWord('ami', ['আ', 'আম', 'আমি'], 'আমি', 'আমী');
+        await avroWord('bhalo', ['ব', 'ভ', 'ভা', 'ভাল', 'ভালো'], 'ভালো', 'ভাল');
+        await avroWord('achhi', ['আ', 'আচ', 'আচ', 'আছ', 'আছি'], 'আছি', 'আছে');
+        bar('tools'); await wait(400);
+        await tap($('send'));
+        addMsg(F.t.trim()); setText('');
+        await wait(1400);
+      },
+    },
+    {
+      tab: 'Predictive touch', ic: '◎', t: 'Predictive touch', s: 'Likely next letters get a bigger target',
+      async run() {
+        await setLayout('en'); setText(''); focus(true);
+        await typeKeys(['t', 'h'], () => bar('strip', [lastWord(), 'the', 'that']));
+        await wait(300);
+        keyFor.e.classList.add('grow');
+        ['a', 'i', 'o'].forEach(c => keyFor[c].classList.add('grow2'));
+        ['w', 'r', 's', 'd'].forEach(c => keyFor[c].classList.add('dim'));
+        hint(keyFor.e, '"e" is likely next', 2600, -14);
+        await wait(1300);
+        const [x, y] = at(keyFor.e, -0.66, 0.05);
+        await tap(keyFor.e, { dx: -0.66, dy: 0.05, hold: 150 });
+        const d = document.createElement('div'); d.className = 'tapdot'; d.style.left = `${x}px`; d.style.top = `${y}px`; stage.appendChild(d);
+        insert('e'); bar('strip', ['the', 'the', 'then'], true);
+        hint(keyFor.w, 'tap on w\'s edge → "e"', 2000, -14);
+        await wait(2100);
+        d.remove();
+        letterKeys.flat().forEach(k => k.classList.remove('grow', 'grow2', 'dim'));
+        await tap(K.space, { fast: true }); insert(' '); bar('tools');
+        await typeKeys([...'best'], () => bar('strip', [lastWord(), 'best', 'better']));
+        await wait(1200);
+      },
+    },
+    {
+      tab: 'Autocorrect', ic: '✨', t: 'Smart autocorrect', s: 'Fixes typos when you press space; ⌫ undoes it',
+      async run() {
+        await setLayout('en'); setText('I '); focus(true);
+        await tap(fieldEl);
+        await typeKeys([...'recieved'], () => {
+          const w = lastWord();
+          bar('strip', [w, 'received', 'receive'], w.length >= 6);
+        });
+        await wait(500);
+        await tap(K.space, { fast: true });
+        setText('I received '); flash(2, 10, 1400); bar('strip', ['recieved', 'it', 'the']);
+        hint(fieldEl, 'recieved → received', 1800, -4);
+        await wait(1900);
+        await typeKeys([...'it'], () => bar('strip', [lastWord(), 'it', 'its']));
+        await wait(1000);
+      },
+    },
+    {
+      tab: 'Language switch', ic: '🌐', t: 'One-tap language switch', s: 'English ⇄ বাংলা (অভ্র) ⇄ বাংলা (জাতীয়)',
+      async run() {
+        await setLayout('en'); setText(''); focus(true); bar('tools');
+        await wait(300);
+        await tap($('lang')); await setLayout('avro'); hint($('lang'), 'অভ্র', 900, -8);
+        await wait(1000);
+        await tap($('lang')); await setLayout('nat'); hint($('lang'), 'জাতীয়', 900, -8);
+        await wait(700);
+        await typeKeys(['ন', 'ত', 'ু', 'ন', ' ', 'ক', 'া', 'জ'], () => bar('strip', [lastWord(), lastWord() === 'নতুন' ? 'নতুন' : (lastWord().startsWith('কা') ? 'কাজ' : lastWord()), '']));
+        bar('tools');
+        await wait(900);
+        await tap($('lang')); await setLayout('en'); hint($('lang'), 'EN', 900, -8);
+        await wait(1200);
+      },
+    },
+    {
+      tab: 'Voice', ic: '🎤', t: 'Voice typing', s: 'Speak Bangla or English, with spoken punctuation',
+      async run() {
+        await setLayout('avro'); setText(''); focus(true); bar('tools');
+        await tap(tool('mic')); toolOn('mic', true);
+        bar('voice');
+        await wait(500);
+        for (const w of ['আজ', 'আবহাওয়া', 'খুব', 'সুন্দর']) {
+          await wait(520);
+          const s = F.t.length + (F.t ? 1 : 0);
+          setText(F.t + (F.t ? ' ' : '') + w); flash(s, F.t.length, 500);
+        }
+        await wait(500);
+        hint($('voice'), 'you say "দাঁড়ি"', 1300, -6);
+        await wait(1000);
+        setText(F.t + '।'); flash(F.t.length - 1, F.t.length, 700);
+        await wait(1000);
+        await tap($('mic')); toolOn('mic', false); bar('tools');
+        await wait(1000);
+      },
+    },
+    {
+      tab: 'Translator', ic: '⇄', t: 'Offline translator', s: 'English → বাংলা right inside the keyboard',
+      async run() {
+        await setLayout('en'); setText(''); focus(true); bar('tools');
+        await tap(tool('tr')); toolOn('tr', true);
+        await openUpper(`<div class="up-head">🌐 <b>English</b> ⇄ <b lang="bn">বাংলা</b><span class="x">✕</span></div>
+          <div class="tbox" id="tin"><span class="caret"></span></div>
+          <div class="tout"><span class="t" id="tout" lang="bn"></span><span class="ins" id="ins">➤</span></div>`);
+        focus(false);
+        let s = '';
+        for (const ch of 'good morning') {
+          await tap(keyFor[ch], { fast: true, pop: ch === ' ' ? null : ch });
+          s += ch; $('tin').innerHTML = esc(s) + '<span class="caret"></span>';
+          if (ch === ' ') $('tout').innerHTML = '<span class="dots"><span></span><span></span><span></span></span>';
+          await wait(30);
+        }
+        $('tout').innerHTML = '<span class="dots"><span></span><span></span><span></span></span>';
+        await wait(800);
+        $('tout').textContent = 'শুভ সকাল';
+        await wait(1000);
+        await tap($('ins'));
+        focus(true); setText('শুভ সকাল'); flash(0, F.t.length, 1000);
+        toolOn('tr', false); await closeUpper();
+        await wait(1300);
+      },
+    },
+    {
+      tab: 'Spell check', ic: '✓', t: 'Spelling & grammar check', s: 'Finds mistakes in বাংলা and English, offline',
+      async run() {
+        await setLayout('avro'); setText('আমার পরিক্ষা কাল'); focus(true); bar('tools');
+        await wait(500);
+        await tap(tool('check')); toolOn('check', true);
+        const i = F.t.indexOf('পরিক্ষা');
+        F.wavy = [i, i + 'পরিক্ষা'.length]; render();
+        await openUpper(`<div class="up-head">✓ <b>Check</b> · 2 suggestions<span class="x">✕</span></div>
+          <div class="iss" lang="bn"><span class="kd k-sp">Spelling</span><span><s>পরিক্ষা</s> → <b>পরীক্ষা</b></span></div>
+          <div class="iss" lang="bn"><span class="kd k-pu">Punctuation</span><span>add <b>।</b> at the end</span></div>
+          <span class="fixall" id="fixall">Fix all</span>`);
+        await wait(1500);
+        await tap($('fixall'));
+        upper.querySelectorAll('.iss').forEach(e => e.classList.add('gone'));
+        setText('আমার পরীক্ষা কাল।'); flash(i, i + 'পরীক্ষা'.length, 1200);
+        await wait(350);
+        upper.querySelector('.up-in').innerHTML = '<div class="up-head">✓ <b>Check</b></div><div class="good">✓ Looks good</div>';
+        await wait(1500);
+        toolOn('check', false); await closeUpper();
+        await wait(800);
+      },
+    },
+    {
+      tab: 'Clipboard', ic: '📋', t: 'Clipboard', s: 'Your recent copies: codes, links, notes',
+      async run() {
+        await setLayout('en'); setText('Code: '); focus(true); bar('tools');
+        await tap(tool('clip')); toolOn('clip', true);
+        await openUpper(`<div class="chiprow"><span class="on">All</span><span>🔗 Links</span><span>🔢 Codes</span><span>📌</span></div>
+          <div class="clips">
+            <div class="clip" id="clip1"><small>🔢 Code · 2 min</small>482913</div>
+            <div class="clip"><small>🔗 Link · 1 h</small>github.com/…</div>
+            <div class="clip"><small>Text · 3 h</small>Meeting at 5 pm</div>
+            <div class="clip"><small>📌 Pinned</small>Thanks a lot! 🙏</div>
+          </div>`);
+        await wait(1200);
+        await tap($('clip1'), { hold: 160 });
+        const s = F.t.length; insert('482913'); flash(s, F.t.length, 1100);
+        toolOn('clip', false); await closeUpper();
+        await wait(1400);
+      },
+    },
+    {
+      tab: 'Emoji', ic: '😊', t: 'Emoji', s: 'Search in English or বাংলা, with skin tones',
+      async run() {
+        await setLayout('avro'); setText('দারুণ হয়েছে '); focus(true); bar('tools');
+        await tap(K.emoji);
+        const E = ['😀', '😂', '🥰', '😍', '😎', '🤩', '😊', '🙏', '❤️', '👍', '🎉', '🔥', '✨', '🌸', '🌿', '💯', '😅', '🤗', '😴', '🤔', '👏', '💚', '🌙', '☕'];
+        await openUpper(`<div class="esearch">🔍 Search emoji · <span lang="bn">ইমোজি খুঁজুন</span></div>
+          <div class="egrid">${E.map((e, i) => `<span id="em${i}">${e}</span>`).join('')}</div>`);
+        await wait(700);
+        for (const i of [1, 8, 10]) { await tap($('em' + i), { hold: 150 }); insert(E[i]); await wait(120); }
+        await wait(700);
+        await closeUpper();
+        await wait(1100);
+      },
+    },
+    {
+      tab: 'Gestures', ic: '👆', t: 'Gestures', s: 'Swipe ⌫ left to delete whole words',
+      async run() {
+        await setLayout('en'); setText('See you at the cafe tomorrow evening'); focus(true); bar('tools');
+        await wait(500);
+        // Backspace swipe: words are selected as the finger slides left, then deleted on release.
+        let [x, y] = at(K.back);
+        await moveTo(x, y);
+        finger.classList.add('press');
+        await wait(200);
+        finger.classList.add('drag');
+        const full = F.t, ends = [full.lastIndexOf(' evening'), full.lastIndexOf(' tomorrow')];
+        for (let step = 1; step <= 30; step++) {
+          x -= 3.4; finger.style.transform = `translate(${x}px, ${y}px)`;
+          const words = step < 12 ? 0 : step < 22 ? 1 : 2;
+          F.sel = words ? [ends[words - 1] + 1, full.length] : null; render();
+          await wait(28);
+        }
+        await wait(400);
+        finger.classList.remove('press', 'drag');
+        setText(full.slice(0, ends[1] + 1));
+        hint(K.back, '2 words deleted', 1300, -10);
+        await wait(1400);
+        // Space-bar trackpad: slide to move the cursor, then type there.
+        sub('Slide on the space bar to move the cursor');
+        [x, y] = at(K.space, 0.25);
+        await moveTo(x, y);
+        finger.classList.add('press');
+        await wait(250);
+        finger.classList.add('drag');
+        const target = F.t.indexOf('cafe');
+        while (F.c > target) {
+          x -= 7; finger.style.transform = `translate(${x}px, ${y}px)`;
+          F.c--; render();
+          await wait(55);
+        }
+        await wait(300);
+        finger.classList.remove('press', 'drag');
+        await typeKeys([...'new ']);
+        await wait(1400);
+      },
+    },
+  ];
+
+  // ---- messages
+  const msgs = $('msgs');
+  function addMsg(text) {
+    const m = document.createElement('div'); m.className = 'msg out'; m.textContent = text; m.lang = 'bn';
+    msgs.appendChild(m);
+    while (msgs.children.length > 4) msgs.firstElementChild.remove();
+  }
+
+  // ---- player
+  const tabs = $('tabs');
+  SCENES.forEach((sc, i) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.textContent = sc.tab; b.setAttribute('aria-pressed', 'false');
+    b.addEventListener('click', () => play(i));
+    tabs.appendChild(b);
+  });
+  let current = 0, visible = true;
+  function tidy() {
+    stage.querySelectorAll('.pop, .hint, .tapdot').forEach(e => e.remove());
+    document.querySelectorAll('.key').forEach(k => k.classList.remove('down', 'grow', 'grow2', 'dim', 'flip'));
+    document.querySelectorAll('.tool').forEach(t => t.classList.remove('on'));
+    finger.classList.remove('press', 'drag');
+    upper.classList.remove('open'); upper.innerHTML = '';
+    bar('tools');
+  }
+  async function play(i) {
+    const mine = ++run;
+    current = i;
+    tidy();
+    try {
+      for (;;) {
+        const sc = SCENES[current];
+        [...tabs.children].forEach((b, j) => b.setAttribute('aria-pressed', String(j === current)));
+        caption(sc);
+        sub(sc.s);
+        await sc.run();
+        if (mine !== run) return;
+        tidy();
+        current = (current + 1) % SCENES.length;
+      }
+    } catch (e) {
+      if (e !== STOP) throw e;
+    }
+  }
+
+  applyLayout('en'); setText(''); render();
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    applyLayout('avro'); setText('আমি ভালো আছি'); bar('strip', ['আছে', 'আছি', 'achhi']);
+    tabs.hidden = true;
+  } else {
+    // Only play while the phone is on screen.
+    new IntersectionObserver(([e]) => {
+      if (e.isIntersecting && !visible) { visible = true; play(current); }
+      else if (!e.isIntersecting && visible) { visible = false; run++; tidy(); }
+    }).observe(stage);
+    play(0);
+  }
 })();
 </script>
 </body>
