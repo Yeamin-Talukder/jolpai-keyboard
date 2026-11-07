@@ -67,19 +67,30 @@ jobs:
       - name: Name the APKs after the version
         run: |
           mkdir -p dist
+          version="${GITHUB_REF_NAME#v}"
           for f in app-shell/build/outputs/apk/release/*.apk; do
             abi=$(basename "$f" | sed -E 's/app-shell-(.*)-release\.apk/\1/')
-            cp "$f" "dist/jolpai-${GITHUB_REF_NAME}-${abi}.apk"
+            cp "$f" "dist/jolpai-keyboard-${version}-${abi}.apk"
           done
           (cd dist && sha256sum *.apk > SHA256SUMS.txt)
+
+      # docs/release-notes/<tag>.md if there is one, then the checksums.
+      - name: Write the release notes
+        id: notes
+        run: |
+          echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+          notes="docs/release-notes/${GITHUB_REF_NAME}.md"
+          if [ -f "$notes" ]; then cat "$notes"; else echo "Jolpai Keyboard ${GITHUB_REF_NAME#v}"; fi > dist/NOTES.md
+          { echo; echo '**SHA-256 checksums**'; echo '```'; cat dist/SHA256SUMS.txt; echo '```'; } >> dist/NOTES.md
 
       - name: Publish the release
         uses: softprops/action-gh-release@v2
         with:
+          name: Jolpai Keyboard ${{ steps.notes.outputs.version }} (beta)
+          body_path: dist/NOTES.md
           files: |
             dist/*.apk
             dist/SHA256SUMS.txt
-          generate_release_notes: true
 
       - name: Remove the key from the runner
         if: always()

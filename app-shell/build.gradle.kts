@@ -23,8 +23,8 @@ android {
         applicationId = "com.yeamin.lipi"
         minSdk = 26
         targetSdk = 37
-        versionCode = 2
-        versionName = "0.7.0"
+        versionCode = 3
+        versionName = "0.8.0"
     }
 
     signingConfigs {
