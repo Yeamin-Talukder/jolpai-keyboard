@@ -80,11 +80,12 @@ object AppUpdater {
         if (_state.value is UpdateState.Checking || busy()) return
         _state.value = UpdateState.Checking
         job = scope.launch {
-            val latest = AppUpdates.fetchLatest(installedVersion)
-            _state.value = when {
-                latest == null -> UpdateState.Failed("Couldn't reach GitHub. Check the internet and try again.", null)
-                AppUpdates.isNewer(latest.version, installedVersion) -> UpdateState.Available(latest)
-                else -> UpdateState.UpToDate(latest.version)
+            _state.value = when (val found = AppUpdates.lookupLatest(installedVersion)) {
+                LatestLookup.Offline -> UpdateState.Failed("Couldn't connect to GitHub. Check the internet and try again.", null)
+                LatestLookup.Unavailable -> UpdateState.Failed("GitHub didn't answer just now. Try again in a few minutes.", null)
+                is LatestLookup.Found ->
+                    if (AppUpdates.isNewer(found.release.version, installedVersion)) UpdateState.Available(found.release)
+                    else UpdateState.UpToDate(found.release.version)
             }
             clearCache(context.applicationContext)
         }
@@ -126,6 +127,9 @@ object AppUpdater {
                 clearCache(app)
                 _state.value = UpdateState.Available(release)
                 throw e
+            } catch (e: HttpStatusException) {
+                clearCache(app)
+                _state.value = UpdateState.Failed("GitHub didn't send the file (error ${e.code}). Try again later, or use the release page.", release)
             } catch (e: IOException) {
                 clearCache(app)
                 _state.value = UpdateState.Failed("The download stopped. Check the internet and try again.", release)
@@ -180,7 +184,7 @@ object AppUpdater {
             conn.readTimeout = 20_000
             conn.instanceFollowRedirects = true // GitHub redirects downloads to its file storage
             conn.setRequestProperty("User-Agent", "JolpaiKeyboard")
-            if (conn.responseCode !in 200..299) throw IOException("HTTP ${conn.responseCode}")
+            if (conn.responseCode !in 200..299) throw HttpStatusException(conn.responseCode)
             val total = conn.contentLengthLong.takeIf { it > 0 } ?: release.apkSize
             val coroutine = kotlin.coroutines.coroutineContext
             var done = 0L
@@ -337,6 +341,9 @@ object AppUpdater {
         File(context.cacheDir, DIR).listFiles()?.forEach { it.delete() }
     }
 }
+
+/** GitHub answered a download with an error status (e.g. 404, 403). */
+private class HttpStatusException(val code: Int) : Exception("HTTP $code")
 
 /** Receives the result of an install session; shows Android's confirmation when it asks for it. */
 class InstallResultReceiver : BroadcastReceiver() {

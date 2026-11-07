@@ -181,23 +181,101 @@ object AppUpdates {
     fun issueUrl(info: DeviceInfo, encode: (String) -> String): String =
         "${JolpaiLinks.NEW_ISSUE}?labels=bug&title=${encode("Problem: ")}&body=${encode(issueBody(info))}"
 
-    /** Asks GitHub for the newest release. Runs off the main thread; null when it can't be reached. */
-    suspend fun fetchLatest(installedVersion: String): LatestRelease? = withContext(Dispatchers.IO) {
-        runCatching {
+    /** Processor types the release workflow builds an APK for (file names end in -<abi>.apk). */
+    val RELEASE_ABIS = listOf("arm64-v8a", "armeabi-v7a", "x86_64", "x86")
+
+    /**
+     * The tag in the address GitHub's ".../releases/latest" page redirects to
+     * (".../releases/tag/v0.10.0" → "v0.10.0"), or null (e.g. no release yet: ".../releases").
+     */
+    fun tagFromReleaseUrl(location: String?): String? =
+        location?.let { Regex("/releases/tag/([^/?#]+)/?(?:[?#].*)?$").find(it)?.groupValues?.get(1) }
+            ?.takeIf { it.isNotBlank() }
+
+    /**
+     * The release for [tag] built from the release workflow's fixed file names, for when GitHub's
+     * API can't be used. The size is unknown (0): the download's own length is used.
+     */
+    fun releaseFromTag(tag: String, abis: List<String>): LatestRelease {
+        val version = tag.removePrefix("v")
+        val abi = abis.firstOrNull { it in RELEASE_ABIS }
+        val base = "${JolpaiLinks.REPO}/releases/download/$tag"
+        val apkName = abi?.let { "jolpai-keyboard-$version-$it.apk" }
+        return LatestRelease(
+            version = version,
+            pageUrl = "${JolpaiLinks.REPO}/releases/tag/$tag",
+            apkUrl = apkName?.let { "$base/$it" },
+            apkName = apkName,
+            apkSize = 0,
+            sumsUrl = "$base/SHA256SUMS.txt",
+        )
+    }
+
+    /**
+     * Asks GitHub for the newest release, off the main thread.
+     *
+     * GitHub's API allows only 60 requests an hour per internet connection without an account
+     * (shared by everyone on the same Wi-Fi, and by the website's download button). When it
+     * refuses (403/429) or fails, the plain ".../releases/latest" page is used instead: it isn't
+     * rate-limited, and its redirect names the newest tag.
+     */
+    suspend fun lookupLatest(installedVersion: String): LatestLookup = withContext(Dispatchers.IO) {
+        val abis = Build.SUPPORTED_ABIS.toList()
+        var connected = false
+        // 1. The API: exact file names and sizes.
+        try {
             val conn = URL(JolpaiLinks.LATEST_RELEASE_API).openConnection() as HttpURLConnection
             try {
                 conn.connectTimeout = 10_000
                 conn.readTimeout = 10_000
                 conn.setRequestProperty("Accept", "application/vnd.github+json")
                 conn.setRequestProperty("User-Agent", "JolpaiKeyboard/$installedVersion")
-                if (conn.responseCode != 200) return@runCatching null
-                val body = conn.inputStream.use { it.readBytes().decodeToString() }
-                parseLatest(body, Build.SUPPORTED_ABIS.toList())
+                val code = conn.responseCode
+                connected = true
+                if (code == 200) {
+                    val body = conn.inputStream.use { it.readBytes().decodeToString() }
+                    parseLatest(body, abis)?.let { return@withContext LatestLookup.Found(it) }
+                }
             } finally {
                 conn.disconnect()
             }
-        }.getOrNull()
+        } catch (_: java.io.IOException) {
+            // Try the web page below.
+        }
+        // 2. The release page's redirect.
+        try {
+            val conn = URL(JolpaiLinks.LATEST_RELEASE).openConnection() as HttpURLConnection
+            try {
+                conn.instanceFollowRedirects = false
+                conn.connectTimeout = 10_000
+                conn.readTimeout = 10_000
+                conn.setRequestProperty("User-Agent", "JolpaiKeyboard/$installedVersion")
+                val code = conn.responseCode
+                connected = true
+                if (code in 300..399) {
+                    tagFromReleaseUrl(conn.getHeaderField("Location"))?.let {
+                        return@withContext LatestLookup.Found(releaseFromTag(it, abis))
+                    }
+                }
+            } finally {
+                conn.disconnect()
+            }
+        } catch (_: java.io.IOException) {
+            // Nothing reachable.
+        }
+        if (connected) LatestLookup.Unavailable else LatestLookup.Offline
     }
+}
+
+/** What [AppUpdates.lookupLatest] found. */
+sealed interface LatestLookup {
+    data class Found(val release: LatestRelease) : LatestLookup
+
+    /** The phone couldn't connect to GitHub at all. */
+    data object Offline : LatestLookup
+
+    /** GitHub answered, but not with a release (busy, or no release published). */
+    data object Unavailable : LatestLookup
 }
 
 /** This install's details for [AppUpdates.issueBody]. */

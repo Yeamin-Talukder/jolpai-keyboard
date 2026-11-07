@@ -62,6 +62,29 @@ class AppUpdatesTest {
         assertNull(AppUpdates.checksumFor("not a sums file", "jolpai-keyboard-0.8.0-arm64-v8a.apk"))
     }
 
+    @Test fun `without the API the latest tag comes from the release page redirect`() {
+        val repo = "https://github.com/Yeamin-Talukder/jolpai-keyboard"
+        assertEquals("v0.10.0", AppUpdates.tagFromReleaseUrl("$repo/releases/tag/v0.10.0"))
+        assertEquals("v1.2.3", AppUpdates.tagFromReleaseUrl("$repo/releases/tag/v1.2.3/"))
+        assertEquals("v1.2.3", AppUpdates.tagFromReleaseUrl("$repo/releases/tag/v1.2.3?x=1"))
+        assertNull(AppUpdates.tagFromReleaseUrl("$repo/releases")) // no release published
+        assertNull(AppUpdates.tagFromReleaseUrl(null))
+    }
+
+    @Test fun `links built from a tag match the release workflow's file names`() {
+        // As published for v0.10.0 (release.yml: jolpai-keyboard-<version>-<abi>.apk, SHA256SUMS.txt).
+        val r = AppUpdates.releaseFromTag("v0.10.0", listOf("arm64-v8a", "armeabi-v7a", "armeabi"))
+        assertEquals("0.10.0", r.version)
+        assertEquals("jolpai-keyboard-0.10.0-arm64-v8a.apk", r.apkName)
+        assertEquals("https://github.com/Yeamin-Talukder/jolpai-keyboard/releases/download/v0.10.0/jolpai-keyboard-0.10.0-arm64-v8a.apk", r.apkUrl)
+        assertEquals("https://github.com/Yeamin-Talukder/jolpai-keyboard/releases/download/v0.10.0/SHA256SUMS.txt", r.sumsUrl)
+        assertEquals("https://github.com/Yeamin-Talukder/jolpai-keyboard/releases/tag/v0.10.0", r.pageUrl)
+        assertEquals(0L, r.apkSize)
+        // A 32-bit-only phone gets armeabi-v7a; a processor with no release APK gets none.
+        assertEquals("jolpai-keyboard-0.10.0-armeabi-v7a.apk", AppUpdates.releaseFromTag("v0.10.0", listOf("armeabi-v7a", "armeabi")).apkName)
+        assertNull(AppUpdates.releaseFromTag("v0.10.0", listOf("mips")).apkUrl)
+    }
+
     @Test fun `bad or empty replies give no release`() {
         assertNull(AppUpdates.parseLatest("not json", listOf("arm64-v8a")))
         assertNull(AppUpdates.parseLatest("""{"message":"Not Found"}""", listOf("arm64-v8a")))
