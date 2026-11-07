@@ -36,6 +36,13 @@ object Changelog {
     /** Newest first. */
     val RELEASES: List<ChangelogRelease> = listOf(
         ChangelogRelease(
+            "0.10.0", "7 Nov 2026",
+            listOf(
+                "Update right inside Jolpai: About → Update downloads the new version with a progress ring (percent, size, speed, time left) and installs it after Android's confirmation",
+                "Every download is checked before it installs: the checksum must match the release, and it must be Jolpai, newer, and signed with the same key",
+            ),
+        ),
+        ChangelogRelease(
             "0.9.0", "7 Nov 2026",
             listOf(
                 "Check offers the fix plus up to 2 other likely words to tap, ranked by what you usually type; a misspelt last word is no longer missed",
