@@ -12,7 +12,7 @@ and nothing you type leaves your phone.**
 [![Downloads](https://img.shields.io/github/downloads/Yeamin-Talukder/jolpai-keyboard/total?label=downloads&color=6E8A2C&logo=android&logoColor=white)](https://github.com/Yeamin-Talukder/jolpai-keyboard/releases)
 [![Views](https://hits.sh/github.com/Yeamin-Talukder/jolpai-keyboard.svg?label=views&color=6E8A2C)](https://hits.sh/github.com/Yeamin-Talukder/jolpai-keyboard/)
 [![Stars](https://img.shields.io/github/stars/Yeamin-Talukder/jolpai-keyboard?style=flat&color=B5C94A&logo=github)](https://github.com/Yeamin-Talukder/jolpai-keyboard/stargazers)
-[![Version](https://img.shields.io/badge/version-0.10.0--beta-B5C94A)](docs/ROADMAP.md)
+[![Version](https://img.shields.io/badge/version-0.10.1--beta-B5C94A)](docs/ROADMAP.md)
 [![License: Apache-2.0](https://img.shields.io/github/license/Yeamin-Talukder/jolpai-keyboard?color=4E6120)](LICENSE)
 <br>
 [![Android 8.0+](https://img.shields.io/badge/Android-8.0%2B%20(API%2026)-3DDC84?logo=android&logoColor=white)](#requirements)
@@ -43,14 +43,18 @@ English↔Bangla translation run **offline**.
 > **Also known as:** Jolpai Bangla Keyboard · Jalpai Keyboard · জলপাই বাংলা কিবোর্ড · Jolpai Avro Keyboard
 > (package `com.yeamin.jolpai`; the project was first called *Lipi Keyboard*, package `com.yeamin.lipi` up to v0.8.0).
 
-## 🆕 What's new in 0.10.0
+## 🆕 What's new in 0.10.1
+
+- 🔄 **Check for updates works even when GitHub is limiting requests** (0.10.0 wrongly said "Couldn't reach GitHub"), with clearer messages when something goes wrong.
+
+In 0.10.0:
 
 - ⬇️ **Update without leaving the app**: About → **Update** downloads the new version with a progress ring (percent, size, speed, time left) and installs it after Android's confirmation.
 - 🛡️ Every update is **checked before it installs**: matching SHA-256 checksum, the same signing key, and a newer version.
 
 Earlier, in 0.9.0: Check offers the fix plus 2 other likely words (the right word **95.8 %** of the time), a new About page, and the new app ID **`com.yeamin.jolpai`** (coming from 0.7.0 or 0.8.0, [move your data once](#-download--install)). In 0.8.0: the ✓ Check tool, sharper autocorrect, typing speed stats, key fonts, sound packs and a split keyboard.
 
-[Full release notes](docs/release-notes/v0.10.0.md) · [All releases](https://github.com/Yeamin-Talukder/jolpai-keyboard/releases)
+[Full release notes](docs/release-notes/v0.10.1.md) · [All releases](https://github.com/Yeamin-Talukder/jolpai-keyboard/releases)
 
 ## ✨ Features
 
@@ -125,7 +129,7 @@ Earlier, in 0.9.0: Check offers the fix plus 2 other likely words (the right wor
 
 ## 📥 Download & install
 
-> **Status: beta (v0.10.0).** All seven development phases are built and 280+ unit tests pass. The app runs
+> **Status: beta (v0.10.1).** All seven development phases are built and 280+ unit tests pass. The app runs
 > daily on a Pixel 7 Pro (Android 17); testing on more phones is ongoing. See the [roadmap](docs/ROADMAP.md)
 > for exactly what works and what is pending.
 

@@ -36,6 +36,13 @@ object Changelog {
     /** Newest first. */
     val RELEASES: List<ChangelogRelease> = listOf(
         ChangelogRelease(
+            "0.10.1", "7 Nov 2026",
+            listOf(
+                "Check for updates works even when GitHub's hourly limit is used up (it said \"Couldn't reach GitHub\" before)",
+                "Clearer messages when an update can't be checked or downloaded",
+            ),
+        ),
+        ChangelogRelease(
             "0.10.0", "7 Nov 2026",
             listOf(
                 "Update right inside Jolpai: About → Update downloads the new version with a progress ring (percent, size, speed, time left) and installs it after Android's confirmation",
