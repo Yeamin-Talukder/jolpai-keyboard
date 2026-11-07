@@ -34,6 +34,41 @@ class TextCheckerTest {
         assertEquals(emptyList<TextIssue>(), checker.check(ok))
     }
 
+    @Test fun `a misspelt last word is flagged, not hidden by the missing full stop`() {
+        val issues = checker.check("i want to takl")
+        val takl = issues.single { it.original == "takl" }
+        assertEquals(IssueKind.SPELLING, takl.kind)
+        assertTrue("talk is offered: ${takl.choices}", "talk" in takl.choices)
+        // The full stop comes once the word is fixed.
+        assertTrue(checker.check("I want to talk").any { it.replacement == "talk." })
+        // Swapped letters at the end are found too.
+        assertTrue("talk" in checker.check("i want to tlak").single { it.original == "tlak" }.choices)
+    }
+
+    @Test fun `misspellings offer up to two other likely words, like the prediction strip`() {
+        val issue = checker.check("I want to takl.").single { it.original == "takl" }
+        assertTrue(issue.alternatives.size in 1..TextChecker.MAX_ALTERNATIVES)
+        assertEquals(issue.choices, issue.choices.distinct())
+        assertTrue(issue.replacement !in issue.alternatives)
+        assertEquals(setOf("tail", "tall", "talk"), issue.choices.toSet())
+    }
+
+    @Test fun `the user's own typing puts the word that fits the sentence first`() {
+        assertEquals("tail", checker.check("I want to takl.").single { it.original == "takl" }.replacement) // no context yet
+        history.recordWord(Language.ENGLISH, "talk", "to")
+        val issue = checker.check("I want to takl.").single { it.original == "takl" }
+        assertEquals("talk", issue.replacement)
+        assertTrue("tail" in issue.alternatives)
+    }
+
+    @Test fun `bangla misspellings offer alternatives too, best first`() {
+        val w = nfc("মানষ")
+        val fixes = BanglaSpelling.corrections(w, { bn.contains(it) }, 3) { bn.frequency(it) }
+        assertEquals(BanglaSpelling.correction(w, { bn.contains(it) }) { bn.frequency(it) }, fixes.firstOrNull())
+        assertEquals(fixes, fixes.distinct())
+        assertTrue(fixes.size <= 3)
+    }
+
     @Test fun `spelling mistakes get the likely word`() {
         val issues = checker.check("I recieved your mesage yesterday.")
         assertEquals(listOf("received", "message"), issues.filter { it.kind == IssueKind.SPELLING }.map { it.replacement })

@@ -296,7 +296,7 @@ class CheckCardView(
         }
         m.issues.forEachIndexed { i, issue ->
             val card = issueCard(issue)
-            list.addView(card, LayoutParams(dp(232f), LayoutParams.MATCH_PARENT).apply { rightMargin = dp(8f) })
+            list.addView(card, LayoutParams(dp(if (issue.alternatives.isEmpty()) 232f else 272f), LayoutParams.MATCH_PARENT).apply { rightMargin = dp(8f) })
             if (firstShow || i == 0) {
                 card.alpha = 0f
                 card.translationX = 24 * density
@@ -349,17 +349,34 @@ class CheckCardView(
             isSingleLine = true
             ellipsize = TextUtils.TruncateAt.END
         }, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT).apply { topMargin = dp(2f) })
-        // Reason + buttons
+        // Reason + buttons. With other likely words (like the prediction strip), they take the
+        // reason's place: "or  tall  talk" — tap one to use it instead of the suggested fix.
         val row = LinearLayout(context).apply {
             orientation = HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            addView(TextView(context).apply {
-                text = issue.reason
-                setTextSize(TypedValue.COMPLEX_UNIT_SP, 11f)
-                setTextColor(palette.hint)
-                maxLines = 2
-                ellipsize = TextUtils.TruncateAt.END
-            }, LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f))
+            if (issue.alternatives.isEmpty()) {
+                addView(TextView(context).apply {
+                    text = issue.reason
+                    setTextSize(TypedValue.COMPLEX_UNIT_SP, 11f)
+                    setTextColor(palette.hint)
+                    maxLines = 2
+                    ellipsize = TextUtils.TruncateAt.END
+                }, LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f))
+            } else {
+                addView(LinearLayout(context).apply {
+                    orientation = HORIZONTAL
+                    gravity = Gravity.CENTER_VERTICAL
+                    addView(TextView(context).apply {
+                        text = "or"
+                        setTextSize(TypedValue.COMPLEX_UNIT_SP, 11f)
+                        setTextColor(palette.hint)
+                    })
+                    issue.alternatives.forEach { alt ->
+                        addView(alternativeChip(alt) { remove(card) { listener.onFix(issue.copy(replacement = alt)) } },
+                            LayoutParams(LayoutParams.WRAP_CONTENT, dp(26f)).apply { leftMargin = dp(5f) })
+                    }
+                }, LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f))
+            }
             // A spelling flag on a name or rare word: "Add word" keeps it for good (personal dictionary).
             val keep = if (issue.kind == IssueKind.SPELLING) "Add word" else "Ignore"
             addView(textButton(keep, filled = false) { remove(card) { listener.onIgnore(issue) } }, LayoutParams(LayoutParams.WRAP_CONTENT, dp(28f)).apply { leftMargin = dp(4f) })
@@ -468,6 +485,28 @@ class CheckCardView(
         GradientDrawable().apply { cornerRadius = 100 * density; setColor(color) },
         null,
     )
+
+    /** A word the user can pick instead of the suggested fix: outlined, in the text colour. */
+    private fun alternativeChip(word: String, onClick: () -> Unit) = TextView(context).apply {
+        text = word
+        setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+        setTextColor(palette.text)
+        gravity = Gravity.CENTER
+        isSingleLine = true
+        ellipsize = TextUtils.TruncateAt.END
+        maxWidth = dp(76f)
+        setPadding(dp(10f), 0, dp(10f), 0)
+        background = RippleDrawable(
+            ColorStateList.valueOf(palette.keyPressed),
+            GradientDrawable().apply {
+                cornerRadius = 100 * density
+                setStroke(dp(1f).coerceAtLeast(1), ColorUtils.setAlphaComponent(palette.hint, 0x80))
+            },
+            null,
+        )
+        contentDescription = "Use $word"
+        setOnClickListener { onClick() }
+    }
 
     private fun textButton(label: String, filled: Boolean, onClick: () -> Unit) = TextView(context).apply {
         text = label

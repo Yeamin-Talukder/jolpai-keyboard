@@ -92,6 +92,11 @@ class UserHistory(
         return top.result().distinct()
     }
 
+    /** How often the user has typed [word] right after [previous] (0 if never). */
+    @Synchronized
+    fun bigramCount(language: Language, previous: String, word: String): Int =
+        bigrams[language]?.get(key(previous))?.get(key(word))?.count ?: 0
+
     /** Words the user has typed after [previous], most frequent first. */
     @Synchronized
     fun nextWords(language: Language, previous: String, limit: Int): List<String> {

@@ -585,10 +585,15 @@ class KeyboardController(
             is KeyAction.FixIssue -> if (checking) {
                 endComposing()
                 if (checkStale) runCheck()
+                // The card sends the issue with the word the user picked as its replacement: the
+                // suggested fix or one of the alternatives ("takl" → talk / tail / tall).
+                val chosen = action.issue.replacement
                 val current = checkIssues.firstOrNull { it == action.issue }
-                    ?: checkIssues.firstOrNull { it.original == action.issue.original && it.replacement == action.issue.replacement }
-                if (current != null) {
-                    applyFixes(listOf(current))
+                    ?: checkIssues.firstOrNull { it.start == action.issue.start && it.original == action.issue.original && chosen in it.choices }
+                    ?: checkIssues.firstOrNull { it.original == action.issue.original && chosen in it.choices }
+                if (current != null && chosen in current.choices) {
+                    if (current.kind == com.yeamin.jolpai.suggest.IssueKind.SPELLING) learnCheckChoice(current, chosen)
+                    applyFixes(listOf(current.copy(replacement = chosen)))
                     checkFixed++
                 }
                 runCheck()
@@ -1063,6 +1068,19 @@ class KeyboardController(
             val known = wordSuggestions.typed == action.text && wordSuggestions.typedIsKnown
             if (!known && learningEnabled) offerToAdd = action.text to language
         }
+    }
+
+    /**
+     * The user picked [chosen] for a misspelling in the Check card: remember it with the word
+     * before it, so the same choice ranks first next time ("want to takl" → talk).
+     */
+    private fun learnCheckChoice(issue: com.yeamin.jolpai.suggest.TextIssue, chosen: String) {
+        if (!learningEnabled) return
+        val history = suggester?.history ?: return
+        val before = checkText.substring(0, issue.start.coerceIn(0, checkText.length)).trimEnd(' ')
+        val previous = Regex("[\\p{L}\\p{M}']+$").find(before)?.value
+        val language = if (chosen.any { it in 'ঀ'..'৿' }) Language.BANGLA else Language.ENGLISH
+        history.recordWord(language, chosen, previous)
     }
 
     private fun learn(language: Language, word: String, previous: String?) {

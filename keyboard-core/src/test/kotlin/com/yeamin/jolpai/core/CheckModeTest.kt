@@ -8,6 +8,7 @@ import com.yeamin.jolpai.core.model.Panel
 import com.yeamin.jolpai.core.settings.KeyboardSettings
 import com.yeamin.jolpai.suggest.BanglaDictionary
 import com.yeamin.jolpai.suggest.EnglishDictionary
+import com.yeamin.jolpai.suggest.Language
 import com.yeamin.jolpai.suggest.Suggester
 import com.yeamin.jolpai.suggest.UserHistory
 import org.junit.Assert.assertEquals
@@ -75,6 +76,39 @@ class CheckModeTest {
         assertEquals(13, field.selStart) // same place in the text ("it" moved by nothing before it… +0)
         assertEquals(1, c.state.value.check!!.fixed)
         assertTrue(c.state.value.check!!.issues.none { it.original == "recieved" })
+    }
+
+    @Test fun `picking another likely word applies it and ranks it first next time`() {
+        val history = UserHistory()
+        val field = CursorEditor("I want to takl.")
+        val c = KeyboardController(field, clock = { 0L }, suggester = Suggester({ en }, { bn }, { null }, history)).apply {
+            updateSettings(KeyboardSettings(autoCapitalize = false))
+            onStartInput(FieldInfo.DEFAULT, restarting = false)
+        }
+        c.onKey(KeyAction.StartCheck)
+        val issue = c.state.value.check!!.issues.single { it.original == "takl" }
+        assertTrue("talk" in issue.alternatives)
+        // The card sends the issue with the picked word as its replacement.
+        c.onKey(KeyAction.FixIssue(issue.copy(replacement = "talk")))
+        assertEquals("I want to talk.", field.text.toString())
+        assertEquals(1, history.bigramCount(Language.ENGLISH, "to", "talk"))
+
+        // A word that wasn't offered is never applied.
+        val other = CursorEditor("I want to takl.")
+        val c2 = controllerFor(other)
+        c2.onKey(KeyAction.StartCheck)
+        val i2 = c2.state.value.check!!.issues.single { it.original == "takl" }
+        c2.onKey(KeyAction.FixIssue(i2.copy(replacement = "anything")))
+        assertEquals("I want to takl.", other.text.toString())
+
+        // Next time, in a new field, "talk" is the suggested fix.
+        val again = CursorEditor("We need to takl.")
+        val c3 = KeyboardController(again, clock = { 0L }, suggester = Suggester({ en }, { bn }, { null }, history)).apply {
+            updateSettings(KeyboardSettings(autoCapitalize = false))
+            onStartInput(FieldInfo.DEFAULT, restarting = false)
+        }
+        c3.onKey(KeyAction.StartCheck)
+        assertEquals("talk", c3.state.value.check!!.issues.single { it.original == "takl" }.replacement)
     }
 
     @Test fun `fix all corrects everything, even fixes that uncover the next one`() {

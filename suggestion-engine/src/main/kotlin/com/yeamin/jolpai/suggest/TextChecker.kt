@@ -5,7 +5,8 @@ enum class IssueKind(val label: String) { SPELLING("Spelling"), PUNCTUATION("Pun
 
 /**
  * One suggested correction in a piece of text: replace `text[start, end)` ([original]) with
- * [replacement]. [reason] is a short explanation for the user.
+ * [replacement]. [reason] is a short explanation for the user. [alternatives] are other likely
+ * words (best first) the user can pick instead, for spelling: "takl" → talk, or tail / tall.
  */
 data class TextIssue(
     val start: Int,
@@ -14,7 +15,11 @@ data class TextIssue(
     val replacement: String,
     val kind: IssueKind,
     val reason: String,
-)
+    val alternatives: List<String> = emptyList(),
+) {
+    /** [replacement] and [alternatives]: every fix the user may choose. */
+    val choices: List<String> get() = listOf(replacement) + alternatives
+}
 
 /**
  * Offline spelling, punctuation and grammar checking for English and Bangla.
@@ -50,19 +55,22 @@ class TextChecker(
         if (text.isBlank()) return emptyList()
         val out = ArrayList<TextIssue>()
         val protected = protectedRanges(text)
-        punctuation(text, endsAtFieldEnd, out)
+        punctuation(text, out)
         grammar(text, out)
         spelling(text, protected, out)
         val kept = ArrayList<TextIssue>()
-        out.sortedWith(compareBy<TextIssue> { it.start }.thenBy { -it.end })
-            .forEach { issue ->
-                if (issue.original == issue.replacement) return@forEach
-                if (issue.original in ignored) return@forEach
-                if (protected.any { it.first < issue.end && issue.start < it.last + 1 }) return@forEach
-                if (kept.any { it.start < issue.end && issue.start < it.end }) return@forEach
-                kept += issue
-            }
-        return kept.take(limit)
+        fun keep(issue: TextIssue) {
+            if (issue.original == issue.replacement) return
+            if (issue.original in ignored) return
+            if (protected.any { it.first < issue.end && issue.start < it.last + 1 }) return
+            if (kept.any { it.start < issue.end && issue.start < it.end }) return
+            kept += issue
+        }
+        out.sortedWith(compareBy<TextIssue> { it.start }.thenBy { -it.end }).forEach(::keep)
+        // The missing full stop covers the last word, so it comes last: a spelling or grammar fix
+        // on that word wins ("i want to takl"), and the full stop is offered once it's fixed.
+        if (endsAtFieldEnd) ArrayList<TextIssue>().also { endOfText(text, it) }.forEach(::keep)
+        return kept.sortedBy { it.start }.take(limit)
     }
 
     // ------------------------------------------------------------------ spelling
@@ -73,7 +81,7 @@ class TextChecker(
             val word = m.value
             if (protected.any { m.range.first in it }) return@forEach
             if (checkedUnknown >= MAX_UNKNOWN_WORDS) return@forEach
-            val issue = if (isBangla(word)) banglaSpelling(word, m.range.first) else englishSpelling(text, word, m.range.first)
+            val issue = if (isBangla(word)) banglaSpelling(text, word, m.range.first) else englishSpelling(text, word, m.range.first)
             if (issue != null) {
                 out += issue
                 checkedUnknown++
@@ -107,28 +115,67 @@ class TextChecker(
             word.length <= 7 -> 1.6f
             else -> 2.0f
         }
-        val best = dict.corrections(word, 1, maxCost, costs = costs).firstOrNull() ?: return null
+        val previous = previousWord(text, start)
+        // Like the prediction strip: several close words, ranked by how likely the slip is and how
+        // common the word is, plus what the user writes: a word they've typed after the previous
+        // one ("to talk") and words they use often come first.
+        val ranked = dict.corrections(word, CANDIDATES, maxCost, costs = costs)
+            .sortedByDescending { c ->
+                EnglishDictionary.rankCorrection(c.frequency, c.cost, costs) + contextBonus(Language.ENGLISH, previous, c.word)
+            }
+        val best = ranked.firstOrNull() ?: return null
         // A capitalised first word may be a name: only suggest a very likely fix.
         if (word[0].isUpperCase() && (best.cost > 1.0f || best.frequency < 60)) return null
-        return TextIssue(start, start + word.length, word, Suggester.applyCase(word, best.word), IssueKind.SPELLING, "Possible misspelling")
+        val choices = ranked.map { Suggester.applyCase(word, it.word) }.distinct()
+        return TextIssue(
+            start, start + word.length, word, choices.first(), IssueKind.SPELLING, "Possible misspelling",
+            alternatives = choices.drop(1).take(MAX_ALTERNATIVES),
+        )
     }
 
-    private fun banglaSpelling(word: String, start: Int): TextIssue? {
+    /**
+     * Extra rank for [candidate] from the user's own typing, on the 0–255 frequency scale: having
+     * typed it after [previous] matters most, then how often they use it at all.
+     */
+    private fun contextBonus(language: Language, previous: String?, candidate: String): Float {
+        val h = history ?: return 0f
+        val pair = if (previous != null) h.bigramCount(language, previous, candidate) else 0
+        return minOf(pair, 5) * PAIR_BONUS + minOf(h.count(language, candidate), 20) * USE_BONUS
+    }
+
+    /** The word just before [at] in the same sentence (only spaces between), or null. */
+    private fun previousWord(text: String, at: Int): String? {
+        var i = at - 1
+        while (i >= 0 && text[i] == ' ') i--
+        if (i < 0 || i == at - 1) return null
+        val end = i + 1
+        while (i >= 0 && (text[i].isLetter() || text[i] == '\'' || text[i] in 'ঀ'..'৿')) i--
+        return text.substring(i + 1, end).takeIf { it.isNotEmpty() }
+    }
+
+    private fun banglaSpelling(text: String, word: String, start: Int): TextIssue? {
         val dict = bangla() ?: return null
         if (word.length < 3 || word.any { it in '০'..'৯' } || word in BANGLA_OK) return null
         val w = BanglaSpelling.normalize(word)
         if (history?.isKnown(Language.BANGLA, word, minCount = 1) == true || history?.isKnown(Language.BANGLA, w, minCount = 1) == true) return null
         if (BanglaSpelling.isKnown(w) { dict.contains(it) }) return null
-        // Among close fixes: a word the user writes wins, then the more common word (মানষ → মানুষ, not মানস).
-        val fix = BanglaSpelling.correction(w, { dict.contains(it) }) {
-            (history?.count(Language.BANGLA, it) ?: 0) * 1000 + dict.frequency(it)
-        } ?: return null
-        return TextIssue(start, start + word.length, word, fix, IssueKind.SPELLING, "বানান ভুল হতে পারে")
+        // Among close fixes: a word the user writes after the previous one wins, then a word they
+        // write at all, then the more common word (মানষ → মানুষ, not মানস).
+        val previous = previousWord(text, start)
+        val fixes = BanglaSpelling.corrections(w, { dict.contains(it) }, 1 + MAX_ALTERNATIVES) {
+            val pair = if (previous != null) history?.bigramCount(Language.BANGLA, previous, it) ?: 0 else 0
+            minOf(pair, 5) * 5000 + (history?.count(Language.BANGLA, it) ?: 0) * 1000 + dict.frequency(it)
+        }
+        if (fixes.isEmpty()) return null
+        return TextIssue(
+            start, start + word.length, word, fixes.first(), IssueKind.SPELLING, "বানান ভুল হতে পারে",
+            alternatives = fixes.drop(1),
+        )
     }
 
     // ------------------------------------------------------------------ punctuation
 
-    private fun punctuation(text: String, endsAtFieldEnd: Boolean, out: MutableList<TextIssue>) {
+    private fun punctuation(text: String, out: MutableList<TextIssue>) {
         // "word ," → "word,"
         SPACE_BEFORE_MARK.findAll(text).forEach { m ->
             val spaces = m.groups[1]!!
@@ -170,7 +217,6 @@ class TextChecker(
         EXTRA_SPACES.findAll(text).forEach { m ->
             out += TextIssue(m.range.first, m.range.last + 1, m.value, " ", IssueKind.PUNCTUATION, "Extra space")
         }
-        if (endsAtFieldEnd) endOfText(text, out)
     }
 
     /** The last sentence has no closing mark: suggest ".", "?" or "।". */
@@ -295,6 +341,18 @@ class TextChecker(
         /** Words looked up for corrections per check (keeps a long text fast). */
         private const val MAX_UNKNOWN_WORDS = 25
 
+        /** Close English words considered per misspelling, and other choices shown besides the fix. */
+        private const val CANDIDATES = 6
+        const val MAX_ALTERNATIVES = 2
+
+        /**
+         * Context bonuses on the 0–255 frequency scale (one unit of edit cost is worth 90): each
+         * time the user typed the word after the previous one (up to 5), and each use (up to 20).
+         * One "to talk" lifts talk (68) over tail (74) for "takl".
+         */
+        private const val PAIR_BONUS = 40f
+        private const val USE_BONUS = 2f
+
         private const val MIN_WORDS_FOR_FULL_STOP = 4
 
         private val WORD = Regex("[A-Za-z]+(?:'[A-Za-z]+)?|[\\u0980-\\u09FF\\u200C\\u200D]+")
@@ -417,13 +475,25 @@ object BanglaSpelling {
      * The likely intended spelling of an unknown [word], or null when nothing close is known.
      * Among the closest candidates, a word the user has typed before ([usage] > 0) wins.
      */
-    fun correction(word: String, known: (String) -> Boolean, usage: (String) -> Int = { 0 }): String? {
-        // Score = how likely this kind of slip is + how much the word is used (user history and
-        // frequency). So ভূল → ভুল (a ূ/ু slip beats the more common ভাল), but মানষ → মানুষ
-        // (common) rather than the rare look-alike মানস.
+    fun correction(word: String, known: (String) -> Boolean, usage: (String) -> Int = { 0 }): String? =
+        corrections(word, known, 1, usage).firstOrNull()
+
+    /**
+     * Up to [limit] likely spellings of an unknown [word], best first (empty when nothing close
+     * is known). Score = how likely this kind of slip is + how much the word is used (user
+     * history and frequency). So ভূল → ভুল (a ূ/ু slip beats the more common ভাল), but
+     * মানষ → মানুষ (common) rather than the rare look-alike মানস.
+     */
+    fun corrections(word: String, known: (String) -> Boolean, limit: Int, usage: (String) -> Int = { 0 }): List<String> {
         val near = closeCandidates(word, known).take(12).toList()
-        if (near.isNotEmpty()) return near.maxByOrNull { (w, bonus) -> bonus + usage(w) }!!.first
-        return farCandidates(word, known).firstOrNull()
+        if (near.isNotEmpty()) {
+            return near.groupBy({ it.first }, { it.second })
+                .map { (w, bonuses) -> w to bonuses.max() + usage(w) }
+                .sortedByDescending { it.second }
+                .map { it.first }
+                .take(limit)
+        }
+        return farCandidates(word, known).distinct().take(limit).toList()
     }
 
     /**

@@ -99,16 +99,19 @@ class SpellingEvalTest {
         val misses = ArrayList<String>()
         score(suggester, wiki + norvig, misses)
         val all = wiki + norvig
-        var checkRight = 0; var checkWrong = 0
+        var checkRight = 0; var checkWrong = 0; var checkOffered = 0
         for ((typo, word) in all) {
-            val fix = suggester.checker.check("we saw $typo there", endsAtFieldEnd = false).firstOrNull { it.original == typo }?.replacement?.lowercase()
+            val issue = suggester.checker.check("we saw $typo there", endsAtFieldEnd = false).firstOrNull { it.original == typo }
+            val fix = issue?.replacement?.lowercase()
             if (fix == word) checkRight++ else if (fix != null) checkWrong++
+            // The right word among the choices on the card (the fix or one of its alternatives).
+            if (issue != null && issue.choices.any { it.lowercase() == word }) checkOffered++
         }
         // Correct words must stay as they are.
         val correct = all.map { it.second }.distinct()
         val falseAuto = correct.count { w -> suggester.english(w).autoCorrect?.lowercase()?.let { it != w } == true }
         val falseFlags = correct.count { w -> suggester.checker.check("we saw $w there", endsAtFieldEnd = false).any { it.original == w } }
-        println("EVAL checker right=%.1f%% wrong=%.1f%%".format(100.0 * checkRight / all.size, 100.0 * checkWrong / all.size))
+        println("EVAL checker right=%.1f%% wrong=%.1f%% offered=%.1f%%".format(100.0 * checkRight / all.size, 100.0 * checkWrong / all.size, 100.0 * checkOffered / all.size))
         println("EVAL correct words: autocorrected=$falseAuto flagged=$falseFlags of ${correct.size}")
         misses.forEach { println("EVAL miss $it") }
     }
@@ -119,6 +122,9 @@ class SpellingEvalTest {
         return listOf(
             s("weight120", TypingCosts(frequencyWeight = 120f)),
             s("neighbour0.5", TypingCosts(neighbour = 0.5f)),
+            s("swap0.6", TypingCosts(swap = 0.6f)),
+            s("swap0.55", TypingCosts(swap = 0.55f)),
+            s("swap0.5", TypingCosts(swap = 0.5f)),
             s("vowel0.6 gap0.7", TypingCosts(vowel = 0.6f, vowelGap = 0.7f)),
             s("vowel0.5 gap0.6", TypingCosts(vowel = 0.5f, vowelGap = 0.6f)),
             s("combo", combo),
