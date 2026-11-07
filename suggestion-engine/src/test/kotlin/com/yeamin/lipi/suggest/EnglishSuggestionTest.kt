@@ -29,6 +29,13 @@ class TypingDistanceTest {
         assertEquals(1f, d.compute("tpe", "the", 3f), 0.001f)
     }
     @Test fun `gives up above the limit`() = assertTrue(d.compute("abcdef", "uvwxyz", 1f) > 1f)
+    @Test fun `spelling by sound is cheaper than a random edit`() {
+        assertEquals(0.4f, d.compute("ocurred", "occurred", 3f), 0.001f) // doubled letter typed once
+        assertEquals(0.7f, d.compute("seperate", "separate", 3f), 0.001f) // vowel for vowel
+        assertEquals(0.8f, d.compute("arguement", "argument", 3f), 0.001f) // extra vowel
+        assertEquals(0.7f, d.compute("skool", "scool", 3f), 0.001f) // k for c
+        assertEquals(1f, d.compute("bat", "bxt", 3f), 0.001f)
+    }
 }
 
 class EnglishSuggestionTest {
@@ -54,6 +61,27 @@ class EnglishSuggestionTest {
         assertEquals("the", suggester.english("teh").autoCorrect)
         assertEquals("the", suggester.english("hte").autoCorrect)
         assertEquals("because", suggester.english("becuase").autoCorrect)
+    }
+
+    @Test fun `common misspellings are fixed`() {
+        assertEquals("accused", suggester.english("acused").autoCorrect)
+        assertEquals("separate", suggester.english("seperate").autoCorrect)
+        assertEquals("argument", suggester.english("arguement").autoCorrect)
+    }
+
+    @Test fun `a lower-case typo prefers a word over a name`() {
+        assertTrue(suggester.english("blaim").candidates.first() != "Blair")
+        assertEquals("Blair", suggester.english("Blaim").candidates.first())
+    }
+
+    @Test fun `two equally likely fixes are offered, not forced`() {
+        fun tiny(vararg words: String) = EnglishDictionary.parse(words.toList(), emptyList()).let { d ->
+            Suggester({ d }, { null }, { null }, UserHistory())
+        }
+        val even = tiny("cat\t200", "cot\t200").english("cet") // a vowel off from both
+        assertTrue(even.toString(), "cat" in even.candidates && "cot" in even.candidates)
+        assertNull(even.autoCorrect)
+        assertEquals("cat", tiny("cat\t200", "cot\t100").english("cet").autoCorrect)
     }
 
     @Test fun `capital letter is kept`() = assertEquals("The", suggester.english("Teh").autoCorrect)

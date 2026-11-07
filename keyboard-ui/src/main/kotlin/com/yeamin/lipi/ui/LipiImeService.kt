@@ -199,6 +199,16 @@ class LipiImeService : InputMethodService(), LifecycleOwner, SavedStateRegistryO
         controller.onLayoutChosen = { id -> scope.launch { settingsRepository.setLastLayout(id) } }
         controller.onEmojiUsed = ::recordEmoji
         controller.stats = com.yeamin.lipi.core.stats.TypingStats(this) // counts only, shown in Typing stats
+        // Cut / copy / paste inside the translate and search boxes use the phone's clipboard directly.
+        controller.boxClipboard = object : com.yeamin.lipi.core.BoxClipboard {
+            private val clipboard get() = getSystemService(android.content.ClipboardManager::class.java)
+            override fun copy(text: String) {
+                clipboard?.setPrimaryClip(android.content.ClipData.newPlainText("Jolpai", text))
+            }
+            override fun paste(): String? = runCatching {
+                clipboard?.primaryClip?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.coerceToText(this@LipiImeService)?.toString()
+            }.getOrNull()
+        }
         controller.onHostCommand = ::handleHost
         scope.launch {
             settingsRepository.settings.collect {

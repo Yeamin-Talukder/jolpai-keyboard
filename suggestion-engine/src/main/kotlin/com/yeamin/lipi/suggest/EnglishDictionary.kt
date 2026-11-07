@@ -96,7 +96,13 @@ class EnglishDictionary private constructor(
      *   (the first letter was a fat-finger slip);
      * - words starting with the first two typed letters swapped ("hte" → "the").
      */
-    fun corrections(typed: String, limit: Int, maxCost: Float, allowOffensive: Boolean = false): List<Correction> {
+    fun corrections(
+        typed: String,
+        limit: Int,
+        maxCost: Float,
+        allowOffensive: Boolean = false,
+        costs: TypingCosts = TypingCosts.DEFAULT,
+    ): List<Correction> {
         val t = typed.lowercase()
         if (t.length < 2) return emptyList()
         val prefixes = buildSet {
@@ -106,13 +112,17 @@ class EnglishDictionary private constructor(
         }
         val maxLengthDiff = if (t.length <= 4) 1 else 2
         val top = TopN<Correction>(limit)
-        val walk = PrefixSharingWalk(t, maxCost)
+        val walk = PrefixSharingWalk(t, maxCost, costs)
+        // A lower-case typo is rarely a name: "blaim" → "blame", not "Blair".
+        val lowerTyped = typed.none { it.isUpperCase() }
         for (prefix in prefixes) {
             val range = keys.prefixRange(prefix)
             walk.run(SortedWords.rangeStart(range), SortedWords.rangeEnd(range)) { i, cost ->
                 if (kotlin.math.abs(keys.lengthAt(i) - t.length) <= maxLengthDiff && (allowOffensive || !offensive[i])) {
                     val f = frequencyAt(i)
-                    top.offer(Correction(formAt(i), f, cost), rankCorrection(f, cost))
+                    val form = formAt(i)
+                    val c = if (lowerTyped && form[0].isUpperCase()) cost + costs.name else cost
+                    if (c <= maxCost) top.offer(Correction(form, f, c), rankCorrection(f, c, costs))
                 }
             }
         }
@@ -127,18 +137,16 @@ class EnglishDictionary private constructor(
      * words is skipped with one binary search. This turns ~10k independent comparisons into
      * a walk over a few hundred prefixes.
      */
-    private inner class PrefixSharingWalk(private val typed: String, private val limit: Float) {
+    private inner class PrefixSharingWalk(
+        private val typed: String,
+        private val limit: Float,
+        private val costs: TypingCosts,
+    ) {
         private val n = typed.length
         private val rows = Array(MAX_WORD + 1) { FloatArray(n + 1) }
         private val rowMin = FloatArray(MAX_WORD + 1)
         private val chars = CharArray(MAX_WORD)
-        private val deleteCosts = FloatArray(n) { j ->
-            when {
-                typed[j] == '\'' -> 0.3f
-                j > 0 && typed[j - 1] == typed[j] -> 0.6f
-                else -> 1f
-            }
-        }
+        private val deleteCosts = FloatArray(n) { j -> costs.extra(typed[j], typed.getOrNull(j - 1)) }
 
         init {
             for (j in 1..n) rows[0][j] = rows[0][j - 1] + deleteCosts[j - 1]
@@ -176,23 +184,14 @@ class EnglishDictionary private constructor(
             val c = chars[r - 1]
             val prev = rows[r - 1]
             val row = rows[r]
-            val ins = when {
-                c == '\'' -> 0.3f
-                r >= 2 && chars[r - 2] == c -> 0.6f
-                else -> 1f
-            }
+            val ins = costs.missing(c, if (r >= 2) chars[r - 2] else null)
             row[0] = prev[0] + ins
             var mn = row[0]
             for (j in 1..n) {
                 val a = typed[j - 1]
-                val sub = when {
-                    a == c -> 0f
-                    KeyProximity.areNeighbours(a, c) -> 0.6f
-                    else -> 1f
-                }
-                var best = minOf(prev[j - 1] + sub, prev[j] + ins, row[j - 1] + deleteCosts[j - 1])
+                var best = minOf(prev[j - 1] + costs.substitute(a, c), prev[j] + ins, row[j - 1] + deleteCosts[j - 1])
                 if (r >= 2 && j >= 2 && a != c && c == typed[j - 2] && chars[r - 2] == a) {
-                    best = minOf(best, rows[r - 2][j - 2] + 0.7f)
+                    best = minOf(best, rows[r - 2][j - 2] + costs.swap)
                 }
                 row[j] = best
                 if (best < mn) mn = best
@@ -206,7 +205,8 @@ class EnglishDictionary private constructor(
         private const val MAX_WORD = 48
 
         /** Higher is better: frequency matters, but each unit of typing distance costs a lot. */
-        fun rankCorrection(frequency: Int, cost: Float): Float = frequency - 90f * cost
+        fun rankCorrection(frequency: Int, cost: Float, costs: TypingCosts = TypingCosts.DEFAULT): Float =
+            frequency - costs.frequencyWeight * cost
 
         /** Loads the bundled list. Takes a few hundred milliseconds: call off the main thread. */
         fun load(): EnglishDictionary = parse(

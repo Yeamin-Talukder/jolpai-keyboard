@@ -136,9 +136,9 @@ class TextCheckerTest {
     }
 
     @Test fun `the user's own words and ignored ones are not flagged`() {
-        assertTrue(checker.check("we met jolpai").any { it.original == "jolpai" })
-        history.addPersonal(Language.ENGLISH, "jolpai")
-        assertTrue(checker.check("we met jolpai").none { it.original == "jolpai" })
+        assertTrue(checker.check("we met wnet").any { it.original == "wnet" })
+        history.addPersonal(Language.ENGLISH, "wnet")
+        assertTrue(checker.check("we met wnet").none { it.original == "wnet" })
         assertTrue(checker.check("we wnet home", ignored = setOf("wnet")).none { it.original == "wnet" })
     }
 

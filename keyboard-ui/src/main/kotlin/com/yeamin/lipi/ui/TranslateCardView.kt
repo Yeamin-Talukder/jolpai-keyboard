@@ -35,8 +35,8 @@ data class TranslateCardModel(
     val status: TranslateStatus,
     /** A translation of the current text is being worked out. */
     val busy: Boolean,
-    /** The typed text with its spelling corrected ("Did you mean …"), or null. */
-    val corrected: String? = null,
+    /** Spelling and grammar suggestions for the typed text, shown as chips (nothing changes until tapped). */
+    val issues: List<com.yeamin.lipi.suggest.TextIssue> = emptyList(),
 )
 
 /**
@@ -62,8 +62,14 @@ class TranslateCardView(
         fun onInsert(text: String)
         fun onDownload()
 
-        /** Use the spelling-corrected text ("Did you mean …"). */
-        fun onApplySpelling()
+        /** Apply one suggestion chip. */
+        fun onFixIssue(issue: com.yeamin.lipi.suggest.TextIssue)
+
+        /** Dismiss one suggestion chip. */
+        fun onIgnoreIssue(issue: com.yeamin.lipi.suggest.TextIssue)
+
+        /** Apply every suggestion ("Fix all"). */
+        fun onFixAll()
     }
 
     private val density = resources.displayMetrics.density
@@ -126,32 +132,18 @@ class TranslateCardView(
     }
     private val progress = ProgressLine()
 
-    /** "Did you mean …": the typed text with its spelling corrected, one tap to use it. */
-    private val didYouMean = TextView(context).apply {
-        setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
-        setTextColor(palette.text)
-        isSingleLine = true
-        ellipsize = TextUtils.TruncateAt.START
+    /** Suggestion chips (spelling, grammar, punctuation), as in the Check card: tap to fix. */
+    private val chipList = LinearLayout(context).apply {
+        orientation = HORIZONTAL
         gravity = Gravity.CENTER_VERTICAL
-        setPadding(dp(12f), 0, dp(12f), 0)
-        compoundDrawablePadding = dp(6f)
-        setCompoundDrawablesRelative(KeyboardIcon.SPELLCHECK.drawable(context, palette.accent, 16 * density).apply { setBounds(0, 0, dp(16f), dp(16f)) }, null, null, null)
-        background = RippleDrawable(
-            ColorStateList.valueOf(palette.keyPressed),
-            GradientDrawable().apply {
-                cornerRadius = 100 * density
-                setColor(ColorUtils.setAlphaComponent(palette.accent, 0x1F))
-                setStroke(dp(1f).coerceAtLeast(1), ColorUtils.setAlphaComponent(palette.accent, 0x55))
-            },
-            null,
-        )
-        contentDescription = "Use the corrected spelling"
-        visibility = GONE
-        setOnClickListener {
-            bounce(this)
-            listener.onApplySpelling()
-        }
     }
+    private val chipRow = android.widget.HorizontalScrollView(context).apply {
+        isHorizontalScrollBarEnabled = false
+        overScrollMode = OVER_SCROLL_NEVER
+        visibility = GONE
+        addView(chipList, LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT))
+    }
+    private var shownIssues: List<com.yeamin.lipi.suggest.TextIssue> = emptyList()
 
     private val header: LinearLayout
     private val inputBox: FrameLayout
@@ -190,7 +182,7 @@ class TranslateCardView(
             addView(clearButton, FrameLayout.LayoutParams(dp(36f), dp(36f), Gravity.END or Gravity.CENTER_VERTICAL).apply { rightMargin = dp(2f) })
         }
         addView(inputBox, LayoutParams(LayoutParams.MATCH_PARENT, dp(40f)).apply { topMargin = dp(6f) })
-        addView(didYouMean, LayoutParams(LayoutParams.WRAP_CONTENT, dp(28f)).apply { topMargin = dp(6f) })
+        addView(chipRow, LayoutParams(LayoutParams.MATCH_PARENT, dp(30f)).apply { topMargin = dp(6f) })
 
         resultBox = FrameLayout(context).apply {
             background = GradientDrawable().apply {
@@ -272,25 +264,99 @@ class TranslateCardView(
         renderSpelling(m)
     }
 
-    /** Shows (sliding in) or hides the "Did you mean …" chip. */
+    /** Shows the suggestion chips (sliding in when they first appear) or hides the row. */
     private fun renderSpelling(m: TranslateCardModel) {
-        val fix = m.corrected?.trim()?.takeIf { it.isNotEmpty() }
-        if (fix == null) {
-            didYouMean.isVisible = false
+        val issues = m.issues
+        if (issues == shownIssues) return
+        val firstShow = shownIssues.isEmpty()
+        shownIssues = issues
+        chipList.removeAllViews()
+        if (issues.isEmpty()) {
+            chipRow.isVisible = false
             return
         }
-        val sb = SpannableStringBuilder("Did you mean  ")
-        sb.setSpan(ForegroundColorSpan(palette.hint), 0, sb.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-        val start = sb.length
-        sb.append(fix)
-        sb.setSpan(android.text.style.StyleSpan(Typeface.BOLD), start, sb.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-        didYouMean.text = sb
-        if (didYouMean.visibility != VISIBLE) {
-            didYouMean.visibility = VISIBLE
-            didYouMean.alpha = 0f
-            didYouMean.translationX = -10 * density
-            didYouMean.animate().alpha(1f).translationX(0f).setDuration(220).setInterpolator(SETTLE).start()
+        issues.forEach { issue -> chipList.addView(issueChip(issue), LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT).apply { rightMargin = dp(6f) }) }
+        if (issues.size > 1) {
+            chipList.addView(fixAllChip(), LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT))
         }
+        if (!chipRow.isVisible || firstShow) {
+            chipRow.isVisible = true
+            chipRow.alpha = 0f
+            chipRow.translationX = -12 * density
+            chipRow.animate().alpha(1f).translationX(0f).setDuration(220).setInterpolator(SETTLE).start()
+            chipRow.scrollTo(0, 0)
+        }
+    }
+
+    /** "recieved → received" in the kind's colour; tap fixes it, ✕ dismisses it. */
+    private fun issueChip(issue: com.yeamin.lipi.suggest.TextIssue): View {
+        val color = when (issue.kind) {
+            com.yeamin.lipi.suggest.IssueKind.SPELLING -> android.graphics.Color.rgb(0xE5, 0x48, 0x4D)
+            com.yeamin.lipi.suggest.IssueKind.PUNCTUATION -> android.graphics.Color.rgb(0x3E, 0x8E, 0xF0)
+            com.yeamin.lipi.suggest.IssueKind.GRAMMAR -> android.graphics.Color.rgb(0xE0, 0x9A, 0x1F)
+        }
+        val chip = LinearLayout(context).apply {
+            orientation = HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(10f), 0, dp(2f), 0)
+            background = RippleDrawable(
+                ColorStateList.valueOf(ColorUtils.setAlphaComponent(color, 0x33)),
+                GradientDrawable().apply {
+                    cornerRadius = 100 * density
+                    setColor(ColorUtils.setAlphaComponent(color, 0x1C))
+                    setStroke(dp(1f).coerceAtLeast(1), ColorUtils.setAlphaComponent(color, 0x88))
+                },
+                null,
+            )
+            contentDescription = "${issue.kind.label}: ${issue.original.trim()} to ${issue.replacement.trim()}. ${issue.reason}"
+        }
+        val label = SpannableStringBuilder()
+        val from = issue.original.trim().ifEmpty { "␣" }
+        label.append(from)
+        label.setSpan(android.text.style.StrikethroughSpan(), 0, label.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        label.setSpan(ForegroundColorSpan(palette.hint), 0, label.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        label.append(" → ")
+        val start = label.length
+        label.append(issue.replacement.trim().ifEmpty { "␣" })
+        label.setSpan(android.text.style.StyleSpan(Typeface.BOLD), start, label.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        chip.addView(TextView(context).apply {
+            text = label
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+            setTextColor(palette.text)
+            isSingleLine = true
+        })
+        chip.addView(ImageView(context).apply {
+            setImageDrawable(KeyboardIcon.CLOSE.drawable(context, palette.hint, 13 * density))
+            scaleType = ImageView.ScaleType.CENTER
+            contentDescription = "Dismiss"
+            setOnClickListener { shrinkAway(chip) { listener.onIgnoreIssue(issue) } }
+        }, LayoutParams(dp(26f), LayoutParams.MATCH_PARENT))
+        chip.setOnClickListener { shrinkAway(chip) { listener.onFixIssue(issue) } }
+        return chip
+    }
+
+    private fun fixAllChip(): View = TextView(context).apply {
+        text = "Fix all"
+        setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+        setTextColor(palette.onAccent)
+        typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+        gravity = Gravity.CENTER
+        setPadding(dp(12f), 0, dp(12f), 0)
+        background = RippleDrawable(
+            ColorStateList.valueOf(ColorUtils.setAlphaComponent(palette.onAccent, 0x40)),
+            GradientDrawable().apply { cornerRadius = 100 * density; setColor(palette.accent) },
+            null,
+        )
+        setOnClickListener {
+            bounce(this)
+            listener.onFixAll()
+        }
+    }
+
+    /** The chip shrinks and fades, then [then] runs (the row is redrawn from the new state). */
+    private fun shrinkAway(v: View, then: () -> Unit) {
+        v.isEnabled = false
+        v.animate().alpha(0f).scaleX(0.8f).scaleY(0.8f).setDuration(130).withEndAction(then).start()
     }
 
     private fun setLabels(m: TranslateCardModel) {

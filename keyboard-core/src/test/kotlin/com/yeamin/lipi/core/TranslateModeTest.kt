@@ -86,6 +86,26 @@ class TranslateModeTest {
         assertNull(translate)
     }
 
+    @Test fun `cut, copy and paste work in the translate box`() {
+        var clip: String? = "good night"
+        controller.boxClipboard = object : BoxClipboard {
+            override fun copy(text: String) { clip = text }
+            override fun paste(): String? = clip
+        }
+        controller.onKey(KeyAction.StartTranslate())
+        controller.onKey(KeyAction.Edit(com.yeamin.lipi.core.model.EditCommand.PASTE))
+        assertEquals("good night", translate!!.source)
+
+        type(" all")
+        controller.onKey(KeyAction.Edit(com.yeamin.lipi.core.model.EditCommand.COPY))
+        assertEquals("good night all", clip)
+
+        controller.onKey(KeyAction.Edit(com.yeamin.lipi.core.model.EditCommand.CUT))
+        assertEquals("good night all", clip)
+        assertEquals("", translate!!.source)
+        assertEquals("", app.text.toString()) // the app's own text is never touched
+    }
+
     @Test fun `a new text field closes translate`() {
         controller.onKey(KeyAction.StartTranslate())
         controller.onStartInput(FieldInfo.DEFAULT, restarting = false)

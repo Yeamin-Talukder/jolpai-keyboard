@@ -121,7 +121,9 @@ class KeyboardContainer(
         override fun onClear() = onAction(KeyAction.ClearTranslate)
         override fun onInsert(text: String) = onAction(KeyAction.CommitTranslation(text))
         override fun onDownload() = onTranslateDownload()
-        override fun onApplySpelling() = onAction(KeyAction.ApplyTranslateSpelling)
+        override fun onFixIssue(issue: com.yeamin.lipi.suggest.TextIssue) = onAction(KeyAction.FixTranslateIssue(issue))
+        override fun onIgnoreIssue(issue: com.yeamin.lipi.suggest.TextIssue) = onAction(KeyAction.IgnoreTranslateIssue(issue))
+        override fun onFixAll() = onAction(KeyAction.ApplyTranslateSpelling)
     })
     private var translateUi: com.yeamin.lipi.core.TranslateUi? = null
 
@@ -163,7 +165,7 @@ class KeyboardContainer(
             return
         }
         if (!translateCard.isShowing) translateCard.show()
-        translateCard.render(TranslateCardModel(t.source, t.toBangla, t.translation, translateStatus, translateBusy && t.translation == null, t.corrected))
+        translateCard.render(TranslateCardModel(t.source, t.toBangla, t.translation, translateStatus, translateBusy && t.translation == null, t.issues))
     }
 
     private val uiState = mutableStateOf<KeyboardUiState?>(null)
@@ -539,9 +541,18 @@ class KeyboardContainer(
         }
         if (options.floating) column.addView(floatingHandle(), LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, (28 * density).toInt()))
         // Translate opens above the toolbar, so the window grows upward and the keys don't move.
-        column.addView(translateCard, LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
-        column.addView(checkCard, LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
-        column.addView(upperSection, LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, (UPPER_HEIGHT_DP * density).toInt()))
+        // Each section above the toolbar closes with a swipe down.
+        fun swipeable(section: View, onClose: () -> Unit) = SwipeDownToClose(context, onClose).apply {
+            addView(section, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
+        }
+        column.addView(swipeable(translateCard) { onAction(KeyAction.EndTranslate) }, LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
+        column.addView(swipeable(checkCard) { onAction(KeyAction.EndCheck) }, LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
+        column.addView(
+            SwipeDownToClose(context) { onAction(KeyAction.ShowPanel(Panel.NONE)) }.apply {
+                addView(upperSection, LayoutParams(LayoutParams.MATCH_PARENT, (UPPER_HEIGHT_DP * density).toInt()))
+            },
+            LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT),
+        )
         // The top bar: the toolbar, with the voice bar laid over it while dictating.
         toolbarRow = toolbar
         topBar.addView(toolbar, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))

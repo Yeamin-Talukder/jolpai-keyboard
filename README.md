@@ -65,7 +65,7 @@ English↔Bangla translation run **offline**.
 - **Key fonts**: Hind Siliguri, Tiro Bangla, Galada or Atma on the keys.
 - **Sound packs**: Soft tap, Typewriter, Bubble or Wooden key sounds, made on the phone.
 - **Split keyboard** for landscape or tablets.
-- **Typing stats**: words per day, English vs বাংলা, autocorrections and letters saved (counts only, never words).
+- **Typing stats**: words per day, typing speed (WPM, best, accuracy), English vs বাংলা, autocorrections and letters saved (counts only, never words).
 - **Inline calculator**: type `250*4` and tap `= 1000`.
 
 ### 🌐 Offline translation, voice and more
@@ -308,7 +308,7 @@ a debug-signed build to a store-signed one needs an uninstall (back up in the ap
 
 - **✓ Check (offline):** tap Check in the top bar and a card opens above the keys with what may be wrong in the text field: spelling (English and Bangla, from the word lists and your own words), punctuation (spaces around marks, doubled marks, দাঁড়ি instead of "." in Bangla, a missing full stop) and common English grammar (a/an, "i" → "I", sentence capitals, repeated words, "could of", "better then", "he don't", "its a", alot …). Each card shows the mistake → the fix and why; tap Fix, Ignore, or Fix all; ↻ checks again after you type more. Links, e-mail addresses, numbers and names are left alone. Nothing leaves the phone.
 - **Emoji and clipboard above the keys:** they open in a section above the top bar, so the keys stay where they are; press any key to close it and keep typing.
-- **🌐 Translate (offline):** tap Translate in the top bar and a box opens above the keys. Type English and the Bangla translation appears as you type; tap ➤ or Enter to insert it. ⇄ turns it round (Bangla → English). Download the Bangla pack once (about 30 MB); after that it works without internet and the text never leaves the phone.
+- **🌐 Translate (offline):** tap Translate in the top bar and a box opens above the keys. Type English and the Bangla translation appears as you type; tap ➤ or Enter to insert it. Spelling and grammar fixes show as chips under the box (tap to fix, nothing changes on its own). ⇄ turns it round (Bangla → English). Download the Bangla pack once (about 30 MB); after that it works without internet and the text never leaves the phone.
 - **🎤 Voice typing:** tap the mic and speak; words appear in the top bar and the keys stay usable. Hold the mic for the full voice panel. Swipe the voice bar down to hide the keys, or left/right to turn it into a floating pill you can drag. Say "comma", "full stop", "new line" (or "কমা", "দাঁড়ি", "নতুন লাইন"). Offline support depends on your phone; the Voice screen shows what it supports.
 - **😊 Emoji:** categories, recents, favourites, skin tones (long-press), search in English or Bangla, kaomoji, your stickers and GIFs.
 - **GIFs** need a free GIPHY API key entered in the app (Google closed Tenor's API in 2026).

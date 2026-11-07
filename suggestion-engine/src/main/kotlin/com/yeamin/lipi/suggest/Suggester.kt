@@ -35,12 +35,16 @@ class Suggester(
     private val bangla: () -> BanglaDictionary?,
     private val avro: () -> AvroSuggester?,
     val history: UserHistory,
+    /** Edit costs for English corrections (a parameter only so tuning runs can try others). */
+    internal val costs: TypingCosts = TypingCosts.DEFAULT,
+    /** Autocorrect only when the best fix outranks the next one by this much (see [isConfident]). */
+    internal val autoCorrectMargin: Float = AUTOCORRECT_MARGIN,
 ) {
     /** Next-character probabilities for predictive touch targets. */
     val nextChars = NextCharPredictor(english, bangla, avro, history)
 
     /** Offline spelling, punctuation and grammar checking (the ✓ Check tool). */
-    val checker = TextChecker(english, bangla, history)
+    val checker = TextChecker(english, bangla, history, costs)
 
     // ------------------------------------------------------------------ English
 
@@ -63,11 +67,12 @@ class Suggester(
         shortcut?.let { add(it, 1000f) }
 
         var correction: Correction? = null
+        var corrections: List<Correction> = emptyList()
         if (!known && typed.length >= 2 && typed.all { it.isLetter() || it == '\'' }) {
-            val corrections = dict.corrections(typed, 4, maxCost(typed.length), allowOffensive = !options.blockOffensive)
+            corrections = dict.corrections(typed, 4, maxCost(typed.length), allowOffensive = !options.blockOffensive, costs = costs)
             correction = corrections.firstOrNull()
             corrections.forEachIndexed { i, c ->
-                add(c.word, 600f - i + EnglishDictionary.rankCorrection(c.frequency, c.cost) / 1000f)
+                add(c.word, 600f - i + EnglishDictionary.rankCorrection(c.frequency, c.cost, costs) / 1000f)
             }
         }
 
@@ -86,7 +91,7 @@ class Suggester(
             // Known word in the wrong case, e.g. "i" → "I".
             entry != null -> applyCase(typed, entry.word).takeIf { it != typed && typed == lower && entry.word != lower }
             known -> null
-            correction != null && isConfident(typed, correction) -> applyCase(typed, correction.word)
+            correction != null && isConfident(typed, corrections) -> applyCase(typed, correction.word)
             else -> null
         }
         return WordSuggestions(typed, candidates, autoCorrect, known)
@@ -99,8 +104,12 @@ class Suggester(
         else -> 2.0f
     }
 
-    /** Only autocorrect when the fix is close and the corrected word is reasonably common. */
-    private fun isConfident(typed: String, c: Correction): Boolean {
+    /**
+     * Only autocorrect when the fix is close, the corrected word is reasonably common, and no
+     * other fix is nearly as likely (then the choice is left to the user: both are offered).
+     */
+    private fun isConfident(typed: String, corrections: List<Correction>): Boolean {
+        val c = corrections.firstOrNull() ?: return false
         if (typed.length < 3) return false
         if (typed.drop(1).any { it.isUpperCase() }) return false // acronyms, iPhone-style names
         val limit = when {
@@ -108,7 +117,10 @@ class Suggester(
             typed.length <= 7 -> 1.5f
             else -> 2.0f
         }
-        return c.cost <= limit && c.frequency >= 40
+        if (c.cost > limit || c.frequency < 40) return false
+        val next = corrections.getOrNull(1)?.takeIf { !it.word.equals(c.word, ignoreCase = true) } ?: return true
+        return EnglishDictionary.rankCorrection(c.frequency, c.cost, costs) -
+            EnglishDictionary.rankCorrection(next.frequency, next.cost, costs) >= autoCorrectMargin
     }
 
     // ------------------------------------------------------------------ Bangla (National)
@@ -140,6 +152,9 @@ class Suggester(
         if (previous.isNullOrBlank()) emptyList() else history.nextWords(language, previous, limit)
 
     companion object {
+        /** See [autoCorrectMargin]: in rank units (frequency 0–255 minus weighted cost). */
+        internal const val AUTOCORRECT_MARGIN = 10f
+
         /**
          * Gives [word] the capitalisation the user typed: ALL CAPS stays all caps, a capital
          * first letter stays capital; otherwise the dictionary spelling is used ("I", "iPhone").

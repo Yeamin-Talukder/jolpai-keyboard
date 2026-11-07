@@ -87,8 +87,14 @@ sealed interface KeyAction {
     /** Turn the translation round (English → Bangla ⇄ Bangla → English), keeping the typed text. */
     data object SwapTranslate : KeyAction
 
-    /** Replace the translate box's text with its spelling corrected ("Did you mean …"). */
+    /** Apply every suggestion chip in the translate box ("Fix all"). */
     data object ApplyTranslateSpelling : KeyAction
+
+    /** Apply one suggestion chip in the translate box. */
+    data class FixTranslateIssue(val issue: com.yeamin.lipi.suggest.TextIssue) : KeyAction
+
+    /** Dismiss a suggestion chip in the translate box (until it closes). */
+    data class IgnoreTranslateIssue(val issue: com.yeamin.lipi.suggest.TextIssue) : KeyAction
 
     /** Empty the translate box. */
     data object ClearTranslate : KeyAction

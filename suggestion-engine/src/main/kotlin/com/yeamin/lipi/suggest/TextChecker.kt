@@ -39,6 +39,7 @@ class TextChecker(
     private val english: () -> EnglishDictionary?,
     private val bangla: () -> BanglaDictionary?,
     private val history: UserHistory?,
+    private val costs: TypingCosts = TypingCosts.DEFAULT,
 ) {
     /**
      * Checks [text]; [ignored] holds originals the user chose to ignore. [endsAtFieldEnd]: the
@@ -106,7 +107,7 @@ class TextChecker(
             word.length <= 7 -> 1.6f
             else -> 2.0f
         }
-        val best = dict.corrections(lower, 1, maxCost).firstOrNull() ?: return null
+        val best = dict.corrections(word, 1, maxCost, costs = costs).firstOrNull() ?: return null
         // A capitalised first word may be a name: only suggest a very likely fix.
         if (word[0].isUpperCase() && (best.cost > 1.0f || best.frequency < 60)) return null
         return TextIssue(start, start + word.length, word, Suggester.applyCase(word, best.word), IssueKind.SPELLING, "Possible misspelling")

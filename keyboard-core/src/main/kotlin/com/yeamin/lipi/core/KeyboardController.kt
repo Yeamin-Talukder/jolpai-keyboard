@@ -49,12 +49,23 @@ import kotlinx.coroutines.flow.asStateFlow
  * The translate box: what has been typed ([source]), the direction, and its translation once the
  * service has one for exactly this text (null while translating, or when it failed).
  */
+/** The phone's clipboard, as the keyboard's own boxes need it (supplied by the keyboard service). */
+interface BoxClipboard {
+    fun copy(text: String)
+
+    /** The clipboard's text, or null when it holds none. */
+    fun paste(): String?
+}
+
 data class TranslateUi(
     val source: String,
     val toBangla: Boolean,
     val translation: String?,
-    /** [source] with its misspelt words corrected, offered as "Did you mean …", or null. */
-    val corrected: String? = null,
+    /**
+     * Spelling and grammar suggestions for the finished words of [source] (as in the Check card),
+     * shown as chips under the box; nothing is changed until the user taps one.
+     */
+    val issues: List<com.yeamin.lipi.suggest.TextIssue> = emptyList(),
 )
 
 /**
@@ -177,10 +188,19 @@ class KeyboardController(
     /** Called when an emoji is inserted, so it can be added to the recents. */
     var onEmojiUsed: ((String) -> Unit)? = null
 
+    /**
+     * The phone's clipboard, for cut / copy / paste inside the keyboard's own boxes (translate,
+     * search): those boxes aren't app text fields, so the app can't do it for them.
+     */
+    var boxClipboard: BoxClipboard? = null
+
     /** Typing statistics (counts only), or null. Never told about password, private or box typing. */
     var stats: com.yeamin.lipi.core.stats.TypingEvents? = null
 
     private val countStats: Boolean get() = stats != null && !typingInBox && !editorField.isSensitive
+
+    /** Typing speed: bursts of key presses, reported to [stats] when each ends. */
+    private val speed = com.yeamin.lipi.core.stats.SpeedMeter { typed, deleted, millis -> stats?.typingBurst(typed, deleted, millis) }
 
     // ------------------------------------------------------------------ search mode
 
@@ -322,6 +342,7 @@ class KeyboardController(
     fun onStartInput(newField: FieldInfo, restarting: Boolean) {
         editorField = newField
         if (!restarting) {
+            speed.flush()
             endTranslate()
             endCheck()
             processors.values.forEach { it.reset() }
@@ -346,6 +367,7 @@ class KeyboardController(
     }
 
     fun onFinishInput() {
+        speed.flush()
         processor.finishComposing(editor)
         processors.values.forEach { it.reset() }
         wordContext = WordContext.EMPTY
@@ -395,6 +417,11 @@ class KeyboardController(
         val undo = undoableCorrection
         undoableCorrection = null
         if (action !is KeyAction.Shift && action !is KeyAction.SwitchPage) offerToAdd = null
+        if (countStats) when (action) {
+            is KeyAction.Text, KeyAction.Space, KeyAction.Enter -> speed.typed(clock())
+            KeyAction.Delete -> speed.deleted(clock())
+            else -> Unit
+        }
 
         when (action) {
             is KeyAction.Text -> {
@@ -604,16 +631,12 @@ class KeyboardController(
             is KeyAction.StartTranslate -> startTranslate(action.toBangla)
             KeyAction.EndTranslate -> endTranslate()
             KeyAction.SwapTranslate -> swapTranslate()
-            KeyAction.ApplyTranslateSpelling -> if (translating) {
-                processor.finishComposing(translateBuffer)
-                val fixed = translateSpelling(translateBuffer.text)
-                if (fixed != null) {
-                    processors.values.forEach { it.reset() }
-                    translateBuffer.clear()
-                    translateBuffer.commit(fixed)
-                    wordSuggestions = WordSuggestions.EMPTY
-                }
+            KeyAction.ApplyTranslateSpelling -> if (translating) fixTranslate(translateIssues(translateBuffer.text))
+            is KeyAction.FixTranslateIssue -> if (translating) {
+                val current = translateIssues(translateBuffer.text)
+                fixTranslate(listOfNotNull(current.firstOrNull { it == action.issue } ?: current.firstOrNull { it.original == action.issue.original && it.replacement == action.issue.replacement }))
             }
+            is KeyAction.IgnoreTranslateIssue -> if (translating) translateIgnored += action.issue.original
             KeyAction.ClearTranslate -> if (translating) {
                 processor.finishComposing(translateBuffer)
                 processor.reset()
@@ -717,6 +740,7 @@ class KeyboardController(
 
     private fun endTranslate() {
         if (!translating) return
+        translateIgnored.clear()
         processor.finishComposing(translateBuffer)
         processors.values.forEach { it.reset() }
         translating = false
@@ -754,22 +778,52 @@ class KeyboardController(
         shiftIsAutomatic = false
     }
 
+    /** Suggestions the user dismissed in the translate box (cleared when it closes). */
+    private val translateIgnored = HashSet<String>()
+
     /**
-     * [text] with its spelling mistakes corrected (the offline checker's spelling suggestions),
-     * or null when there is nothing to correct. The word still being typed is left alone.
+     * The checker's suggestions for the finished words in the translate box (the word still
+     * being typed is left alone). Positions are in [text].
      */
-    private fun translateSpelling(text: String): String? {
-        if (text.isBlank()) return null
-        val checker = suggester?.checker ?: return null
-        // Only finished words: the last one may still be half typed.
+    private fun translateIssues(text: String): List<com.yeamin.lipi.suggest.TextIssue> {
+        if (text.isBlank()) return emptyList()
+        val checker = suggester?.checker ?: return emptyList()
         val done = if (text.last().isWhitespace() || text.last() in ".,!?।") text.length else text.trimEnd().lastIndexOf(' ').let { if (it < 0) 0 else it }
-        if (done == 0) return null
-        val issues = checker.check(text.substring(0, done), endsAtFieldEnd = false)
-            .filter { it.kind == com.yeamin.lipi.suggest.IssueKind.SPELLING }
-        if (issues.isEmpty()) return null
-        val sb = StringBuilder(text)
-        issues.sortedByDescending { it.start }.forEach { sb.replace(it.start, it.end, it.replacement) }
-        return sb.toString()
+        if (done == 0) return emptyList()
+        return checker.check(text.substring(0, done), translateIgnored, endsAtFieldEnd = false)
+    }
+
+    /** Applies [issues] to the translate box (last first, so earlier positions stay valid). */
+    private fun fixTranslate(issues: List<com.yeamin.lipi.suggest.TextIssue>) {
+        if (issues.isEmpty()) return
+        processor.finishComposing(translateBuffer)
+        val sb = StringBuilder(translateBuffer.text)
+        issues.sortedByDescending { it.start }.forEach { if (it.end <= sb.length) sb.replace(it.start, it.end, it.replacement) }
+        processors.values.forEach { it.reset() }
+        translateBuffer.clear()
+        translateBuffer.commit(sb.toString())
+        wordSuggestions = WordSuggestions.EMPTY
+    }
+
+    /**
+     * Cut, copy and paste in the translate or search box (it has no selection, so cut and copy
+     * take the whole text). Pasted text goes in at the end, on one line.
+     */
+    private fun boxEdit(command: EditCommand) {
+        val clip = boxClipboard ?: return
+        val box = if (searchPanel != null) searchBuffer else translateBuffer
+        processor.finishComposing(box)
+        when (command) {
+            EditCommand.COPY -> box.text.takeIf { it.isNotBlank() }?.let { clip.copy(it) }
+            EditCommand.CUT -> box.text.takeIf { it.isNotBlank() }?.let {
+                clip.copy(it)
+                processors.values.forEach { p -> p.reset() }
+                box.clear()
+            }
+            EditCommand.PASTE -> clip.paste()?.replace(Regex("\\s+"), " ")?.takeIf { it.isNotBlank() }?.let { box.commit(it) }
+            else -> Unit
+        }
+        selecting = false
     }
 
     /** Puts the translation into the app (with a space either side as needed) and empties the box. */
@@ -838,6 +892,10 @@ class KeyboardController(
     }
 
     private fun edit(command: EditCommand) {
+        if (typingInBox && (command == EditCommand.CUT || command == EditCommand.COPY || command == EditCommand.PASTE)) {
+            boxEdit(command)
+            return
+        }
         when (command) {
             EditCommand.TOGGLE_SELECT -> selecting = !selecting
             EditCommand.SELECT_ALL -> editor.run(EditorCommand.SELECT_ALL)
@@ -922,10 +980,13 @@ class KeyboardController(
         get() = !typingInBox && suggester != null && settings.personalizedLearning && !editorField.isSensitive &&
             !editorField.noSuggestions && editorField.kind == FieldKind.TEXT
 
-    /** Autocorrect: as set for normal typing, and always on in the translate box (a misspelt word translates badly). */
+    /**
+     * Autocorrect as set for normal typing. Never in the translate box: there misspellings are
+     * offered as suggestion chips instead, so nothing changes without the user's say.
+     */
     private val autoCorrectEnabled: Boolean
-        get() = suggestionsEnabled && activeLayout == LayoutId.ENGLISH &&
-            (translating || settings.autoCorrect && editorField.kind == FieldKind.TEXT)
+        get() = suggestionsEnabled && activeLayout == LayoutId.ENGLISH && !translating &&
+            settings.autoCorrect && editorField.kind == FieldKind.TEXT
 
     private fun suggestOptions(typed: String) = SuggestOptions(
         autoCorrect = autoCorrectEnabled && typed != rejectedWord,
@@ -983,12 +1044,17 @@ class KeyboardController(
         val composition = processor.composition
         if (composition != null) {
             val previous = banglaContextBefore().previous
+            if (countStats) speed.typed(clock())
             processor.commitCandidate(action.text, editor, clock())
             learnAvro(composition, action.text, previous)
             return
         }
         val ctx = readContext()
-        if (countStats) stats?.suggestionPicked(action.text.length - ctx.current.length)
+        if (countStats) {
+            val saved = action.text.length - ctx.current.length
+            stats?.suggestionPicked(saved)
+            speed.typed(clock(), saved.coerceAtLeast(0) + 1) // the rest of the word, and the space
+        }
         if (ctx.current.isNotEmpty()) editor.replaceBefore(ctx.current.length, action.text) else editor.commit(action.text)
         processor.onSpace(editor, clock())
         learn(language, action.text, ctx.previous)
@@ -1269,7 +1335,7 @@ class KeyboardController(
         check = if (checking) CheckUi(checkIssues, checkStale, checkFixed, checkEmpty, checkText) else null,
         translate = if (translating) {
             val source = translateBuffer.text
-            TranslateUi(source, translateToBangla, translatedText.takeIf { translatedSource == source }, translateSpelling(source))
+            TranslateUi(source, translateToBangla, translatedText.takeIf { translatedSource == source }, translateIssues(source))
         } else {
             null
         },

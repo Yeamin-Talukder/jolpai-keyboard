@@ -88,39 +88,49 @@ class CheckModeTest {
     }
 
     @Test fun `ignore hides a word, typing marks the card stale, recheck refreshes`() {
-        val field = CursorEditor("we met at jolpai today")
+        val field = CursorEditor("we met at wnet today")
         val c = controllerFor(field)
         c.onKey(KeyAction.StartCheck)
-        val jolpai = c.state.value.check!!.issues.first { it.original == "jolpai" }
-        c.onKey(KeyAction.IgnoreIssue(jolpai))
-        assertTrue(c.state.value.check!!.issues.none { it.original == "jolpai" })
+        val wnet = c.state.value.check!!.issues.first { it.original == "wnet" }
+        c.onKey(KeyAction.IgnoreIssue(wnet))
+        assertTrue(c.state.value.check!!.issues.none { it.original == "wnet" })
 
         c.onKey(KeyAction.Text("x"))
         assertTrue(c.state.value.check!!.stale)
         c.onKey(KeyAction.Recheck)
         assertEquals(false, c.state.value.check!!.stale)
-        assertTrue(c.state.value.check!!.issues.none { it.original == "jolpai" }) // still ignored
+        assertTrue(c.state.value.check!!.issues.none { it.original == "wnet" }) // still ignored
 
         // "Add word" on a spelling flag keeps it for good: closing and reopening doesn't bring it back.
         c.onKey(KeyAction.EndCheck)
         c.onKey(KeyAction.StartCheck)
-        assertTrue(c.state.value.check!!.issues.none { it.original == "jolpai" })
+        assertTrue(c.state.value.check!!.issues.none { it.original == "wnet" })
     }
 
-    @Test fun `the translate box corrects spelling as you type and offers did-you-mean`() {
+    @Test fun `the translate box suggests fixes as chips instead of changing words`() {
         val field = CursorEditor("")
         val c = controllerFor(field)
+        c.updateSettings(KeyboardSettings(autoCapitalize = false, autoCorrect = true))
         c.onKey(KeyAction.StartTranslate())
         "I recieved it ".forEach { c.onKey(if (it == ' ') KeyAction.Space else KeyAction.Text(it.toString())) }
-        assertEquals("I received it ", c.state.value.translate!!.source) // autocorrect, even though it's off for normal typing
+        val t = c.state.value.translate!!
+        assertEquals("I recieved it ", t.source) // never autocorrected in the box
+        val chip = t.issues.single { it.original == "recieved" }
+        assertEquals("received", chip.replacement)
         assertEquals("", field.text.toString())
 
+        c.onKey(KeyAction.FixTranslateIssue(chip))
+        assertEquals("I received it ", c.state.value.translate!!.source)
+        assertTrue(c.state.value.translate!!.issues.isEmpty())
+
+        // Dismissed chips stay away; Fix all applies the rest (Bangla too).
         c.onKey(KeyAction.ClearTranslate)
-        c.onKey(KeyAction.PasteText("শিক্ষাথী "))
-        assertEquals("শিক্ষার্থী ", c.state.value.translate!!.corrected)
+        c.onKey(KeyAction.PasteText("teh শিক্ষাথী "))
+        val issues = c.state.value.translate!!.issues
+        c.onKey(KeyAction.IgnoreTranslateIssue(issues.first { it.original == "teh" }))
+        assertTrue(c.state.value.translate!!.issues.none { it.original == "teh" })
         c.onKey(KeyAction.ApplyTranslateSpelling)
-        assertEquals("শিক্ষার্থী ", c.state.value.translate!!.source)
-        assertNull(c.state.value.translate!!.corrected)
+        assertEquals("teh শিক্ষার্থী ", c.state.value.translate!!.source)
     }
 
     @Test fun `an AI rewrite applies only to the text it was made for`() {
@@ -159,6 +169,37 @@ class CheckModeTest {
         c.onStartInput(FieldInfo(isPassword = true), restarting = false)
         type("secret words ")
         assertEquals(3, events.words) // nor password fields
+    }
+
+    @Test fun `typing speed is measured from key presses, outside boxes and private fields`() {
+        val bursts = ArrayList<Pair<Int, Long>>()
+        val events = object : com.yeamin.lipi.core.stats.TypingEvents {
+            override fun word(bangla: Boolean) = Unit
+            override fun autocorrected() = Unit
+            override fun suggestionPicked(lettersSaved: Int) = Unit
+            override fun emoji() = Unit
+            override fun typingBurst(typed: Int, deleted: Int, millis: Long) { bursts += typed to millis }
+        }
+        var now = 0L
+        val c = KeyboardController(CursorEditor(""), clock = { now }, suggester = Suggester({ en }, { bn }, { null }, UserHistory())).apply {
+            updateSettings(KeyboardSettings(autoCapitalize = false))
+            onStartInput(FieldInfo.DEFAULT, restarting = false)
+            stats = events
+        }
+        fun type(s: String) = s.forEach { now += 200; c.onKey(if (it == ' ') KeyAction.Space else KeyAction.Text(it.toString())) }
+        type("hello there friend ")
+        c.onFinishInput()
+        assertEquals(1, bursts.size)
+        assertEquals(19, bursts[0].first)
+        assertEquals(19 * 200L, bursts[0].second)
+
+        c.onKey(KeyAction.StartTranslate())
+        type("hello there friend ")
+        c.onKey(KeyAction.EndTranslate)
+        c.onStartInput(FieldInfo(isPassword = true), restarting = false)
+        type("secret words here ")
+        c.onFinishInput()
+        assertEquals(1, bursts.size)
     }
 
     @Test fun `empty field, closing, and other tools`() {
