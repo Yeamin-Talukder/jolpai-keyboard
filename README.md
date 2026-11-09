@@ -5,8 +5,8 @@
 # Jolpai Keyboard (জলপাই কিবোর্ড): Bangla & English Keyboard for Android
 
 **A free, open-source, privacy-first Bangla (Bengali) keyboard for Android with Avro phonetic typing,
-the National (জাতীয়) layout, English QWERTY, smart suggestions, an offline spelling and grammar check,
-offline English↔Bangla translation, voice typing, a clipboard manager and 64 themes. No ads, no tracking,
+the National (জাতীয়) and প্রভাত (Probhat) layouts, English QWERTY, on-device AI predictions, an offline spelling and grammar
+check, offline English↔Bangla translation, voice typing, a clipboard manager and 64 themes. No ads, no tracking,
 and nothing you type leaves your phone.**
 
 [![Downloads](https://img.shields.io/github/downloads/Yeamin-Talukder/jolpai-keyboard/total?label=downloads&color=6E8A2C&logo=android&logoColor=white)](https://github.com/Yeamin-Talukder/jolpai-keyboard/releases)
@@ -33,7 +33,8 @@ and nothing you type leaves your phone.**
 
 **Jolpai Keyboard** (Bangla: **জলপাই কিবোর্ড**, "olive keyboard") is an open-source Android keyboard
 (IME) built for people who write in **Bangla (Bengali) and English**. You can type Bangla **phonetically
-with Avro** (`ami` → আমি), use the fixed **National (জাতীয়) layout**, or switch to **English QWERTY**,
+with Avro** (`ami` → আমি), use the fixed **National (জাতীয়)** or **প্রভাত (Probhat)** layout, or switch to **English QWERTY**
+with on-device AI predictions,
 all in one keyboard that works in every app: WhatsApp, Messenger, Facebook, Gmail, Chrome and more.
 
 It aims for Gboard-level speed and features while keeping your data on your device:
@@ -251,6 +252,7 @@ flowchart LR
     P -->|English| E["EnglishProcessor"]
     P -->|অভ্র| A["AvroProcessor"]
     P -->|জাতীয়| N["NationalProcessor"]
+    P -->|প্রভাত| N
     E & A & N --> ES["EditorSession<br/>(InputConnection, batched)"]
     ES --> APPX["Your app's text field"]
     ES -. async, cancelled per key .-> S["SuggestionEngine"]
@@ -262,8 +264,8 @@ flowchart LR
 | **Key grid** | A custom `View` drawn on a `Canvas` (not Compose) for the lowest per-key latency and full multi-touch control |
 | **Panels and settings** | Jetpack Compose + Material 3 (emoji, clipboard, voice, editing, translate, settings app) |
 | **Text editing** | `EditorSession` wraps `InputConnection`, batches edits and tracks the cursor itself (fast even in WebView) |
-| **Bangla engines** | Avro phonetic transliterator and National-layout composer in pure Kotlin |
-| **Suggestions** | Sorted word lists with frequencies, typo-aware correction search (weighted edit costs tuned on public misspelling lists), bigram next-word model, Avro dictionary candidates, on-device learning |
+| **Bangla engines** | Avro phonetic transliterator and the National / Probhat composer in pure Kotlin |
+| **Suggestions** | Sorted word lists with frequencies, typo-aware correction search (weighted edit costs tuned on public misspelling lists), an on-device neural next-word model for English (LSTM, 4.7 MB, read in plain Kotlin), Bangla next-word lists, learned pairs and triples with fading, Avro dictionary candidates, on-device learning |
 | **Writing check** | Rule-based spelling, punctuation and grammar checker in plain Kotlin (English and Bangla); optional ML Kit GenAI proofreading where the phone has Gemini Nano |
 | **Storage** | Room on **SQLCipher** (encrypted), key in Android Keystore; DataStore for settings |
 | **DI and async** | Hilt, Kotlin coroutines and Flow; suggestions run off the main thread and are cancelled per keystroke |
@@ -279,7 +281,8 @@ Full design notes, platform limits and the privacy model: **[docs/ARCHITECTURE.m
 | Module | What it holds |
 |---|---|
 | `bangla-engine` | Plain Kotlin (no Android). National-layout composer, Avro phonetic engine and its rule table |
-| `suggestion-engine` | Plain Kotlin. English and Bangla word lists and frequencies, completion, autocorrect, the spelling/punctuation/grammar checker, Avro dictionary candidates, learning model |
+| `suggestion-engine` | Plain Kotlin. English and Bangla word lists and frequencies, completion, autocorrect, the spelling/punctuation/grammar checker, Avro dictionary candidates, learning model, the next-word model reader (`NextWordModel`, `LanguageModel`) and emoji by meaning |
+| `lm-trainer` | PC-only Gradle tool, not in the app: prepares Bangla text and trains/exports next-word models in the format the app reads |
 | `core-data` | Encrypted Room database: learned words, word pairs, Avro picks, personal dictionary, clipboard history, snippets |
 | `clipboard-manager` | Clipboard capture and history, private image copies, snippets, the 📋 panel shown in the keyboard |
 | `emoji-engine` | Plain Kotlin. Unicode emoji with English and Bangla keywords, skin tones, kaomoji |
@@ -365,7 +368,7 @@ signed APKs, and publishes them with the notes and checksums.
 <details>
 <summary><b>Typing, layouts and suggestions</b></summary>
 
-- **Language button (top bar, right):** tap to switch between English, বাংলা (অভ্র) and বাংলা (জাতীয়). Hold it for Android's keyboard chooser. Choose which layouts are on in the app.
+- **Language button (top bar, right):** tap to switch between English, বাংলা (অভ্র), বাংলা (জাতীয়) and বাংলা (প্রভাত). Hold it for Android's keyboard chooser. Choose which layouts are on in the app.
 - **Avro:** type how a word sounds (`ami` → আমি). The underlined word is the best dictionary match; the strip shows the other candidates, with your English spelling last. Tap one to use it, and Jolpai remembers your pick for that spelling. Case matters (`t` ত, `T` ট); reph is `rr` (`korrm` → কর্ম).
 - **জাতীয়:** Ridmik-style National layout. Hold a key to type the small letter in its corner (ু → উ, ত → ৎ). ্র is ্ then র (or hold র); reph is Shift + ্.
 - **প্রভাত:** Probhat, laid out 12 · 9 · 9 like popular Bangla phone keyboards. The corner shows the shifted letter (য়: য-ফলা, ্: ঁ); hold a key for it. ৃ and ্ sit beside ম (shifted: ৃ and ঁ); ঞ is on জ, ৎ on ত. Off until you turn it on in Languages & layouts.
@@ -431,7 +434,7 @@ signed APKs, and publishes them with the notes and checksums.
 
 **How do I type Bangla on Android with Jolpai Keyboard?**
 Install Jolpai, turn it on in the app's two setup steps, then tap the 🌐 language button to choose
-বাংলা (অভ্র) for phonetic typing (`ami` → আমি) or বাংলা (জাতীয়) for the National layout.
+বাংলা (অভ্র) for phonetic typing (`ami` → আমি) or বাংলা (জাতীয়) for the National layout, or বাংলা (প্রভাত) for Probhat (turn it on in Languages & layouts first).
 
 **Does Jolpai Keyboard support Avro phonetic typing?**
 Yes. It has a built-in Avro phonetic engine using the open Avro rule table from OpenBangla, with

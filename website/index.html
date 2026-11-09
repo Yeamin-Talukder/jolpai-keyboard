@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Jolpai – Free Bangla Keyboard for Android (Avro, জাতীয়)</title>
-<meta name="description" content="Free, open-source Bangla &amp; English keyboard for Android: Avro phonetic, National (জাতীয়) layout, offline spell check and translation. No ads, no tracking.">
+<meta name="description" content="Free, open-source Bangla &amp; English keyboard for Android: Avro phonetic, National (জাতীয়) and প্রভাত layouts, on-device AI predictions, offline spell check and translation. No ads, no tracking.">
 <meta name="keywords" content="Bangla keyboard, Bengali keyboard, Avro keyboard Android, বাংলা কিবোর্ড, অভ্র কিবোর্ড, জাতীয় কিবোর্ড, Jatiya keyboard, Bangla typing, open source keyboard, Jolpai Keyboard">
 <link rel="canonical" href="https://yeamin-talukder.github.io/jolpai-keyboard/">
 <meta name="robots" content="index, follow, max-image-preview:large">
@@ -14,7 +14,7 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Jolpai Keyboard">
 <meta property="og:title" content="Jolpai Keyboard – Free Bangla & English Keyboard for Android">
-<meta property="og:description" content="Avro phonetic, the National (জাতীয়) layout, offline spelling check and translation, 64 themes. Free, open source, no ads, no tracking.">
+<meta property="og:description" content="Avro phonetic, the National (জাতীয়) and প্রভাত layouts, on-device AI predictions, offline spelling check and translation, 64 themes. Free, open source, no ads, no tracking.">
 <meta property="og:url" content="https://yeamin-talukder.github.io/jolpai-keyboard/">
 <meta property="og:image" content="https://yeamin-talukder.github.io/jolpai-keyboard/images/banner.png">
 <meta property="og:image:width" content="1280">
@@ -42,7 +42,7 @@
   "@type": "SoftwareApplication",
   "name": "Jolpai Keyboard",
   "alternateName": ["জলপাই কিবোর্ড", "Jolpai Bangla Keyboard", "Jalpai Keyboard"],
-  "description": "Free, open-source, privacy-first Bangla and English keyboard for Android with Avro phonetic typing, the National (জাতীয়) layout, smart suggestions, an offline spelling and grammar check, offline English–Bangla translation, voice typing, a clipboard manager and 64 themes.",
+  "description": "Free, open-source, privacy-first Bangla and English keyboard for Android with Avro phonetic typing, the National (জাতীয়) and প্রভাত layouts, on-device AI predictions, smart suggestions, an offline spelling and grammar check, offline English–Bangla translation, voice typing, a clipboard manager and 64 themes.",
   "applicationCategory": "UtilitiesApplication",
   "applicationSubCategory": "Keyboard",
   "operatingSystem": "Android 8.0 or newer",
@@ -65,6 +65,9 @@
   "featureList": [
     "Avro phonetic Bangla typing",
     "National (Jatiya) Bangla layout",
+    "Probhat (প্রভাত) Bangla layout",
+    "On-device AI next-word prediction for English",
+    "Bangla next-word prediction from open text",
     "English QWERTY with autocorrect",
     "Offline spelling, punctuation and grammar check for Bangla and English",
     "Offline English to Bangla translation",
@@ -93,12 +96,14 @@
      "acceptedAnswer": {"@type": "Answer", "text": "Install Jolpai, turn it on in the app's two setup steps, then tap the language button to choose বাংলা (অভ্র) for phonetic typing (ami → আমি) or বাংলা (জাতীয়) for the National layout."}},
     {"@type": "Question", "name": "Does Jolpai Keyboard support Avro phonetic typing?",
      "acceptedAnswer": {"@type": "Answer", "text": "Yes. It has a built-in Avro phonetic engine using the open Avro rule table from OpenBangla, with dictionary candidates and learning of your choices. It works fully offline."}},
-    {"@type": "Question", "name": "Does it have the National (জাতীয়) / Jatiya layout? What about Bijoy?",
-     "acceptedAnswer": {"@type": "Answer", "text": "Yes, the Bangladesh National layout is built in, arranged like Ridmik Keyboard. The Bijoy layout is not included."}},
+    {"@type": "Question", "name": "Does it have the National (জাতীয়) / Jatiya layout? What about Probhat or Bijoy?",
+     "acceptedAnswer": {"@type": "Answer", "text": "Yes, the Bangladesh National layout is built in, arranged like Ridmik Keyboard. The Probhat (প্রভাত) layout is built in too: turn it on in Languages & layouts. The Bijoy layout is not included."}},
     {"@type": "Question", "name": "Is Jolpai Keyboard safe? Does it collect what I type?",
      "acceptedAnswer": {"@type": "Answer", "text": "No. It has no account, analytics, ads or crash-reporting SDK, and stores learned words and clipboard history only on your phone, in an encrypted database. Password and incognito fields are never learned. The code is open source, so you can check this yourself."}},
     {"@type": "Question", "name": "Does Jolpai Keyboard work offline?",
      "acceptedAnswer": {"@type": "Answer", "text": "Yes. Typing, suggestions, Avro, the spelling and grammar check, the clipboard and themes need no internet. Translation works offline after a one-time pack download. Only GIF search needs the internet (and checking for updates, when you tap it)."}},
+    {"@type": "Question", "name": "Does Jolpai use AI? Does my text leave the phone?",
+     "acceptedAnswer": {"@type": "Answer", "text": "Yes, for English: a small neural next-word model (4.7 MB) runs inside the keyboard, on your phone. It reads only the sentence you are typing to suggest the next word, rank suggestions and autocorrect, pick emoji by meaning and catch wrong words like their/there in Check. Nothing is sent anywhere, and it learns nothing. You can turn it off in Suggestions → On-device AI predictions."}},
     {"@type": "Question", "name": "Does it check Bangla spelling and grammar?",
      "acceptedAnswer": {"@type": "Answer", "text": "Yes. Check finds Bangla spelling mistakes (look-alike letters, vowel signs, word endings) and punctuation such as দাঁড়ি, plus English spelling, punctuation and common grammar, all offline. It is rule-based, so it won't judge meaning or style."}},
     {"@type": "Question", "name": "Can I translate English to Bangla inside the keyboard?",
@@ -328,6 +333,10 @@
   }
   .key.grow2::after { content: ""; position: absolute; inset: -4px -4px; border-radius: 11px; border: 1.5px dashed rgba(181,201,74,.5); animation: grow .4s ease; }
   .key.dim { opacity: .55; }
+  .key.off { display: none; }
+  .kb.k12 .krow { gap: 3px; }
+  .kb.k12 .key { font-size: 16.5px; border-radius: 9px; }
+  .kb.k12 .key sup { font-size: 8.5px; right: 3px; }
   @keyframes grow { from { transform: scale(.7); opacity: 0; } }
   .pop {
     position: absolute; z-index: 5; width: 46px; height: 58px; border-radius: 12px; background: var(--kb-press); color: var(--kb-text);
@@ -358,17 +367,44 @@
   .finger.press { scale: .82; }
   .finger.drag { transition: opacity .25s, scale .12s; }
 
-  .demo-tabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; width: min(420px, 100%); }
-  .demo-tabs button {
-    font: inherit; font-size: 13.5px; color: var(--muted); background: var(--bg-2); border: 1px solid var(--line); border-radius: 99px;
-    padding: 4px 11px; cursor: pointer; transition: all .2s;
+  /* Feature buttons: in a column on each side of the phone where there is room, else a row under it */
+  .demo-body { display: flex; align-items: center; justify-content: center; gap: 18px; width: 100%; }
+  .demo-body .stage { flex: none; }
+  .demo-side { display: none; flex-direction: column; gap: 8px; width: 172px; flex: none; }
+  .demo-tabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; width: min(460px, 100%); }
+  .demo-tabs button, .demo-side button {
+    font: inherit; font-size: 15px; font-weight: 500; color: var(--muted); background: var(--bg-2); border: 1px solid var(--line); border-radius: 99px;
+    padding: 7px 14px; cursor: pointer; transition: color .2s, background .2s, border-color .2s, transform .15s;
   }
-  .demo-tabs button:hover { color: var(--text); border-color: var(--olive-deep); }
-  .demo-tabs button[aria-pressed="true"] { background: rgba(181,201,74,.16); color: var(--olive); border-color: var(--olive-2); }
+  .demo-side button {
+    display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; border-radius: 14px; padding: 10px 12px; line-height: 1.2;
+  }
+  .demo-side .tic { width: 26px; height: 26px; flex: none; display: grid; place-items: center; border-radius: 8px; background: rgba(181,201,74,.1); color: var(--olive); font-size: 14px; font-weight: 700; }
+  .demo-side .tic .ms { width: 17px; height: 17px; }
+  .demo-tabs button:hover, .demo-side button:hover { color: var(--text); border-color: var(--olive-deep); }
+  .demo-side button:hover { transform: translateX(2px); }
+  .demo-side.left button:hover { transform: translateX(-2px); }
+  .demo-tabs button[aria-pressed="true"], .demo-side button[aria-pressed="true"] { background: rgba(181,201,74,.16); color: var(--olive); border-color: var(--olive-2); }
+  .demo-side button[aria-pressed="true"] .tic { background: var(--olive); color: #18200b; }
+  .demo-tabs button.new::after, .demo-side button.new::after { content: "new"; margin-left: 6px; padding: 1px 6px; border-radius: 99px; background: var(--olive); color: #18200b; font-size: 10.5px; font-weight: 700; letter-spacing: .02em; vertical-align: 1px; }
+  .demo-side button.new::after { margin-left: auto; flex: none; }
+  .demo-side button > span:nth-child(2) { min-width: 0; }
+  /* Wide screens (and the one-column hero on tablets): buttons beside the phone */
+  @media (min-width: 1180px), (min-width: 760px) and (max-width: 980px) {
+    .demo-side { display: flex; }
+    .demo .demo-tabs { display: none; }
+    /* two button columns + gaps + the phone: sized here, as the grid can't measure the phone's percentage width */
+    .demo { width: 740px; max-width: 100%; margin: 0 auto; }
+    .demo-body .stage { width: 360px; }
+  }
+  @media (min-width: 1180px) {
+    .hero > .wrap { max-width: 1340px; }
+    .hero-grid { grid-template-columns: minmax(0, 1fr) auto; gap: 40px; }
+  }
 
   /* Static keyboards: the three layouts and the theme gallery (same keys and icons as the demo) */
   .kbtheme { --kb-bg: #1b1e16; --kb-key: #2b3024; --kb-press: #3e4534; --kb-fn: #23271d; --kb-text: #eef0e4; --kb-hint: #a5ad8e; --kb-accent: #b5c94a; --kb-on-accent: #1f2608; }
-  .layouts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; }
+  .layouts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 26px; max-width: 900px; margin: 0 auto; }
   .lay h3 { margin: 14px 0 2px; text-align: center; font-size: 19px; color: var(--text); }
   .lay p { margin: 0; text-align: center; color: var(--muted); font-size: 15px; }
   .mini { background: var(--kb-bg); border-radius: 22px; overflow: hidden; border: 1px solid #2b3420; box-shadow: 0 24px 50px -30px rgba(0,0,0,.8); }
@@ -733,7 +769,7 @@
           <span class="h1-bn" lang="bn">জলপাই — বাংলা ও ইংরেজি কিবোর্ড</span>
         </h1>
         <p class="lead">Type Bangla the way it sounds with <b>Avro phonetic</b> (<code style="font-family:var(--mono)">ami</code> → আমি), use the
-          <b>National (জাতীয়)</b> layout, or switch to English, all in one keyboard. Smart suggestions, an offline
+          <b>National (জাতীয়)</b> or <b>প্রভাত</b> layout, or switch to English, all in one keyboard. <b>On-device AI</b> predictions, an offline
           spelling check, offline translation and 64 themes. <b>No ads, no account, no tracking.</b></p>
         <div class="cta">
           <!-- Split button: download now, or ▾ to pick the phone type (filled by the download picker script) -->
@@ -761,7 +797,7 @@
         </div>
         <p class="release-note"><span class="js-version">Version 0.11.0</span><span class="js-dl" hidden></span> · Android 8.0+ · Free forever</p>
         <ul class="chips" aria-label="Highlights">
-          <li>অভ্র Avro phonetic</li><li>জাতীয় layout</li><li>Works offline</li><li>No ads · No tracking</li><li>Material You</li>
+          <li>অভ্র Avro phonetic</li><li>জাতীয় layout</li><li>প্রভাত layout</li><li>On-device AI</li><li>Works offline</li><li>No ads · No tracking</li><li>Material You</li>
         </ul>
       </div>
 
@@ -770,6 +806,8 @@
           <span class="cap-ic" id="capI">অ</span>
           <span class="cap-txt"><b id="capT">অভ্র phonetic</b><span id="capS">Type how it sounds: ami → আমি</span></span>
         </div>
+        <div class="demo-body">
+        <div class="demo-side left" id="tabsL" role="group" aria-label="Show a feature"></div>
         <div class="stage" id="stage" aria-hidden="true">
           <div class="phone">
             <div class="screen">
@@ -794,6 +832,8 @@
           </div>
           <div class="finger" id="finger"></div>
         </div>
+        <div class="demo-side right" id="tabsR" role="group" aria-label="Show a feature"></div>
+        </div>
         <div class="demo-tabs" id="tabs" role="group" aria-label="Show a feature"></div>
       </div>
     </div>
@@ -802,7 +842,7 @@
   <!-- Stats -->
   <div class="wrap reveal">
     <div class="stats" role="list">
-      <div role="listitem"><b>3</b><span>layouts</span></div>
+      <div role="listitem"><b>4</b><span>layouts</span></div>
       <div role="listitem"><b>64</b><span>themes</span></div>
       <div role="listitem" class="js-dl-stat"><b>100%</b><span>on your phone</span></div>
       <div role="listitem"><b>0</b><span>ads or trackers</span></div>
@@ -820,12 +860,12 @@
       </div>
       <div class="grid">
         <article class="card reveal"><div class="ic ic-letter" aria-hidden="true">অ</div><h3>Avro phonetic (অভ্র)</h3><p>Type how a word sounds: <code>ami banglay likhi</code> → আমি বাংলায় লিখি. Dictionary candidates, and it remembers your picks.</p></article>
-        <article class="card reveal"><div class="ic ic-letter" aria-hidden="true">জ</div><h3>National (জাতীয়) layout</h3><p>The Bangladesh national standard layout, arranged like Ridmik. Hold a key for the letter in its corner.</p></article>
-        <article class="card reveal"><div class="ic"><svg viewBox="0 -960 960 960" width="24" height="24" aria-hidden="true"><path d="M160-200q-33 0-56.5-23.5T80-280v-400q0-33 23.5-56.5T160-760h640q33 0 56.5 23.5T880-680v400q0 33-23.5 56.5T800-200H160Zm0-80h640v-400H160v400Zm200-40h240q17 0 28.5-11.5T640-360q0-17-11.5-28.5T600-400H360q-17 0-28.5 11.5T320-360q0 17 11.5 28.5T360-320Zm-200 40v-400 400Zm108.5-291.5Q280-583 280-600t-11.5-28.5Q257-640 240-640t-28.5 11.5Q200-617 200-600t11.5 28.5Q223-560 240-560t28.5-11.5Zm120 0Q400-583 400-600t-11.5-28.5Q377-640 360-640t-28.5 11.5Q320-617 320-600t11.5 28.5Q343-560 360-560t28.5-11.5Zm120 0Q520-583 520-600t-11.5-28.5Q497-640 480-640t-28.5 11.5Q440-617 440-600t11.5 28.5Q463-560 480-560t28.5-11.5Zm120 0Q640-583 640-600t-11.5-28.5Q617-640 600-640t-28.5 11.5Q560-617 560-600t11.5 28.5Q583-560 600-560t28.5-11.5Zm120 0Q760-583 760-600t-11.5-28.5Q737-640 720-640t-28.5 11.5Q680-617 680-600t11.5 28.5Q703-560 720-560t28.5-11.5Zm-480 120Q280-463 280-480t-11.5-28.5Q257-520 240-520t-28.5 11.5Q200-497 200-480t11.5 28.5Q223-440 240-440t28.5-11.5Zm120 0Q400-463 400-480t-11.5-28.5Q377-520 360-520t-28.5 11.5Q320-497 320-480t11.5 28.5Q343-440 360-440t28.5-11.5Zm120 0Q520-463 520-480t-11.5-28.5Q497-520 480-520t-28.5 11.5Q440-497 440-480t11.5 28.5Q463-440 480-440t28.5-11.5Zm120 0Q640-463 640-480t-11.5-28.5Q617-520 600-520t-28.5 11.5Q560-497 560-480t11.5 28.5Q583-440 600-440t28.5-11.5Zm120 0Q760-463 760-480t-11.5-28.5Q737-520 720-520t-28.5 11.5Q680-497 680-480t11.5 28.5Q703-440 720-440t28.5-11.5Z"/></svg></div><h3>English with autocorrect</h3><p>Fixes phone slips and spelling-by-sound mistakes, but only when one fix is clearly best. Undo with Backspace.</p></article>
+        <article class="card reveal"><div class="ic ic-letter" aria-hidden="true">জ</div><h3>National (জাতীয়) and প্রভাত</h3><p>The Bangladesh national layout, arranged like Ridmik, and প্রভাত (Probhat) as on a computer. Hold a key for the letter in its corner.</p></article>
+        <article class="card reveal"><div class="ic"><svg viewBox="0 -960 960 960" width="24" height="24" aria-hidden="true"><path d="M160-200q-33 0-56.5-23.5T80-280v-400q0-33 23.5-56.5T160-760h640q33 0 56.5 23.5T880-680v400q0 33-23.5 56.5T800-200H160Zm0-80h640v-400H160v400Zm200-40h240q17 0 28.5-11.5T640-360q0-17-11.5-28.5T600-400H360q-17 0-28.5 11.5T320-360q0 17 11.5 28.5T360-320Zm-200 40v-400 400Zm108.5-291.5Q280-583 280-600t-11.5-28.5Q257-640 240-640t-28.5 11.5Q200-617 200-600t11.5 28.5Q223-560 240-560t28.5-11.5Zm120 0Q400-583 400-600t-11.5-28.5Q377-640 360-640t-28.5 11.5Q320-617 320-600t11.5 28.5Q343-560 360-560t28.5-11.5Zm120 0Q520-583 520-600t-11.5-28.5Q497-640 480-640t-28.5 11.5Q440-617 440-600t11.5 28.5Q463-560 480-560t28.5-11.5Zm120 0Q640-583 640-600t-11.5-28.5Q617-640 600-640t-28.5 11.5Q560-617 560-600t11.5 28.5Q583-560 600-560t28.5-11.5Zm120 0Q760-583 760-600t-11.5-28.5Q737-640 720-640t-28.5 11.5Q680-617 680-600t11.5 28.5Q703-560 720-560t28.5-11.5Zm-480 120Q280-463 280-480t-11.5-28.5Q257-520 240-520t-28.5 11.5Q200-497 200-480t11.5 28.5Q223-440 240-440t28.5-11.5Zm120 0Q400-463 400-480t-11.5-28.5Q377-520 360-520t-28.5 11.5Q320-497 320-480t11.5 28.5Q343-440 360-440t28.5-11.5Zm120 0Q520-463 520-480t-11.5-28.5Q497-520 480-520t-28.5 11.5Q440-497 440-480t11.5 28.5Q463-440 480-440t28.5-11.5Zm120 0Q640-463 640-480t-11.5-28.5Q617-520 600-520t-28.5 11.5Q560-497 560-480t11.5 28.5Q583-440 600-440t28.5-11.5Zm120 0Q760-463 760-480t-11.5-28.5Q737-520 720-520t-28.5 11.5Q680-497 680-480t11.5 28.5Q703-440 720-440t28.5-11.5Z"/></svg></div><h3>On-device AI for English</h3><p>A small neural model reads your sentence: the next word, autocorrect that picks the word that fits ("takl" → talk), emoji by meaning. On your phone only.</p></article>
         <article class="card reveal"><div class="ic"><svg viewBox="0 -960 960 960" width="24" height="24" aria-hidden="true"><path d="m564-192 198-198q11-11 28-11t28 11q11 11 11 28t-11 28L621-137q-12 12-27 18t-30 6q-15 0-30-6t-27-18l-85-85q-11-11-11-28t11-28q11-11 28-11t28 11l86 86ZM254-452l-37 105q-5 12-15 19.5t-23 7.5q-22 0-34-18t-4-38l162-435q5-13 16.5-21t25.5-8h32q14 0 25.5 8t16.5 21l162 434q8 21-4.5 39T541-320q-14 0-25-8t-16-21l-36-103H254Zm28-76h156l-76-216h-4l-76 216Z"/></svg></div><h3>Spelling &amp; grammar check</h3><p>Finds spelling, punctuation and grammar mistakes in English <b>and বাংলা</b>, offline, with one-tap fixes.</p></article>
         <article class="card reveal"><div class="ic"><svg viewBox="0 -960 960 960" width="24" height="24" aria-hidden="true"><path d="m603-202-34 97q-4 11-14 18t-22 7q-20 0-32.5-16.5T496-133l152-402q5-11 15-18t22-7h30q12 0 22 7t15 18l152 403q8 19-4 35.5T868-80q-13 0-22.5-7T831-106l-34-96H603ZM362-401 188-228q-11 11-27.5 11.5T132-228q-11-11-11-28t11-28l174-174q-35-35-63.5-80T190-640h84q20 39 40 68t48 58q33-33 68.5-92.5T484-720H80q-17 0-28.5-11.5T40-760q0-17 11.5-28.5T80-800h240v-40q0-17 11.5-28.5T360-880q17 0 28.5 11.5T400-840v40h240q17 0 28.5 11.5T680-760q0 17-11.5 28.5T640-720h-76q-21 72-63 148t-83 116l96 98-30 82-122-125Zm266 129h144l-72-204-72 204Z"/></svg></div><h3>Offline translation</h3><p>English ↔ Bangla inside the keyboard. Download a ~30 MB pack once; then it works without internet.</p></article>
         <article class="card reveal"><div class="ic"><svg viewBox="0 -960 960 960" width="24" height="24" aria-hidden="true"><path d="M395-435q-35-35-35-85v-240q0-50 35-85t85-35q50 0 85 35t35 85v240q0 50-35 85t-85 35q-50 0-85-35Zm85-205Zm-40 480v-83q-92-13-157.5-78T203-479q-2-17 9-29t28-12q17 0 28.5 11.5T284-480q14 70 69.5 115T480-320q72 0 127-45.5T676-480q4-17 15.5-28.5T720-520q17 0 28 12t9 29q-14 91-79 157t-158 79v83q0 17-11.5 28.5T480-120q-17 0-28.5-11.5T440-160Zm68.5-331.5Q520-503 520-520v-240q0-17-11.5-28.5T480-800q-17 0-28.5 11.5T440-760v240q0 17 11.5 28.5T480-480q17 0 28.5-11.5Z"/></svg></div><h3>Voice typing</h3><p>Speak Bangla or English, with spoken punctuation: "comma", "দাঁড়ি", "নতুন লাইন".</p></article>
-        <article class="card reveal"><div class="ic"><svg viewBox="0 -960 960 960" width="24" height="24" aria-hidden="true"><path d="m706-706-70-32q-6-3-8.5-8t-2.5-10q0-5 2.5-10t8.5-8l70-32 32-70q3-6 8-9t10-3q5 0 10 3t8 9l32 70 70 32q6 3 9 8t3 10q0 5-3 10t-9 8l-70 32-32 70q-3 6-8 8.5t-10 2.5q-5 0-10-2.5t-8-8.5l-32-70ZM260-380l-160-73q-9-4-13-11.5T83-480q0-8 4-15.5t13-11.5l160-73 73-160q4-9 11.5-13t15.5-4q8 0 15.5 4t11.5 13l73 160 160 73q9 4 13 11.5t4 15.5q0 8-4 15.5T620-453l-160 73-73 160q-4 9-11.5 13t-15.5 4q-8 0-15.5-4T333-220l-73-160Zm100 26 40-86 86-40-86-40-40-86-40 86-86 40 86 40 40 86Zm350 204-70-32q-6-3-9-8t-3-10q0-5 3-10t9-8l70-32 32-70q3-6 8-9t10-3q5 0 10 3t8 9l32 70 70 32q6 3 9 8t3 10q0 5-3 10t-9 8l-70 32-32 70q-3 6-8 9t-10 3q-5 0-10-3t-8-9l-32-70ZM360-480Z"/></svg></div><h3>Learns how you write</h3><p>Next-word prediction, Bangla word frequencies and a personal dictionary, all learned on your phone.</p></article>
+        <article class="card reveal"><div class="ic"><svg viewBox="0 -960 960 960" width="24" height="24" aria-hidden="true"><path d="m706-706-70-32q-6-3-8.5-8t-2.5-10q0-5 2.5-10t8.5-8l70-32 32-70q3-6 8-9t10-3q5 0 10 3t8 9l32 70 70 32q6 3 9 8t3 10q0 5-3 10t-9 8l-70 32-32 70q-3 6-8 8.5t-10 2.5q-5 0-10-2.5t-8-8.5l-32-70ZM260-380l-160-73q-9-4-13-11.5T83-480q0-8 4-15.5t13-11.5l160-73 73-160q4-9 11.5-13t15.5-4q8 0 15.5 4t11.5 13l73 160 160 73q9 4 13 11.5t4 15.5q0 8-4 15.5T620-453l-160 73-73 160q-4 9-11.5 13t-15.5 4q-8 0-15.5-4T333-220l-73-160Zm100 26 40-86 86-40-86-40-40-86-40 86-86 40 86 40 40 86Zm350 204-70-32q-6-3-9-8t-3-10q0-5 3-10t9-8l70-32 32-70q3-6 8-9t10-3q5 0 10 3t8 9l32 70 70 32q6 3 9 8t3 10q0 5-3 10t-9 8l-70 32-32 70q-3 6-8 9t-10 3q-5 0-10-3t-8-9l-32-70ZM360-480Z"/></svg></div><h3>Learns how you write</h3><p>Bangla next words from 91 million words of open text (কেমন → আছেন), plus your own phrases, which fade when you stop using them. All on your phone.</p></article>
         <article class="card reveal"><div class="ic"><svg viewBox="0 -960 960 960" width="24" height="24" aria-hidden="true"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h167q11-35 43-57.5t70-22.5q40 0 71.5 22.5T594-840h166q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560h-80v80q0 17-11.5 28.5T640-640H320q-17 0-28.5-11.5T280-680v-80h-80v560Zm308.5-571.5Q520-783 520-800t-11.5-28.5Q497-840 480-840t-28.5 11.5Q440-817 440-800t11.5 28.5Q463-760 480-760t28.5-11.5Z"/></svg></div><h3>Clipboard &amp; snippets</h3><p>Clipboard history with pins and smart categories (links, OTP codes, phone numbers). Type <code>@addr</code> to insert your address.</p></article>
         <article class="card reveal"><div class="ic"><svg viewBox="0 -960 960 960" width="24" height="24" aria-hidden="true"><path d="M480-80q-82 0-155-31.5t-127.5-86Q143-252 111.5-325T80-480q0-83 32.5-156t88-127Q256-817 330-848.5T488-880q80 0 151 27.5t124.5 76q53.5 48.5 85 115T880-518q0 115-70 176.5T640-280h-74q-9 0-12.5 5t-3.5 11q0 12 15 34.5t15 51.5q0 50-27.5 74T480-80Zm0-400Zm-177 23q17-17 17-43t-17-43q-17-17-43-17t-43 17q-17 17-17 43t17 43q17 17 43 17t43-17Zm120-160q17-17 17-43t-17-43q-17-17-43-17t-43 17q-17 17-17 43t17 43q17 17 43 17t43-17Zm200 0q17-17 17-43t-17-43q-17-17-43-17t-43 17q-17 17-17 43t17 43q17 17 43 17t43-17Zm120 160q17-17 17-43t-17-43q-17-17-43-17t-43 17q-17 17-17 43t17 43q17 17 43 17t43-17ZM480-160q9 0 14.5-5t5.5-13q0-14-15-33t-15-57q0-42 29-67t71-25h70q66 0 113-38.5T800-518q0-121-92.5-201.5T488-800q-136 0-232 93t-96 227q0 133 93.5 226.5T480-160Z"/></svg></div><h3>64 themes</h3><p>Material You, soft pastels, gradients and dark themes like Olive night, plus your own photo themes, key fonts and sounds.</p></article>
         <article class="card reveal"><div class="ic"><svg viewBox="0 -960 960 960" width="24" height="24" aria-hidden="true"><path d="M620-520q25 0 42.5-17.5T680-580q0-25-17.5-42.5T620-640q-25 0-42.5 17.5T560-580q0 25 17.5 42.5T620-520Zm-280 0q25 0 42.5-17.5T400-580q0-25-17.5-42.5T340-640q-25 0-42.5 17.5T280-580q0 25 17.5 42.5T340-520Zm-16 408.5Q251-143 197-197t-85.5-127Q80-397 80-480t31.5-156Q143-709 197-763t127-85.5Q397-880 480-880t156 31.5Q709-817 763-763t85.5 127Q880-563 880-480t-31.5 156Q817-251 763-197t-127 85.5Q563-80 480-80t-156-31.5ZM480-480Zm227 227q93-93 93-227t-93-227q-93-93-227-93t-227 93q-93 93-93 227t93 227q93 93 227 93t227-93Zm-227-7q58 0 107-28t79-76q6-12-1-24t-21-12H316q-14 0-21 12t-1 24q30 48 79.5 76T480-260Z"/></svg></div><h3>Emoji, stickers, GIFs</h3><p>Emoji search in English and Bangla, skin tones, kaomoji, your own stickers and GIF search.</p></article>
@@ -839,8 +879,8 @@
   <section class="alt" aria-labelledby="s-title">
     <div class="wrap">
       <div class="section-head reveal">
-        <h2 id="s-title">Three layouts, one tap apart</h2>
-        <p>Switch English ↔ বাংলা (অভ্র) ↔ বাংলা (জাতীয়) from the top bar.</p>
+        <h2 id="s-title">Four layouts, one tap apart</h2>
+        <p>Switch English ↔ বাংলা (অভ্র) ↔ বাংলা (জাতীয়) ↔ বাংলা (প্রভাত) from the top bar.</p>
       </div>
       <div class="layouts">
         <figure class="lay reveal" style="margin:0">
@@ -855,8 +895,12 @@
           <div class="mini kbtheme" data-layout="nat" data-label="National (Jatiya) layout" data-text="জাতীয় " data-comp="কিবোর্ড" data-strip="কিবোর্ড|কিবোর্ডে|কিবোর্ডের" role="img" aria-label="National (Jatiya) Bangla keyboard layout with corner letters on each key"></div>
           <figcaption><h3>National (জাতীয়)</h3><p>Ridmik-style keys · hold for the corner letter</p></figcaption>
         </figure>
+        <figure class="lay reveal" style="margin:0">
+          <div class="mini kbtheme" data-layout="probhat" data-label="প্রভাত (Probhat) layout" data-text="প্রভাত " data-comp="কিবোর্ড" data-strip="কিবোর্ড|কিবোর্ডে|কিবোর্ডের" role="img" aria-label="Probhat (প্রভাত) Bangla keyboard layout: 12, 9 and 9 keys, corners show the shifted letter"></div>
+          <figcaption><h3>প্রভাত (Probhat)</h3><p>As on a computer · hold for the shifted letter</p></figcaption>
+        </figure>
       </div>
-      <p class="swipe">Swipe for অভ্র and জাতীয় →</p>
+      <p class="swipe">Swipe for more layouts →</p>
       <figure class="reveal" style="margin:48px 0 0">
         <div class="themes" id="themes" role="img" aria-label="20 Jolpai Keyboard themes: Material You, light pastel themes and soft dark themes for the Android Bangla keyboard"></div>
         <p class="swipe">Swipe to see all 20 →</p>
@@ -964,9 +1008,10 @@
       <div class="faq">
         <details class="reveal"><summary>How do I type Bangla on Android with Jolpai Keyboard?</summary><p>Install Jolpai, turn it on in the app's two setup steps, then tap the language button to choose বাংলা (অভ্র) for phonetic typing (<code>ami</code> → আমি) or বাংলা (জাতীয়) for the National layout.</p></details>
         <details class="reveal"><summary>Does Jolpai Keyboard support Avro phonetic typing?</summary><p>Yes. It has a built-in Avro phonetic engine using the open Avro rule table from OpenBangla, with dictionary candidates and learning of your choices. It works fully offline.</p></details>
-        <details class="reveal"><summary>Does it have the National (জাতীয়) / Jatiya layout? What about Bijoy?</summary><p>Yes, the Bangladesh National layout is built in, arranged like Ridmik Keyboard. The Bijoy layout is not included.</p></details>
+        <details class="reveal"><summary>Does it have the National (জাতীয়) / Jatiya layout? What about Probhat or Bijoy?</summary><p>Yes, the Bangladesh National layout is built in, arranged like Ridmik Keyboard. The Probhat (প্রভাত) layout is built in too: turn it on in Languages & layouts. The Bijoy layout is not included.</p></details>
         <details class="reveal"><summary>Is Jolpai Keyboard safe? Does it collect what I type?</summary><p>No. It has no account, analytics, ads or crash-reporting SDK, and stores learned words and clipboard history only on your phone, in an encrypted database. Password and incognito fields are never learned. The code is open source, so you can check this yourself.</p></details>
         <details class="reveal"><summary>Does Jolpai Keyboard work offline?</summary><p>Yes. Typing, suggestions, Avro, the spelling and grammar check, the clipboard and themes need no internet. Translation works offline after a one-time pack download. Only GIF search needs the internet (and checking for updates, when you tap it).</p></details>
+        <details class="reveal"><summary>Does Jolpai use AI? Does my text leave the phone?</summary><p>Yes, for English: a small neural next-word model (4.7 MB) runs inside the keyboard, on your phone. It reads only the sentence you are typing to suggest the next word, rank suggestions and autocorrect, pick emoji by meaning and catch wrong words like their/there in Check. Nothing is sent anywhere, and it learns nothing. You can turn it off in Suggestions → On-device AI predictions.</p></details>
         <details class="reveal"><summary>Does it check Bangla spelling and grammar?</summary><p>Yes. Check finds Bangla spelling mistakes (look-alike letters, vowel signs, word endings) and punctuation such as দাঁড়ি, plus English spelling, punctuation and common grammar, all offline. It is rule-based, so it won't judge meaning or style.</p></details>
         <details class="reveal"><summary>Can I translate English to Bangla inside the keyboard?</summary><p>Yes. The Translate box translates English to Bangla (and back) as you type, on your device, after a one-time download of about 30 MB.</p></details>
         <details class="reveal"><summary>Which Android versions are supported?</summary><p>Android 8.0 (Oreo, API 26) and newer. Material You colours need Android 12 or newer.</p></details>
@@ -984,7 +1029,7 @@
       </div>
       <div class="grid">
         <article class="card reveal"><div class="ic ic-letter" aria-hidden="true">অ</div><h3>অভ্র ফোনেটিক</h3><p>যেমন উচ্চারণ, তেমন লিখুন: <code>ami</code> → আমি। আপনার বেছে নেওয়া শব্দ মনে রাখে।</p></article>
-        <article class="card reveal"><div class="ic ic-letter" aria-hidden="true">জ</div><h3>জাতীয় কিবোর্ড লেআউট</h3><p>বাংলাদেশের জাতীয় মানের লেআউট, রিদমিকের মতো সাজানো।</p></article>
+        <article class="card reveal"><div class="ic ic-letter" aria-hidden="true">জ</div><h3>জাতীয় কিবোর্ড লেআউট</h3><p>বাংলাদেশের জাতীয় মানের লেআউট, রিদমিকের মতো সাজানো। কম্পিউটারের মতো প্রভাত লেআউটও আছে।</p></article>
         <article class="card reveal"><div class="ic"><svg viewBox="0 -960 960 960" width="24" height="24" aria-hidden="true"><path d="m564-192 198-198q11-11 28-11t28 11q11 11 11 28t-11 28L621-137q-12 12-27 18t-30 6q-15 0-30-6t-27-18l-85-85q-11-11-11-28t11-28q11-11 28-11t28 11l86 86ZM254-452l-37 105q-5 12-15 19.5t-23 7.5q-22 0-34-18t-4-38l162-435q5-13 16.5-21t25.5-8h32q14 0 25.5 8t16.5 21l162 434q8 21-4.5 39T541-320q-14 0-25-8t-16-21l-36-103H254Zm28-76h156l-76-216h-4l-76 216Z"/></svg></div><h3>বানান ও ব্যাকরণ চেক</h3><p>বাংলা ও ইংরেজি লেখার বানান, যতিচিহ্ন ও ব্যাকরণের ভুল দেখায়, এক ট্যাপে ঠিক করা যায়।</p></article>
         <article class="card reveal"><div class="ic"><svg viewBox="0 -960 960 960" width="24" height="24" aria-hidden="true"><path d="m603-202-34 97q-4 11-14 18t-22 7q-20 0-32.5-16.5T496-133l152-402q5-11 15-18t22-7h30q12 0 22 7t15 18l152 403q8 19-4 35.5T868-80q-13 0-22.5-7T831-106l-34-96H603ZM362-401 188-228q-11 11-27.5 11.5T132-228q-11-11-11-28t11-28l174-174q-35-35-63.5-80T190-640h84q20 39 40 68t48 58q33-33 68.5-92.5T484-720H80q-17 0-28.5-11.5T40-760q0-17 11.5-28.5T80-800h240v-40q0-17 11.5-28.5T360-880q17 0 28.5 11.5T400-840v40h240q17 0 28.5 11.5T680-760q0 17-11.5 28.5T640-720h-76q-21 72-63 148t-83 116l96 98-30 82-122-125Zm266 129h144l-72-204-72 204Z"/></svg></div><h3>অফলাইন অনুবাদ</h3><p>কিবোর্ডের ভেতরেই ইংরেজি↔বাংলা অনুবাদ, ইন্টারনেট ছাড়াই।</p></article>
         <article class="card reveal"><div class="ic"><svg viewBox="0 -960 960 960" width="24" height="24" aria-hidden="true"><path d="M240-80q-33 0-56.5-23.5T160-160v-400q0-33 23.5-56.5T240-640h40v-80q0-83 58.5-141.5T480-920q83 0 141.5 58.5T680-720v80h40q33 0 56.5 23.5T800-560v400q0 33-23.5 56.5T720-80H240Zm0-80h480v-400H240v400Zm296.5-143.5Q560-327 560-360t-23.5-56.5Q513-440 480-440t-56.5 23.5Q400-393 400-360t23.5 56.5Q447-280 480-280t56.5-23.5ZM360-640h240v-80q0-50-35-85t-85-35q-50 0-85 35t-35 85v80ZM240-160v-400 400Z"/></svg></div><h3>প্রাইভেসি আগে</h3><p>আপনি যা লেখেন তা আপনার ফোনেই থাকে, এনক্রিপ্টেড অবস্থায়। কোনো অ্যাকাউন্ট লাগে না।</p></article>
@@ -1410,6 +1455,12 @@
   const LAYOUTS = {
     en: { rows: LATIN, hints: [[...'1234567890']], space: 'English', dot: '.', pill: 'EN', num: '?123' },
     avro: { rows: LATIN, hints: [[...'1234567890']], space: 'অভ্র', dot: '.', pill: 'অভ্র', num: '?123' },
+    // প্রভাত as in the app (ProbhatKeyMap): 12 · 9 · 9, corners show the shifted letter.
+    probhat: {
+      rows: [['দ', 'ূ', 'ী', 'র', 'ট', 'এ', 'ু', 'ি', 'ও', 'প', 'ে', 'ো'], ['া', 'স', 'ড', 'ত', 'গ', 'হ', 'জ', 'ক', 'ল'], ['য়', 'শ', 'চ', 'আ', 'ব', 'ন', 'ম', 'ৃ', '্']],
+      hints: [['ধ', 'ঊ', 'ঈ', 'ড়', 'ঠ', 'ঐ', 'উ', 'ই', 'ঔ', 'ফ', 'ৈ', 'ৌ'], ['অ', 'ষ', 'ঢ', 'থ', 'ঘ', 'ঃ', 'ঝ', 'খ', 'ং'], ['্য', 'ঢ়', 'ছ', 'ঋ', 'ভ', 'ণ', 'ঙ', '', 'ঁ']],
+      space: 'প্রভাত', dot: '।', pill: 'প্রভাত', num: '?১২৩',
+    },
     nat: {
       rows: [['ঙ', 'য', 'ড', 'প', 'ট', 'চ', 'জ', 'হ', 'গ', 'ড়'], ['ৃ', 'ু', 'ি', 'ব', '্', 'া', 'ক', 'ত', 'দ'], ['ঁ', 'ো', 'ে', 'র', 'ন', 'স', 'ম']],
       // The corner letters (hold a key to type them), as in the app's NationalKeyMap.HINTS
@@ -1422,7 +1473,7 @@
   const rowEls = [0, 1, 2, 3].map(i => { const r = document.createElement('div'); r.className = 'krow' + (i === 1 ? ' mid' : ''); kbEl.appendChild(r); return r; });
   const K = {};
   K.shift = mk('fn wide', ic('shift', 21)); K.back = mk('fn wide', ic('backspace', 21));
-  [10, 9, 7].forEach((n, ri) => {
+  [12, 9, 9].forEach((n, ri) => {
     if (ri === 2) rowEls[2].appendChild(K.shift);
     for (let i = 0; i < n; i++) { const k = mk('', ''); letterKeys[ri].push(k); rowEls[ri].appendChild(k); }
     if (ri === 2) rowEls[2].appendChild(K.back);
@@ -1433,12 +1484,14 @@
   function setShift(on) {
     shiftOn = on;
     K.shift.querySelector('.lb').innerHTML = ic(on ? 'shift_fill' : 'shift', 21);
-    if (layout !== 'nat') letterKeys.flat().forEach(k => { const t = k.querySelector('.lb'); t.textContent = on ? t.textContent.toUpperCase() : t.textContent.toLowerCase(); });
+    if (layout === 'en' || layout === 'avro') letterKeys.flat().forEach(k => { const t = k.querySelector('.lb'); t.textContent = on ? t.textContent.toUpperCase() : t.textContent.toLowerCase(); });
   }
   const label = (k, t) => { k.querySelector('.lb').textContent = t; };
   function applyLayout(name) {
     const L = LAYOUTS[name];
     keyFor = { ' ': K.space };
+    letterKeys.forEach((ks, ri) => ks.forEach((k, i) => k.classList.toggle('off', i >= L.rows[ri].length)));
+    kbEl.classList.toggle('k12', L.rows[0].length > 10);
     L.rows.forEach((row, ri) => row.forEach((c, i) => {
       const k = letterKeys[ri][i];
       label(k, shown(c));
@@ -1456,6 +1509,8 @@
   async function setLayout(name) {
     if (name === layout) return;
     const flipping = LAYOUTS[name].rows !== LAYOUTS[layout].rows;
+    // A layout with other key counts appears at once (keys can't flip into a different row).
+    if (LAYOUTS[name].rows.some((r, i) => r.length !== LAYOUTS[layout].rows[i].length)) { applyLayout(name); await wait(150); return; }
     const ks = flipping ? letterKeys.flat() : [];
     [...ks, K.space].forEach(k => k.classList.add('flip'));
     await wait(170);
@@ -1638,6 +1693,46 @@
       },
     },
     {
+      tab: 'On-device AI', ic: 'auto_awesome', t: 'On-device AI predictions', s: 'A small neural model reads your whole sentence, on your phone only', isNew: true,
+      async run() {
+        await setLayout('en'); setText(''); focus(true); bar('tools');
+        const strip = $('strip').children;
+        await tap(fieldEl);
+        setShift(true); await wait(300);
+        await tap(keyFor.i, { fast: true, pop: 'I' }); insert('I'); setShift(false);
+        await tap(K.space, { fast: true }); insert(' ');
+        bar('strip', ['want', 'think', 'have']); hint(strip[0], 'next word from the sentence', 1300, -6);
+        await wait(900);
+        await tap(strip[0]); insert('want '); bar('strip', ['to', 'you', 'a']);
+        await wait(450);
+        await tap(strip[0]); insert('to '); bar('strip', ['go', 'see', 'talk']);
+        await wait(600);
+        sub('Autocorrect picks the word that fits the sentence');
+        const guess = { t: ['to', 'the', 'take'], ta: ['take', 'talk', 'tell'], tak: ['take', 'taken', 'takes'] };
+        await typeKeys([...'takl'], () => { const w = lastWord(); bar('strip', w === 'takl' ? ['“takl”', 'talk', 'tail'] : [w, ...(guess[w] || [w, ''])], w === 'takl'); });
+        await wait(500);
+        await tap(K.space, { fast: true });
+        setText(F.t.replace(/takl$/, 'talk ')); flash(F.t.length - 5, F.t.length - 1, 900);
+        hint(strip[1], 'talk, not tail: it fits "I want to…"', 1700, -6);
+        bar('strip', ['to', 'about', 'with']);
+        await wait(1500);
+        await tap(strip[0]); insert('to '); bar('strip', ['you', 'him', 'her']);
+        await wait(450);
+        await tap(strip[0]); insert('you'); bar('tools');
+        await wait(400);
+        await tap($('send')); addMsg(F.t.trim()); setText('');
+        await wait(700);
+        sub('Emoji by meaning: the whole sentence counts, not one keyword');
+        await typeKeys([...'so tired'], () => { const w = lastWord(); bar('strip', [w, w.startsWith('t') ? 'tired' : 'so', w.startsWith('t') ? 'today' : 'sorry']); });
+        bar('strip', ['tired', 'tiring', '😴']); hint(strip[2], 'emoji that fits', 1400, -6);
+        await wait(1200);
+        await tap(strip[2]); insert(' 😴');
+        await wait(400);
+        await tap($('send')); addMsg(F.t.trim()); setText('');
+        await wait(1400);
+      },
+    },
+    {
       tab: 'অভ্র', ic: 'অ', t: 'অভ্র phonetic', s: 'Type how it sounds: ami → আমি',
       async run() {
         await setLayout('avro'); setText(''); focus(true);
@@ -1678,6 +1773,45 @@
             insert(st.c[0]);
           }
           strip();
+          await wait(40);
+        }
+        await wait(400);
+        await tap($('send')); addMsg(F.t.trim()); setText('');
+        await wait(1400);
+      },
+    },
+    {
+      tab: 'প্রভাত', ic: 'প্র', t: 'প্রভাত (Probhat) layout', s: 'Letters where a computer has them; hold a key for the letter in its corner', isNew: true,
+      async run() {
+        await setLayout('probhat'); setText(''); focus(true); bar('tools');
+        await tap(fieldEl);
+        const words = ['আমি', 'আমার', 'আমরা', 'ভাত', 'ভালো', 'ভাই', 'খাই', 'খাবো', 'খাবার'];
+        const next = { 'আমি': ['ভাত', 'তোমাকে', 'কি'], 'ভাত': ['খাই', 'খাবো', 'খেয়েছি'] };
+        const strip = () => {
+          const w = lastWord();
+          if (!w) {
+            const prev = F.t.trim().split(' ').pop();
+            if (next[prev]) bar('strip', next[prev]); else bar('tools');
+            return;
+          }
+          const more = words.filter(x => x.startsWith(w) && x !== w).slice(0, 2);
+          bar('strip', [w, more[0] || w, more[1] || '']);
+        };
+        const seq = [
+          'আ', 'ম', 'ি', ' ',
+          { h: 'ব', c: ['ভ'], note: 'hold ব for ভ' }, 'া', 'ত', ' ',
+          { h: 'ক', c: ['খ'] }, 'া', { h: 'ি', c: ['ই', '৮'], note: 'hold ি for ই' }, ' ',
+        ];
+        for (const st of seq) {
+          if (typeof st === 'string') {
+            await tap(keyFor[st], { fast: true, pop: st === ' ' ? null : shown(st) });
+            insert(st);
+          } else {
+            await hold(keyFor[st.h], st.c, st.note);
+            insert(st.c[0]);
+          }
+          strip();
+          if (st === ' ' && F.t.trim() === 'আমি') { hint($('strip').children[0], 'বাংলা next words', 1200, -6); await wait(700); }
           await wait(40);
         }
         await wait(400);
@@ -1728,7 +1862,7 @@
       },
     },
     {
-      tab: 'Language switch', ic: 'language', t: 'One-tap language switch', s: 'English ⇄ বাংলা (অভ্র) ⇄ বাংলা (জাতীয়)',
+      tab: 'Language switch', ic: 'language', t: 'One-tap language switch', s: 'English ⇄ অভ্র ⇄ জাতীয় ⇄ প্রভাত',
       async run() {
         await setLayout('en'); setText(''); focus(true); bar('tools');
         await wait(300);
@@ -1739,6 +1873,8 @@
         await typeKeys(['ন', 'ত', 'ু', 'ন', ' ', 'ক', 'া', 'জ'], () => bar('strip', [lastWord(), lastWord() === 'নতুন' ? 'নতুন' : (lastWord().startsWith('কা') ? 'কাজ' : lastWord()), '']));
         bar('tools');
         await wait(900);
+        await tap($('lang')); await setLayout('probhat'); hint($('lang'), 'প্রভাত', 900, -8);
+        await wait(1000);
         await tap($('lang')); await setLayout('en'); hint($('lang'), 'EN', 900, -8);
         await wait(1200);
       },
@@ -1900,12 +2036,21 @@
   }
 
   // ---- player
-  const tabs = $('tabs');
+  // Each scene has a button under the phone (narrow screens) and one beside it (wide screens):
+  // the first half on the left, the rest on the right.
+  const tabs = $('tabs'), half = Math.ceil(SCENES.length / 2);
   SCENES.forEach((sc, i) => {
     const b = document.createElement('button');
-    b.type = 'button'; b.textContent = sc.tab; b.setAttribute('aria-pressed', 'false');
+    b.type = 'button'; b.textContent = sc.tab; b.setAttribute('aria-pressed', 'false'); b.dataset.scene = i;
+    if (sc.isNew) b.classList.add('new');
     b.addEventListener('click', () => play(i));
     tabs.appendChild(b);
+    const s = document.createElement('button');
+    s.type = 'button'; s.setAttribute('aria-pressed', 'false'); s.dataset.scene = i;
+    if (sc.isNew) s.classList.add('new');
+    s.innerHTML = `<span class="tic">${ICON[sc.ic] ? ic(sc.ic, 17) : esc(sc.ic)}</span><span>${esc(sc.tab)}</span>`;
+    s.addEventListener('click', () => play(i));
+    $(i < half ? 'tabsL' : 'tabsR').appendChild(s);
   });
   let current = 0, visible = true;
   function tidy() {
@@ -1923,7 +2068,7 @@
     try {
       for (;;) {
         const sc = SCENES[current];
-        [...tabs.children].forEach((b, j) => b.setAttribute('aria-pressed', String(j === current)));
+        document.querySelectorAll('[data-scene]').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.scene === current)));
         // Keep the playing scene's tab in view when the tabs scroll sideways (phones).
         const on = tabs.children[current];
         if (tabs.scrollWidth > tabs.clientWidth) tabs.scrollTo({ left: on.offsetLeft - (tabs.clientWidth - on.offsetWidth) / 2, behavior: 'smooth' });
@@ -1963,7 +2108,7 @@
     el.innerHTML = `<div class="mlabel">${esc(d.label)}</div>
       <div class="mfield">${esc(d.text)}${d.comp ? `<span class="comp">${esc(d.comp)}</span>` : ''}<span class="caret"></span></div>
       <div class="tb"><div class="tb-lead">${ic('grid_view', 19)}</div><div class="tb-mid"><div class="tb-layer strip"><span>${a}</span><b>${b}</b><span>${c}</span></div></div><div class="lang">${ic('language', 14)}<span>${L.pill}</span></div></div>
-      <div class="kb">${keyRows(d.layout)}</div>`;
+      <div class="kb${L.rows[0].length > 10 ? ' k12' : ''}">${keyRows(d.layout)}</div>`;
   });
   // Colours from theme-engine KeyboardTheme. Material You follows the wallpaper; a green one is shown.
   const THEMES = [{"n":"Material You","bg":"#e9efdc","k":"#fbfdf5","f":"#d6e0c2","t":"#1a1c16","h":"#6b7560","a":"#4c662b","o":"#ffffff","b":"transparent","r":12},{"n":"Light","bg":"#e8ebef","k":"#ffffff","f":"#d0d5dd","t":"#1b1d21","h":"#7b818b","a":"#0b57d0","o":"#ffffff","b":"transparent","r":8},{"n":"Cloud","bg":"#f2f4f8","k":"#ffffff","f":"#e6eaf1","t":"#1f2430","h":"#8a93a6","a":"#5b6cf0","o":"#ffffff","b":"transparent","r":16},{"n":"Peach","bg":"#fbe9e0","k":"#ffffff","f":"#f5d9cc","t":"#3b2620","h":"#a07a6c","a":"#c8553d","o":"#ffffff","b":"transparent","r":14},{"n":"Sky","bg":"linear-gradient(160deg, #e3f2fd, #d3e6fa)","k":"#ffffff","f":"#cfe3f7","t":"#13263a","h":"#5f7a94","a":"#2f6fb5","o":"#ffffff","b":"transparent","r":14},{"n":"Pistachio","bg":"#eaf4dc","k":"#fbfef6","f":"#dcebc8","t":"#1f3311","h":"#6b8656","a":"#4c7a26","o":"#ffffff","b":"transparent","r":16},{"n":"Sakura","bg":"linear-gradient(160deg, #fce4ec, #f6cfdc)","k":"#ffffff","f":"#f7d3df","t":"#3d1f2b","h":"#9c6b7d","a":"#c93d67","o":"#ffffff","b":"transparent","r":14},{"n":"Lemonade","bg":"linear-gradient(160deg, #fff59d, #e6f59a)","k":"#fffde7","f":"#f7ee8a","t":"#2f2a05","h":"#857a20","a":"#5e8c12","o":"#ffffff","b":"transparent","r":16},{"n":"Olive night","bg":"#1b1e16","k":"#2b3024","f":"#23271d","t":"#eef0e4","h":"#a5ad8e","a":"#b5c94a","o":"#1f2608","b":"transparent","r":12},{"n":"Misty blue","bg":"linear-gradient(160deg, #1c2230, #232b3c)","k":"#2a3344","f":"#232a39","t":"#e4eaf5","h":"#98a6bf","a":"#9bb8e8","o":"#14223a","b":"transparent","r":12},{"n":"Moonlight","bg":"linear-gradient(160deg, #161a2b, #252b45)","k":"#ffffff1f","f":"#ffffff12","t":"#f0f2fa","h":"#b4bad6","a":"#c9d3ff","o":"#1a2048","b":"#ffffff1a","r":14},{"n":"Arctic night","bg":"#182327","k":"#24343a","f":"#1e2b30","t":"#e2f1f3","h":"#93b2b8","a":"#8fd9d9","o":"#0d2e30","b":"transparent","r":12},{"n":"Sage night","bg":"#1c2421","k":"#2a3531","f":"#232c29","t":"#e5efea","h":"#9db2a8","a":"#9fd3be","o":"#12302a","b":"transparent","r":12},{"n":"Aurora","bg":"linear-gradient(160deg, #0f2027, #1f3f47)","k":"#ffffff26","f":"#ffffff14","t":"#ffffff","h":"#b5e3d8","a":"#4fe3b5","o":"#07261e","b":"#ffffff2e","r":12},{"n":"Cosmic","bg":"linear-gradient(160deg, #0d0b26, #2a1450)","k":"#ffffff29","f":"#ffffff14","t":"#ffffff","h":"#c7bdf2","a":"#9d7bff","o":"#14073a","b":"#ffffff24","r":14},{"n":"Sunset","bg":"linear-gradient(160deg, #7b2d8e, #b83b6b)","k":"#ffffff33","f":"#00000022","t":"#ffffff","h":"#ffe3ee","a":"#ffd166","o":"#4a1a55","b":"transparent","r":12},{"n":"Grape","bg":"linear-gradient(160deg, #2d0f4a, #4a1673)","k":"#4b2470","f":"#3b1a5b","t":"#f6edff","h":"#c9a8ec","a":"#ffc94d","o":"#3a2000","b":"transparent","r":14},{"n":"Emerald","bg":"#04342a","k":"#0b5244","f":"#074437","t":"#e6fff7","h":"#88d9c0","a":"#2ee6a8","o":"#00281c","b":"transparent","r":12},{"n":"Frost","bg":"#2e3440","k":"#3b4252","f":"#343a47","t":"#eceff4","h":"#a3abba","a":"#88c0d0","o":"#2e3440","b":"transparent","r":10},{"n":"Neon","bg":"#050508","k":"#0d0d14","f":"#08080d","t":"#e9fbff","h":"#6fe9ff","a":"#00e5ff","o":"#001a1f","b":"#00a8c2","r":10}];
@@ -1975,7 +2120,7 @@
   applyLayout('en'); setText(''); render();
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
     applyLayout('avro'); setText('আমি ভালো আছি'); bar('strip', ['আছে', 'আছি', 'achhi']);
-    tabs.hidden = true;
+    tabs.hidden = true; $('tabsL').hidden = true; $('tabsR').hidden = true;
   } else {
     // Only play while the phone is on screen.
     new IntersectionObserver(([e]) => {
