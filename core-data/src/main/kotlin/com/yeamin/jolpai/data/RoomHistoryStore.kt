@@ -5,6 +5,7 @@ import com.yeamin.jolpai.suggest.HistorySnapshot
 import com.yeamin.jolpai.suggest.HistoryStore
 import com.yeamin.jolpai.suggest.Language
 import com.yeamin.jolpai.suggest.LearnedBigram
+import com.yeamin.jolpai.suggest.LearnedTrigram
 import com.yeamin.jolpai.suggest.LearnedWord
 import com.yeamin.jolpai.suggest.PersonalWord
 import dagger.Module
@@ -45,13 +46,33 @@ class RoomHistoryStore @Inject constructor(private val dao: HistoryDao) : Histor
     }
 
     override fun saveWord(word: LearnedWord) = enqueue {
-        dao.upsertWord(LearnedWordEntity(word.language.storageKey, word.word.lowercase(), word.word, word.count, word.lastUsed))
+        dao.upsertWord(LearnedWordEntity(word.language.storageKey, word.word.lowercase(), word.word, word.count, word.lastUsed, word.weight))
     }
 
     override fun saveBigram(bigram: LearnedBigram) = enqueue {
         dao.upsertBigram(
-            LearnedBigramEntity(bigram.language.storageKey, bigram.previous.lowercase(), bigram.word.lowercase(), bigram.word, bigram.count),
+            LearnedBigramEntity(
+                bigram.language.storageKey, bigram.previous.lowercase(), bigram.word.lowercase(), bigram.word, bigram.count,
+                bigram.lastUsed, bigram.weight,
+            ),
         )
+    }
+
+    override fun saveTrigram(trigram: LearnedTrigram) = enqueue {
+        dao.upsertTrigram(
+            LearnedTrigramEntity(
+                trigram.language.storageKey, trigram.previous2.lowercase(), trigram.previous.lowercase(), trigram.word.lowercase(),
+                trigram.word, trigram.count, trigram.lastUsed, trigram.weight,
+            ),
+        )
+    }
+
+    override fun deleteBigram(language: Language, previous: String, word: String) = enqueue {
+        dao.deleteBigram(language.storageKey, previous.lowercase(), word.lowercase())
+    }
+
+    override fun deleteTrigram(language: Language, previous2: String, previous: String, word: String) = enqueue {
+        dao.deleteTrigram(language.storageKey, previous2.lowercase(), previous.lowercase(), word.lowercase())
     }
 
     override fun saveSelection(roman: String, bangla: String) = enqueue {
@@ -70,21 +91,26 @@ class RoomHistoryStore @Inject constructor(private val dao: HistoryDao) : Histor
     override fun deleteLearned(language: Language, word: String) = enqueue {
         dao.deleteWord(language.storageKey, word.lowercase())
         dao.deleteBigramsTo(language.storageKey, word.lowercase())
+        dao.deleteTrigramsTo(language.storageKey, word.lowercase())
     }
 
     override fun clearLearned() = enqueue {
         dao.clearWords()
         dao.clearBigrams()
+        dao.clearTrigrams()
         dao.clearSelections()
     }
 
     /** Reads everything stored, for [com.yeamin.jolpai.suggest.UserHistory.load]. Call off the main thread. */
     suspend fun loadSnapshot(): HistorySnapshot = HistorySnapshot(
         words = dao.allWords().mapNotNull { e ->
-            Language.fromStorageKey(e.language)?.let { LearnedWord(it, e.word, e.count, e.lastUsed) }
+            Language.fromStorageKey(e.language)?.let { LearnedWord(it, e.word, e.count, e.lastUsed, e.weight) }
         },
         bigrams = dao.allBigrams().mapNotNull { e ->
-            Language.fromStorageKey(e.language)?.let { LearnedBigram(it, e.previous, e.word, e.count) }
+            Language.fromStorageKey(e.language)?.let { LearnedBigram(it, e.previous, e.word, e.count, e.lastUsed, e.weight) }
+        },
+        trigrams = dao.allTrigrams().mapNotNull { e ->
+            Language.fromStorageKey(e.language)?.let { LearnedTrigram(it, e.previous2, e.previous, e.word, e.count, e.lastUsed, e.weight) }
         },
         selections = dao.allSelections().associate { it.roman to it.bangla },
         personal = dao.allPersonal().mapNotNull { e ->

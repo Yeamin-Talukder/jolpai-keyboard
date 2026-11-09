@@ -137,6 +137,26 @@ fun ThemesScreen(
             }
         }
 
+        SettingsGroup("Festivals") {
+            val today = remember { com.yeamin.jolpai.theme.Festivals.on(java.time.LocalDate.now()) }
+            SettingsSwitch(
+                "Festival themes on festival days",
+                (today?.let { "Today is ${it.name}. " } ?: "") +
+                    "পহেলা বৈশাখ, একুশে ফেব্রুয়ারি, স্বাধীনতা ও বিজয় দিবস, রমজান and both Eids get their own theme for the day; then yours comes back.",
+                checked = settings.festivalThemes,
+                onChange = vm::setFestivalThemes,
+                icon = UiR.drawable.ms_auto_awesome,
+            )
+            BuiltInThemes.festivals.forEach { t ->
+                ThemeRow(
+                    t.name, null, t, settings.themeId == t.id,
+                    actions = {
+                        IconButton(onClick = { vm.duplicateTheme(t, onEdit) }) { MsIcon(UiR.drawable.ms_edit, "Customise ${t.name}") }
+                    },
+                ) { vm.selectTheme(t.id) }
+            }
+        }
+
         SettingsGroup("Yours") {
             if (customThemes.isEmpty()) {
                 SettingsNote("Tap the pencil on any theme to make your own copy.", Modifier.padding(vertical = 8.dp))

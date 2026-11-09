@@ -18,6 +18,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 /**
@@ -142,6 +143,40 @@ class ClipboardRepository @Inject constructor(
 
     suspend fun deleteSnippet(snippet: SnippetEntity) = withContext(Dispatchers.IO) { snippetDao.delete(snippet.id) }
 
+    /**
+     * Adds ready-made snippets, skipping any whose text is already saved. A shortcut that another
+     * snippet already uses is left off (the text is still added). Returns how many were added.
+     */
+    suspend fun addSnippets(items: List<PackSnippet>): Int = withContext(Dispatchers.IO) {
+        packLock.withLock {
+            val existing = snippetDao.all()
+            val texts = existing.map { it.text.trim() }.toMutableSet()
+            val shortcuts = existing.mapNotNull { it.shortcut }.toMutableSet()
+            var added = 0
+            val now = System.currentTimeMillis()
+            items.forEach { p ->
+                if (!texts.add(p.text.trim())) return@forEach
+                val shortcut = p.shortcut.takeIf { it.isNotBlank() && shortcuts.add(it) }
+                snippetDao.insert(SnippetEntity(title = p.title, shortcut = shortcut, text = p.text, createdAt = now, category = p.category.storageKey))
+                added++
+            }
+            added
+        }
+    }
+
+    /**
+     * Adds every [SnippetPack] once per install (also for people updating from a version without
+     * them). Called when the app and when the keyboard start; a flag keeps it to one time.
+     */
+    suspend fun addPacksOnce() = withContext(Dispatchers.IO) {
+        val prefs = context.getSharedPreferences(PACK_PREFS, Context.MODE_PRIVATE)
+        if (prefs.getInt(PACK_VERSION_KEY, 0) >= PACK_VERSION) return@withContext
+        addSnippets(SnippetPack.entries.flatMap { it.items })
+        prefs.edit().putInt(PACK_VERSION_KEY, PACK_VERSION).apply()
+    }
+
+    private val packLock = kotlinx.coroutines.sync.Mutex()
+
     private suspend fun remove(clips: List<ClipEntity>) {
         if (clips.isEmpty()) return
         clips.forEach { c -> c.imagePath?.let { File(it).delete() } }
@@ -149,6 +184,10 @@ class ClipboardRepository @Inject constructor(
     }
 
     companion object {
+        private const val PACK_PREFS = "snippet_packs"
+        private const val PACK_VERSION_KEY = "added_version"
+        /** Raise when packs gain items that existing installs should get too. */
+        private const val PACK_VERSION = 1
         const val MAX_TEXT_CHARS = 50_000
         private const val SHARE_DIR = "clip-share"
         const val CODE_LIFETIME_MS = 60_000L

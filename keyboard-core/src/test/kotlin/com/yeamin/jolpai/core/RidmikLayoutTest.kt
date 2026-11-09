@@ -127,9 +127,9 @@ class RidmikLayoutTest {
 
     @Test fun `hold time for hidden characters follows the setting, within limits`() {
         val controller = KeyboardController(FakeEditor(), clock = { 0L }).apply { onStartInput(FieldInfo.DEFAULT, restarting = false) }
-        assertEquals(350L, controller.state.value.longPressMs)
-        controller.updateSettings(KeyboardSettings(longPressMs = 200))
-        assertEquals(200L, controller.state.value.longPressMs)
+        assertEquals(200L, controller.state.value.longPressMs) // the default: quick
+        controller.updateSettings(KeyboardSettings(longPressMs = 500))
+        assertEquals(500L, controller.state.value.longPressMs)
         assertTrue(com.yeamin.jolpai.core.settings.LONG_PRESS_RANGE.first >= 100)
     }
 }

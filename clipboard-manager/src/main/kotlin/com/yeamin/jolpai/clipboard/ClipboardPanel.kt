@@ -78,6 +78,9 @@ data class PanelColors(
 interface ClipboardPanelActions {
     fun pasteText(text: String)
 
+    /** Inserts a snippet, filling in variables such as {date} and {bangla_date}. */
+    fun insertSnippet(text: String) = pasteText(text)
+
     /** Inserts an image clip; returns false if the app being typed in doesn't accept images. */
     fun pasteImage(clip: ClipEntity): Boolean
 
@@ -203,7 +206,7 @@ fun ClipboardPanel(
                             s.shortcut?.contains(query, true) == true || s.kind.label.contains(query, true)
                         )
                 }
-                SnippetList(matching, colors) { actions.pasteText(it.text) }
+                SnippetList(matching, colors) { actions.insertSnippet(it.text) }
                 return@Box
             }
             val shown = clips.filter { c ->

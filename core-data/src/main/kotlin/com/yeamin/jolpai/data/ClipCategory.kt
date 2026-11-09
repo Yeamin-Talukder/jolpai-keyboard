@@ -70,6 +70,7 @@ enum class ClipCategory(val label: String) {
 /** What a snippet is for; chosen when saving (suggested from the text), used to group and filter. */
 enum class SnippetCategory(val storageKey: String, val label: String) {
     MESSAGE("message", "Messages"),
+    ISLAMIC("islamic", "Islamic"),
     REPLY("reply", "Quick replies"),
     SIGNATURE("signature", "Signatures"),
     ADDRESS("address", "Addresses"),
@@ -82,6 +83,14 @@ enum class SnippetCategory(val storageKey: String, val label: String) {
     companion object {
         fun fromStorageKey(key: String?): SnippetCategory = entries.firstOrNull { it.storageKey == key } ?: OTHER
 
+        /** Greetings and phrases that make a snippet "Islamic" (Bangla and English spellings). */
+        private val ISLAMIC_WORDS = listOf(
+            "আসসালামু", "আলাইকুম", "আলহামদুলিল্লাহ", "ইনশাআল্লাহ", "মাশাআল্লাহ", "সুবহানাল্লাহ", "বিসমিল্লাহ",
+            "আস্তাগফিরুল্লাহ", "জাযাকাল্লাহ", "ইন্না লিল্লাহ", "ঈদ মোবারক", "রমজান মোবারক", "জুমা মোবারক",
+            "assalam", "alaikum", "alhamdulillah", "inshaallah", "insha allah", "mashaallah", "masha allah",
+            "subhanallah", "bismillah", "astaghfirullah", "jazakallah", "eid mubarak", "ramadan mubarak", "jumma mubarak",
+        )
+
         /** A sensible category for new snippet text. */
         fun suggest(text: String): SnippetCategory {
             val t = text.trim()
@@ -91,6 +100,7 @@ enum class SnippetCategory(val storageKey: String, val label: String) {
                 ClipCategory.ADDRESS -> ADDRESS
                 ClipCategory.CODE -> CODE
                 else -> when {
+                    ISLAMIC_WORDS.any { t.contains(it, ignoreCase = true) } -> ISLAMIC
                     t.lines().size >= 2 && (t.contains('@') || t.count { it.isDigit() } >= 7) && t.length < 400 -> SIGNATURE
                     t.length <= 60 && t.lines().size == 1 -> REPLY
                     else -> MESSAGE

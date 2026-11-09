@@ -471,7 +471,52 @@ object BuiltInThemes {
         TWILIGHT, COSMIC, AURORA, SUNSET, GLASS, NEON, HIGH_CONTRAST,
     )
 
-    fun byId(id: String): KeyboardTheme? = all.firstOrNull { it.id == id }
+    // ---------------------------------------------------------------- festivals (2026-11-08)
+    // Shown on their own in Themes, and used for the day when "Festival themes" is on (see [Festivals]).
+
+    /** পহেলা বৈশাখ: the red and white of the new year. */
+    val BOISHAKH = KeyboardTheme(
+        id = "builtin:festival-boishakh", name = "পহেলা বৈশাখ", dark = false,
+        background = c(0xFFFFF6EE), backgroundEnd = c(0xFFFFE3D8), key = c(0xFFFFFFFF), keyPressed = c(0xFFF8CFC6),
+        functionKey = c(0xFFF7D8CE), text = c(0xFF3A0F0A), hint = c(0xFFA8473B), accent = c(0xFFD7261E), onAccent = c(0xFFFFFFFF),
+        keyRadiusDp = 12f,
+    )
+
+    /** ঈদ মোবারক: deep green and gold. */
+    val EID = KeyboardTheme(
+        id = "builtin:festival-eid", name = "ঈদ মোবারক", dark = true,
+        background = c(0xFF0B3D2E), backgroundEnd = c(0xFF145A43), key = c(0xFF1B5A45), keyPressed = c(0xFF2A7259),
+        functionKey = c(0xFF123F31), text = c(0xFFF7F0DA), hint = c(0xFFD9BC63), accent = c(0xFFD4AF37), onAccent = c(0xFF1F1600),
+        shadow = false, keyRadiusDp = 12f,
+    )
+
+    /** একুশে ফেব্রুয়ারি (শহীদ দিবস): solemn charcoal with the red of the Shaheed Minar. */
+    val EKUSHEY = KeyboardTheme(
+        id = "builtin:festival-ekushey", name = "একুশে ফেব্রুয়ারি", dark = true,
+        background = c(0xFF121212), backgroundEnd = c(0xFF1F1F1F), key = c(0xFF282828), keyPressed = c(0xFF3A3A3A),
+        functionKey = c(0xFF1B1B1B), text = c(0xFFF3F3F3), hint = c(0xFFBDBDBD), accent = c(0xFFC62828), onAccent = c(0xFFFFFFFF),
+        shadow = false, keyRadiusDp = 10f,
+    )
+
+    /** বিজয় দিবস and স্বাধীনতা দিবস: the green and red of the flag. */
+    val BIJOY = KeyboardTheme(
+        id = "builtin:festival-bijoy", name = "বিজয় দিবস", dark = true,
+        background = c(0xFF006A4E), backgroundEnd = c(0xFF00553F), key = c(0xFF0F7B5D), keyPressed = c(0xFF1B9572),
+        functionKey = c(0xFF005A42), text = c(0xFFFFFFFF), hint = c(0xFFCDEBDC), accent = c(0xFFF42A41), onAccent = c(0xFFFFFFFF),
+        shadow = false, keyRadiusDp = 12f,
+    )
+
+    /** রমজান: night blue and lantern gold. */
+    val RAMADAN = KeyboardTheme(
+        id = "builtin:festival-ramadan", name = "রমজান", dark = true,
+        background = c(0xFF0E1630), backgroundEnd = c(0xFF1B2754), key = c(0xFF202C57), keyPressed = c(0xFF2D3C72),
+        functionKey = c(0xFF151F43), text = c(0xFFF5EFDD), hint = c(0xFFCDB66E), accent = c(0xFFE3C565), onAccent = c(0xFF1C1500),
+        shadow = false, keyRadiusDp = 12f,
+    )
+
+    val festivals: List<KeyboardTheme> = listOf(BOISHAKH, EKUSHEY, BIJOY, RAMADAN, EID)
+
+    fun byId(id: String): KeyboardTheme? = all.firstOrNull { it.id == id } ?: festivals.firstOrNull { it.id == id }
 
     /**
      * What the "System" theme (the default on a fresh install) draws: Material You in the phone's

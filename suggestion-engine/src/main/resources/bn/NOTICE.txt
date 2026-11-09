@@ -21,3 +21,30 @@ bangla-frequency.tsv
   shared under the same licence.
   Changes: য় ড় ঢ় written as single characters, only Bangla words kept, words seen fewer than
   3 times dropped, counts turned into a 1-255 weight by tools/prepare-bangla-frequency.pl.
+
+bangla-nextwords.tsv, bangla-trigrams.tsv
+  Next-word lists with a 1-255 weight: bangla-nextwords.tsv (word pairs) is counted from all
+  three sources below; bangla-trigrams.tsv (word triples) from Leipzig and Tatoeba only, not
+  from Wikipedia.
+  - Bangla Wikipedia, dump of 2026-11-01 (https://dumps.wikimedia.org/bnwiki/latest/
+    bnwiki-latest-pages-articles.xml.bz2, file dated 2026-11-01). Text by the Wikipedia
+    contributors, Creative Commons Attribution-ShareAlike 4.0 (CC BY-SA 4.0,
+    https://creativecommons.org/licenses/by-sa/4.0/).
+  - Leipzig Corpora Collection (https://wortschatz.uni-leipzig.de/en/download/ben):
+    ben-bd_web_2017_1M (Bengali web text from Bangladesh, 2017) and ben_newscrawl_2017_1M
+    (Bengali news, 2017), from https://downloads.wortschatz-leipzig.de/corpora/. "The text
+    corpora offered for download are made available under the Creative Commons licence CC BY"
+    (https://wortschatz.uni-leipzig.de/en/usage, checked 2026-11-09; links to CC BY 4.0,
+    https://creativecommons.org/licenses/by/4.0/). D. Goldhahn, T. Eckart,
+    U. Quasthoff: Building Large Monolingual Dictionaries at the Leipzig Corpora Collection:
+    From 100 to 200 Languages. LREC 2012.
+  - Tatoeba (https://tatoeba.org), Bengali sentences export of 2026-11-07
+    (https://downloads.tatoeba.org/exports/per_language/ben/ben_sentences.tsv.bz2).
+    Creative Commons Attribution 2.0 France (CC BY 2.0 FR,
+    https://creativecommons.org/licenses/by/2.0/fr/).
+  bangla-nextwords.tsv is shared under CC BY-SA 4.0 (it contains Wikipedia-derived data).
+  bangla-trigrams.tsv is shared under Creative Commons Attribution 4.0 (CC BY 4.0,
+  https://creativecommons.org/licenses/by/4.0/), with the attributions above.
+  Changes: wiki markup removed, য় ড় ঢ় written as single characters, ZWNJ/ZWJ removed, repeated
+  sentences dropped, only Bangla words kept, rare pairs and triples dropped, counts turned into
+  1-255 weights. tools/prepare-bangla-nextwords.pl rebuilds both files (commands in its header).

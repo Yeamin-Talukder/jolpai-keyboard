@@ -12,6 +12,9 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -23,7 +26,6 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yeamin.jolpai.clipboard.PanelColors
@@ -31,6 +33,7 @@ import com.yeamin.jolpai.core.model.DateTimeKind
 import com.yeamin.jolpai.core.model.EditCommand
 import com.yeamin.jolpai.core.model.KeyAction
 import com.yeamin.jolpai.core.model.Panel
+import com.yeamin.jolpai.core.tools.TextStyle
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -40,25 +43,29 @@ import kotlinx.coroutines.launch
  * Cursor keys and word keys repeat while held.
  */
 @Composable
-fun EditingPanel(selecting: Boolean, colors: PanelColors, onAction: (KeyAction) -> Unit) {
+fun EditingPanel(selecting: Boolean, textStyle: TextStyle?, colors: PanelColors, onAction: (KeyAction) -> Unit) {
     fun edit(c: EditCommand) = onAction(KeyAction.Edit(c))
     Column(
         Modifier
             .fillMaxSize()
             .background(colors.background)
+            .verticalScroll(rememberScrollState()) // only scrolls when the keyboard is very short
             .padding(6.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         PanelRow {
-            Tool(if (selecting) "◼ Selecting" else "◻ Select", colors, highlighted = selecting) { edit(EditCommand.TOGGLE_SELECT) }
-            Tool("Select all", colors) { edit(EditCommand.SELECT_ALL) }
-        }
-        PanelRow {
+            Tool(if (selecting) "◼ Select" else "◻ Select", colors, highlighted = selecting) { edit(EditCommand.TOGGLE_SELECT) }
+            Tool("All", colors) { edit(EditCommand.SELECT_ALL) }
             Tool("Copy", colors) { edit(EditCommand.COPY) }
             Tool("Cut", colors) { edit(EditCommand.CUT) }
             Tool("Paste", colors) { edit(EditCommand.PASTE) }
+        }
+        PanelRow {
             Tool("Undo", colors) { edit(EditCommand.UNDO) }
             Tool("Redo", colors) { edit(EditCommand.REDO) }
+            Tool("◀ word", colors, repeat = true) { edit(EditCommand.SELECT_WORD_LEFT) }
+            Tool("⌫ word", colors, repeat = true) { edit(EditCommand.DELETE_WORD) }
+            Tool("word ▶", colors, repeat = true) { edit(EditCommand.SELECT_WORD_RIGHT) }
         }
         PanelRow {
             Tool("⇤", colors, repeat = true) { edit(EditCommand.LINE_START) }
@@ -69,19 +76,42 @@ fun EditingPanel(selecting: Boolean, colors: PanelColors, onAction: (KeyAction) 
             Tool("⇥", colors, repeat = true) { edit(EditCommand.LINE_END) }
         }
         PanelRow {
-            Tool("◀ word", colors, repeat = true) { edit(EditCommand.SELECT_WORD_LEFT) }
-            Tool("⌫ word", colors, repeat = true) { edit(EditCommand.DELETE_WORD) }
-            Tool("word ▶", colors, repeat = true) { edit(EditCommand.SELECT_WORD_RIGHT) }
             Tool("📅 Date", colors) { onAction(KeyAction.InsertDateTime(DateTimeKind.DATE)) }
             Tool("🕑 Time", colors) { onAction(KeyAction.InsertDateTime(DateTimeKind.TIME)) }
+            Tool("🗓 বাংলা তারিখ", colors) { onAction(KeyAction.InsertDateTime(DateTimeKind.BANGLA_DATE)) }
         }
-        Text(
-            "Undo and redo work in apps that support Ctrl+Z.",
-            color = colors.hint,
-            fontSize = 11.sp,
-            modifier = Modifier.fillMaxWidth(),
-            textAlign = TextAlign.Center,
-        )
+        // Text styles: restyle the selection, or with nothing selected, type in that style.
+        Row(
+            Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            StyleChip("Aa Normal", textStyle == null, colors) { onAction(KeyAction.SetTextStyle(null)) }
+            TextStyle.entries.forEach { s ->
+                StyleChip(s.sample, textStyle == s, colors) { onAction(KeyAction.SetTextStyle(s)) }
+            }
+        }
+    }
+}
+
+/** A text-style choice, showing a sample of the style; highlighted while styled typing uses it. */
+@Composable
+private fun StyleChip(label: String, active: Boolean, colors: PanelColors, onClick: () -> Unit) {
+    Box(
+        Modifier
+            .clip(RoundedCornerShape(8.dp))
+            .background(if (active) colors.accent else colors.surface)
+            .semantics { role = Role.Button }
+            .pointerInput(Unit) {
+                awaitEachGesture {
+                    awaitFirstDown()
+                    waitForUpOrCancellation()?.let { onClick() }
+                }
+            }
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(label, color = if (active) colors.onAccent else colors.text, fontSize = 15.sp, maxLines = 1)
     }
 }
 
@@ -133,9 +163,9 @@ private fun RowScope.Tool(
                     repeater?.cancel()
                 }
             }
-            .padding(vertical = 12.dp),
+            .padding(vertical = 10.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Text(label, color = if (highlighted) colors.onAccent else colors.text, fontSize = 14.sp, maxLines = 1)
+        Text(label, color = if (highlighted) colors.onAccent else colors.text, fontSize = 13.sp, maxLines = 1)
     }
 }

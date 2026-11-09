@@ -39,7 +39,7 @@ enum class ClipRetention(val storageKey: String, val millis: Long?, val label: S
     FOREVER("forever", null, "Until I delete them");
 
     companion object {
-        val DEFAULT = DAY
+        val DEFAULT = WEEK
         fun fromStorageKey(key: String?): ClipRetention = entries.firstOrNull { it.storageKey == key } ?: DEFAULT
     }
 }

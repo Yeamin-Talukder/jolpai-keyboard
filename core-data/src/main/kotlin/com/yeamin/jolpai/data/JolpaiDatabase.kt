@@ -1,6 +1,7 @@
 package com.yeamin.jolpai.data
 
 import android.content.Context
+import androidx.room.ColumnInfo
 import androidx.room.Dao
 import androidx.room.Database
 import androidx.room.Entity
@@ -11,9 +12,14 @@ import java.io.File
 import net.zetetic.database.sqlcipher.SQLiteDatabase
 import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
 import androidx.room.Upsert
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import kotlinx.coroutines.flow.Flow
 
-/** A word the user has typed. [key] is the lower-cased word; [word] the latest spelling. */
+/**
+ * A word the user has typed. [key] is the lower-cased word; [word] the latest spelling.
+ * [weight] is the use count fading over time (-1: not stored yet, use [count]).
+ */
 @Entity(tableName = "learned_word", primaryKeys = ["language", "key"])
 data class LearnedWordEntity(
     val language: String,
@@ -21,9 +27,10 @@ data class LearnedWordEntity(
     val word: String,
     val count: Int,
     val lastUsed: Long,
+    @ColumnInfo(defaultValue = "-1") val weight: Float = -1f,
 )
 
-/** [word] was typed after [previous] (lower-cased) [count] times. */
+/** [word] was typed after [previous] (lower-cased) [count] times; [weight] fades like a word's. */
 @Entity(tableName = "learned_bigram", primaryKeys = ["language", "previous", "key"])
 data class LearnedBigramEntity(
     val language: String,
@@ -31,6 +38,21 @@ data class LearnedBigramEntity(
     val key: String,
     val word: String,
     val count: Int,
+    @ColumnInfo(defaultValue = "0") val lastUsed: Long = 0,
+    @ColumnInfo(defaultValue = "-1") val weight: Float = -1f,
+)
+
+/** [word] was typed after [previous2] [previous] (both lower-cased). */
+@Entity(tableName = "learned_trigram", primaryKeys = ["language", "previous2", "previous", "key"])
+data class LearnedTrigramEntity(
+    val language: String,
+    val previous2: String,
+    val previous: String,
+    val key: String,
+    val word: String,
+    val count: Int,
+    val lastUsed: Long,
+    val weight: Float,
 )
 
 /** Avro: the Bangla candidate the user picked for a Roman word. */
@@ -45,6 +67,7 @@ data class PersonalWordEntity(val language: String, val key: String, val word: S
 interface HistoryDao {
     @Upsert suspend fun upsertWord(e: LearnedWordEntity)
     @Upsert suspend fun upsertBigram(e: LearnedBigramEntity)
+    @Upsert suspend fun upsertTrigram(e: LearnedTrigramEntity)
     @Upsert suspend fun upsertSelection(e: AvroSelectionEntity)
     @Upsert suspend fun upsertPersonal(e: PersonalWordEntity)
 
@@ -57,12 +80,23 @@ interface HistoryDao {
     @Query("DELETE FROM learned_bigram WHERE language = :language AND `key` = :key")
     suspend fun deleteBigramsTo(language: String, key: String)
 
+    @Query("DELETE FROM learned_trigram WHERE language = :language AND `key` = :key")
+    suspend fun deleteTrigramsTo(language: String, key: String)
+
+    @Query("DELETE FROM learned_bigram WHERE language = :language AND previous = :previous AND `key` = :key")
+    suspend fun deleteBigram(language: String, previous: String, key: String)
+
+    @Query("DELETE FROM learned_trigram WHERE language = :language AND previous2 = :previous2 AND previous = :previous AND `key` = :key")
+    suspend fun deleteTrigram(language: String, previous2: String, previous: String, key: String)
+
     @Query("DELETE FROM learned_word") suspend fun clearWords()
     @Query("DELETE FROM learned_bigram") suspend fun clearBigrams()
+    @Query("DELETE FROM learned_trigram") suspend fun clearTrigrams()
     @Query("DELETE FROM avro_selection") suspend fun clearSelections()
 
     @Query("SELECT * FROM learned_word") suspend fun allWords(): List<LearnedWordEntity>
     @Query("SELECT * FROM learned_bigram") suspend fun allBigrams(): List<LearnedBigramEntity>
+    @Query("SELECT * FROM learned_trigram") suspend fun allTrigrams(): List<LearnedTrigramEntity>
     @Query("SELECT * FROM avro_selection") suspend fun allSelections(): List<AvroSelectionEntity>
     @Query("SELECT * FROM personal_word") suspend fun allPersonal(): List<PersonalWordEntity>
 
@@ -79,10 +113,10 @@ interface HistoryDao {
  */
 @Database(
     entities = [
-        LearnedWordEntity::class, LearnedBigramEntity::class, AvroSelectionEntity::class, PersonalWordEntity::class,
+        LearnedWordEntity::class, LearnedBigramEntity::class, LearnedTrigramEntity::class, AvroSelectionEntity::class, PersonalWordEntity::class,
         ClipEntity::class, SnippetEntity::class, EmojiUsageEntity::class, CustomThemeEntity::class,
     ],
-    version = 5,
+    version = 6,
     exportSchema = false,
 )
 abstract class JolpaiDatabase : RoomDatabase() {
@@ -106,7 +140,7 @@ abstract class JolpaiDatabase : RoomDatabase() {
             val passphrase = passphrase(context)
             return Room.databaseBuilder(context, JolpaiDatabase::class.java, NAME)
                 .openHelperFactory(SupportOpenHelperFactory(passphrase.toByteArray()))
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
                 .build()
         }
 
@@ -162,5 +196,19 @@ abstract class JolpaiDatabase : RoomDatabase() {
         private fun deleteDatabaseFiles(file: File) {
             listOf("", "-wal", "-shm", "-journal").forEach { File(file.path + it).delete() }
         }
+    }
+}
+
+/** Version 6: learned words and pairs fade over time (weight, and a time for pairs), and three-word sequences. */
+val MIGRATION_5_6 = object : Migration(5, 6) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE learned_word ADD COLUMN weight REAL NOT NULL DEFAULT -1")
+        db.execSQL("ALTER TABLE learned_bigram ADD COLUMN lastUsed INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("ALTER TABLE learned_bigram ADD COLUMN weight REAL NOT NULL DEFAULT -1")
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `learned_trigram` (`language` TEXT NOT NULL, `previous2` TEXT NOT NULL, " +
+                "`previous` TEXT NOT NULL, `key` TEXT NOT NULL, `word` TEXT NOT NULL, `count` INTEGER NOT NULL, " +
+                "`lastUsed` INTEGER NOT NULL, `weight` REAL NOT NULL, PRIMARY KEY(`language`, `previous2`, `previous`, `key`))",
+        )
     }
 }

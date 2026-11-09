@@ -177,7 +177,7 @@ class KeyboardContainer(
             val s = uiState.value ?: return@setContent
             when (s.panel) {
                 Panel.NONE, Panel.EMOJI, Panel.CLIPBOARD -> Unit // emoji and clipboard open above the toolbar
-                Panel.EDITING -> EditingPanel(s.selecting, panelColors, onAction)
+                Panel.EDITING -> EditingPanel(s.selecting, s.textStyle, panelColors, onAction)
                 else -> servicePanel(s.panel, panelColors, s)
             }
         }

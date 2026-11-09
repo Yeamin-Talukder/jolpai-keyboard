@@ -197,14 +197,14 @@ data class GestureConfig(
          * Comma/full stop long-presses are off too, as they would replace the punctuation menus.
          */
         val DEFAULT_BINDINGS: List<GestureBinding> = listOf(
-            GestureBinding(GestureZone.SPACE, GestureType.SWIPE_UP, GestureAction.EMOJI),
-            GestureBinding(GestureZone.SPACE, GestureType.SWIPE_DOWN, GestureAction.CLIPBOARD),
+            GestureBinding(GestureZone.SPACE, GestureType.SWIPE_UP, GestureAction.CLIPBOARD),
+            GestureBinding(GestureZone.SPACE, GestureType.SWIPE_DOWN, GestureAction.EMOJI),
             GestureBinding(GestureZone.SPACE, GestureType.SWIPE_LEFT, GestureAction.PREVIOUS_LANGUAGE, enabled = false),
             GestureBinding(GestureZone.SPACE, GestureType.SWIPE_RIGHT, GestureAction.NEXT_LANGUAGE, enabled = false),
             GestureBinding(GestureZone.COMMA, GestureType.LONG_PRESS, GestureAction.SETTINGS, enabled = false),
             GestureBinding(GestureZone.PERIOD, GestureType.LONG_PRESS, GestureAction.SYMBOLS, enabled = false),
-            GestureBinding(GestureZone.TOOLBAR, GestureType.SWIPE_LEFT, GestureAction.TRANSLATE),
-            GestureBinding(GestureZone.TOOLBAR, GestureType.SWIPE_RIGHT, GestureAction.AI_WRITING),
+            GestureBinding(GestureZone.TOOLBAR, GestureType.SWIPE_LEFT, GestureAction.UNDO),
+            GestureBinding(GestureZone.TOOLBAR, GestureType.SWIPE_RIGHT, GestureAction.REDO),
             GestureBinding(GestureZone.COMMA, GestureType.SWIPE_UP, GestureAction.INSERT_TEXT, enabled = false, text = "@gmail.com"),
             GestureBinding(GestureZone.COMMA, GestureType.SWIPE_DOWN, GestureAction.INSERT_TEXT, enabled = false, text = "https://"),
         )

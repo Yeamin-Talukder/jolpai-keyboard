@@ -48,6 +48,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.yeamin.jolpai.data.ClipEntity
 import com.yeamin.jolpai.clipboard.ClipImages
+import com.yeamin.jolpai.clipboard.SnippetPack
 import com.yeamin.jolpai.data.SnippetEntity
 import com.yeamin.jolpai.data.ClipCategory
 import com.yeamin.jolpai.data.SnippetCategory
@@ -216,7 +217,7 @@ private val TEMPLATES = listOf(
     SnippetTemplate("Address", SnippetCategory.ADDRESS, "Home address", "House 00, Road 00, Area, Dhaka 1200, Bangladesh", "@addr"),
     SnippetTemplate("Phone number", SnippetCategory.PHONE, "My number", "+880 1XXX-XXXXXX", "@ph"),
     SnippetTemplate("Quick reply", SnippetCategory.REPLY, "Busy", "I'm busy right now, I'll call you back soon.", "@busy"),
-    SnippetTemplate("Message", SnippetCategory.MESSAGE, "Greeting", "আসসালামু আলাইকুম, কেমন আছেন?", "@salam"),
+    SnippetTemplate("Message", SnippetCategory.MESSAGE, "Message", "কেমন আছেন? অনেক দিন কথা হয় না।", ""),
     SnippetTemplate("Code", SnippetCategory.CODE, "Code snippet", "fun main() {\n    println(\"Hello\")\n}", ""),
 )
 
@@ -227,10 +228,13 @@ fun SnippetsScreen(
     snippets: List<SnippetEntity>,
     onSave: (title: String, shortcut: String, text: String, id: Long, category: SnippetCategory) -> Unit,
     onDelete: (SnippetEntity) -> Unit,
+    onAddPack: (SnippetPack, (Int) -> Unit) -> Unit,
     onBack: () -> Unit,
 ) {
     var editing by remember { mutableStateOf<SnippetEntity?>(null) }
     var creating by remember { mutableStateOf<SnippetTemplate?>(null) }
+    var packShown by remember { mutableStateOf<SnippetPack?>(null) }
+    var packNote by remember { mutableStateOf<String?>(null) }
     var blank by remember { mutableStateOf(false) }
     var filter by rememberSaveable { mutableStateOf<String?>(null) }
     var query by rememberSaveable { mutableStateOf("") }
@@ -254,6 +258,19 @@ fun SnippetsScreen(
                 )
             }
         }
+        // Ready-made packs: everyday messages and Islamic greetings, in Bangla and English.
+        Text("Ready-made packs", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            SnippetPack.entries.forEach { p ->
+                val icon = if (p == SnippetPack.ISLAMIC) snippetIcon(SnippetCategory.ISLAMIC) else snippetIcon(SnippetCategory.MESSAGE)
+                AssistChip(
+                    onClick = { packShown = p },
+                    label = { Text("${p.label} · ${p.items.size}") },
+                    leadingIcon = { MsIcon(icon, null, Modifier.size(18.dp)) },
+                )
+            }
+        }
+        packNote?.let { SettingsNote(it) }
         if (snippets.size > 4) {
             OutlinedTextField(
                 value = query,
@@ -307,6 +324,46 @@ fun SnippetsScreen(
             }
             item { Spacer(Modifier.height(24.dp)) }
         }
+    }
+
+    packShown?.let { pack ->
+        val saved = snippets.map { it.text.trim() }.toSet()
+        val missing = pack.items.count { it.text.trim() !in saved }
+        AlertDialog(
+            onDismissRequest = { packShown = null },
+            icon = { MsIcon(if (pack == SnippetPack.ISLAMIC) snippetIcon(SnippetCategory.ISLAMIC) else snippetIcon(SnippetCategory.MESSAGE), null) },
+            title = { Text(pack.label) },
+            text = {
+                Column {
+                    Text(
+                        if (missing == 0) "All of these are already in your snippets." else "Type a shortcut, then space, to insert its text.",
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    LazyColumn(Modifier.heightIn(max = 380.dp).padding(top = 10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        items(pack.items, key = { it.text }) { p ->
+                            val have = p.text.trim() in saved
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Column(Modifier.weight(1f)) {
+                                    Text(p.text, style = MaterialTheme.typography.bodyLarge, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                                    Text(p.shortcut, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                                }
+                                if (have) MsIcon(UiR.drawable.ms_check, "Already added", Modifier.size(18.dp).padding(start = 4.dp))
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    enabled = missing > 0,
+                    onClick = {
+                        onAddPack(pack) { n -> packNote = if (n == 0) "${pack.label}: nothing new to add." else "Added $n from ${pack.label}." }
+                        packShown = null
+                    },
+                ) { Text(if (missing == 0) "Added" else "Add $missing") }
+            },
+            dismissButton = { TextButton(onClick = { packShown = null }) { Text("Close") } },
+        )
     }
 
     if (blank || creating != null || editing != null) {
@@ -396,6 +453,7 @@ fun clipIcon(k: ClipCategory): Int = when (k) {
 /** The Material Symbol for a snippet category. */
 fun snippetIcon(k: SnippetCategory): Int = when (k) {
     SnippetCategory.MESSAGE -> UiR.drawable.ms_chat
+    SnippetCategory.ISLAMIC -> UiR.drawable.ms_dark_mode
     SnippetCategory.REPLY -> UiR.drawable.ms_quickreply
     SnippetCategory.SIGNATURE -> UiR.drawable.ms_signature
     SnippetCategory.ADDRESS -> UiR.drawable.ms_home

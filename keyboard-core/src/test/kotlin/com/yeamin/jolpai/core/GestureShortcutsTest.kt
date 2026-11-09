@@ -118,12 +118,13 @@ class GestureShortcutsTest {
     @Test fun `defaults turn on only gestures that replace nothing`() {
         val c = GestureConfig()
         val b = BuiltIns()
-        assertEquals(GestureAction.EMOJI, c.active(GestureZone.SPACE, GestureType.SWIPE_UP, b)?.action)
-        assertEquals(GestureAction.CLIPBOARD, c.active(GestureZone.SPACE, GestureType.SWIPE_DOWN, b)?.action)
+        assertEquals(GestureAction.CLIPBOARD, c.active(GestureZone.SPACE, GestureType.SWIPE_UP, b)?.action)
+        assertEquals(GestureAction.EMOJI, c.active(GestureZone.SPACE, GestureType.SWIPE_DOWN, b)?.action)
         assertNull("language swipes are off (cursor swipe stays)", c.active(GestureZone.SPACE, GestureType.SWIPE_LEFT, b))
         assertNull("comma keeps its menu", c.active(GestureZone.COMMA, GestureType.LONG_PRESS, b))
-        assertNull("translation isn't available", c.active(GestureZone.TOOLBAR, GestureType.SWIPE_LEFT, b))
-        assertEquals(2, c.activeCount(b))
+        assertEquals(GestureAction.UNDO, c.active(GestureZone.TOOLBAR, GestureType.SWIPE_LEFT, b)?.action)
+        assertEquals(GestureAction.REDO, c.active(GestureZone.TOOLBAR, GestureType.SWIPE_RIGHT, b)?.action)
+        assertEquals(4, c.activeCount(b))
     }
 
     @Test fun `configuration survives storage`() {
@@ -179,15 +180,16 @@ class GestureShortcutsTest {
         assertNull(GestureConflicts.replaces(GestureZone.SPACE, GestureType.SWIPE_LEFT, BuiltIns(swipeGestures = false)))
         val c = GestureConfig().with(GestureBinding(GestureZone.SHIFT, GestureType.SWIPE_UP, GestureAction.EMOJI))
         val same = GestureConflicts.sameAction(c, c.binding(GestureZone.SHIFT, GestureType.SWIPE_UP)!!)
-        assertEquals(listOf("space:up"), same.map { it.key })
+        assertEquals(listOf("space:down"), same.map { it.key })
     }
 
     @Test fun `the dispatcher answers only for usable gestures`() {
         val c = GestureConfig()
             .with(GestureBinding(GestureZone.PERIOD, GestureType.SWIPE_UP, GestureAction.INSERT_TEXT, text = ""))
             .with(GestureBinding(GestureZone.SHIFT, GestureType.DOUBLE_TAP, GestureAction.EMOJI))
+            .with(GestureBinding(GestureZone.TOOLBAR, GestureType.SWIPE_RIGHT, GestureAction.AI_WRITING))
         val d = GestureDispatcher(c, BuiltIns())
-        assertEquals(KeyAction.Shortcut(GestureAction.EMOJI, ""), d.actionFor(GestureZone.SPACE, GestureType.SWIPE_UP))
+        assertEquals(KeyAction.Shortcut(GestureAction.CLIPBOARD, ""), d.actionFor(GestureZone.SPACE, GestureType.SWIPE_UP))
         assertNull("no text set", d.actionFor(GestureZone.PERIOD, GestureType.SWIPE_UP))
         assertNull("reserved", d.actionFor(GestureZone.SHIFT, GestureType.DOUBLE_TAP))
         assertNull("unavailable", d.actionFor(GestureZone.TOOLBAR, GestureType.SWIPE_RIGHT))

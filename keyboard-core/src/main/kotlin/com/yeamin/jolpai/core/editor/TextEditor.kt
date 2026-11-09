@@ -24,6 +24,9 @@ interface TextEditor {
 
     fun hasSelection(): Boolean
 
+    /** The selected text (up to [maxChars]), or empty when nothing is selected or it is unknown. */
+    fun selectedText(maxChars: Int = 10_000): CharSequence = ""
+
     /** Selection start and end as absolute positions, or -1 when unknown. */
     fun selectionStart(): Int
     fun selectionEnd(): Int

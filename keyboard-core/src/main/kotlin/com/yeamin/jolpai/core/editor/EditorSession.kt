@@ -40,6 +40,9 @@ class EditorSession(private val connection: () -> InputConnection?) : TextEditor
 
     override fun hasSelection(): Boolean = selStart >= 0 && selEnd >= 0 && selStart != selEnd
 
+    override fun selectedText(maxChars: Int): CharSequence =
+        if (!hasSelection()) "" else connection()?.getSelectedText(0)?.let { if (it.length > maxChars) it.subSequence(0, maxChars) else it } ?: ""
+
     override fun selectionStart(): Int = minOf(selStart, selEnd)
     override fun selectionEnd(): Int = maxOf(selStart, selEnd)
 

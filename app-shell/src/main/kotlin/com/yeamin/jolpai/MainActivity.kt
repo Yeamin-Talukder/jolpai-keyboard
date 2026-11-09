@@ -201,6 +201,7 @@ class MainActivity : ComponentActivity() {
                             snippets = snippets,
                             onSave = viewModel::saveSnippet,
                             onDelete = viewModel::deleteSnippet,
+                            onAddPack = viewModel::addSnippetPack,
                             onBack = back,
                         )
                         Destination.TOOLBAR -> ToolbarScreen(settings.toolbar, viewModel::setToolbar, back)

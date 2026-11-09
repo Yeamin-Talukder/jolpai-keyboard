@@ -7,6 +7,7 @@ import com.yeamin.jolpai.core.theme.ThemeRepository
 import com.yeamin.jolpai.data.AvroSelectionEntity
 import com.yeamin.jolpai.data.HistoryDao
 import com.yeamin.jolpai.data.LearnedBigramEntity
+import com.yeamin.jolpai.data.LearnedTrigramEntity
 import com.yeamin.jolpai.data.LearnedWordEntity
 import com.yeamin.jolpai.data.RoomHistoryStore
 import com.yeamin.jolpai.data.SnippetDao
@@ -76,12 +77,23 @@ class BackupManager @Inject constructor(
             put("learned", buildJsonObject {
                 put("words", buildJsonArray {
                     historyDao.allWords().forEach { w ->
-                        add(buildJsonObject { put("lang", w.language); put("word", w.word); put("count", w.count); put("lastUsed", w.lastUsed) })
+                        add(buildJsonObject { put("lang", w.language); put("word", w.word); put("count", w.count); put("lastUsed", w.lastUsed); put("weight", w.weight) })
                     }
                 })
                 put("bigrams", buildJsonArray {
                     historyDao.allBigrams().forEach { b ->
-                        add(buildJsonObject { put("lang", b.language); put("prev", b.previous); put("word", b.word); put("count", b.count) })
+                        add(buildJsonObject {
+                            put("lang", b.language); put("prev", b.previous); put("word", b.word); put("count", b.count)
+                            put("lastUsed", b.lastUsed); put("weight", b.weight)
+                        })
+                    }
+                })
+                put("trigrams", buildJsonArray {
+                    historyDao.allTrigrams().forEach { t ->
+                        add(buildJsonObject {
+                            put("lang", t.language); put("prev2", t.previous2); put("prev", t.previous); put("word", t.word)
+                            put("count", t.count); put("lastUsed", t.lastUsed); put("weight", t.weight)
+                        })
                     }
                 })
                 put("avro", buildJsonObject { historyDao.allSelections().forEach { put(it.roman, it.bangla) } })
@@ -137,7 +149,7 @@ class BackupManager @Inject constructor(
                 val o = e.jsonObject
                 val word = o.str("word") ?: return@forEach
                 historyDao.upsertWord(
-                    LearnedWordEntity(o.str("lang") ?: return@forEach, word.lowercase(), word, o.int("count") ?: 1, o.long("lastUsed") ?: 0),
+                    LearnedWordEntity(o.str("lang") ?: return@forEach, word.lowercase(), word, o.int("count") ?: 1, o.long("lastUsed") ?: 0, o.float("weight") ?: -1f),
                 )
                 learned++
             }
@@ -145,7 +157,21 @@ class BackupManager @Inject constructor(
                 val o = e.jsonObject
                 val word = o.str("word") ?: return@forEach
                 historyDao.upsertBigram(
-                    LearnedBigramEntity(o.str("lang") ?: return@forEach, (o.str("prev") ?: return@forEach).lowercase(), word.lowercase(), word, o.int("count") ?: 1),
+                    LearnedBigramEntity(
+                        o.str("lang") ?: return@forEach, (o.str("prev") ?: return@forEach).lowercase(), word.lowercase(), word, o.int("count") ?: 1,
+                        o.long("lastUsed") ?: 0, o.float("weight") ?: -1f,
+                    ),
+                )
+            }
+            l["trigrams"]?.jsonArray?.forEach { e ->
+                val o = e.jsonObject
+                val word = o.str("word") ?: return@forEach
+                val count = o.int("count") ?: 1
+                historyDao.upsertTrigram(
+                    LearnedTrigramEntity(
+                        o.str("lang") ?: return@forEach, (o.str("prev2") ?: return@forEach).lowercase(), (o.str("prev") ?: return@forEach).lowercase(),
+                        word.lowercase(), word, count, o.long("lastUsed") ?: System.currentTimeMillis(), o.float("weight") ?: count.toFloat(),
+                    ),
                 )
             }
             l["avro"]?.jsonObject?.forEach { (roman, bangla) ->
@@ -165,6 +191,7 @@ class BackupManager @Inject constructor(
     private fun JsonObject.str(k: String): String? = (this[k] as? JsonPrimitive)?.contentOrNull
     private fun JsonObject.int(k: String): Int? = (this[k] as? JsonPrimitive)?.intOrNull
     private fun JsonObject.long(k: String): Long? = (this[k] as? JsonPrimitive)?.contentOrNull?.toLongOrNull()
+    private fun JsonObject.float(k: String): Float? = (this[k] as? JsonPrimitive)?.contentOrNull?.toFloatOrNull()
 
     private companion object {
         // "lipi" is the app's first name; kept so backups made by older versions still import.

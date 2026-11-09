@@ -16,6 +16,8 @@ class BanglaDictionary private constructor(
     private val otherWords: SortedWords,
     private val otherWeights: ByteArray,
 ) {
+    /** Ranked next words counted from open Bangla text (null in tests or when the list is missing). */
+    var nextWords: BanglaNextWords? = null
 
     val size: Int get() = words.size
 
@@ -72,7 +74,7 @@ class BanglaDictionary private constructor(
                 val tab = line.indexOf('\t')
                 if (tab > 0) frequencies[line.substring(0, tab)] = line.substring(tab + 1).toIntOrNull() ?: 0
             }
-            return of(readResourceLines("/bn/bangla-words.txt"), frequencies)
+            return of(readResourceLines("/bn/bangla-words.txt"), frequencies).also { it.nextWords = BanglaNextWords.load() }
         }
 
         /**
