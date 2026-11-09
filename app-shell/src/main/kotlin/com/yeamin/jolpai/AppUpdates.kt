@@ -36,6 +36,17 @@ object Changelog {
     /** Newest first. */
     val RELEASES: List<ChangelogRelease> = listOf(
         ChangelogRelease(
+            "0.11.0", "9 Nov 2026",
+            listOf(
+                "On-device AI for English: the next word from your whole sentence, smarter suggestions and autocorrect (\"i want to takl\" → talk), emoji by meaning (good night → 😴), and Check catches their/there and its/it's. Runs only on your phone",
+                "Bangla next words from the very first word, ranked from 91 million words of open Bangla text (কেমন → আছেন), using the last one or two words",
+                "Jolpai learns your phrases (the word after one word and after two), and old habits fade so new ones take over; learned data is kept on update",
+                "New প্রভাত (Probhat) layout: turn it on in Languages & layouts",
+                "Vowel-sign keys (া ি ে ু ্ …) are clean and centred, with no dotted circle",
+                "Festival themes, snippet packs (everyday messages, Islamic greetings), date and Bangla calendar snippets, and Unicode text styles",
+            ),
+        ),
+        ChangelogRelease(
             "0.10.1", "7 Nov 2026",
             listOf(
                 "Check for updates works even when GitHub's hourly limit is used up (it said \"Couldn't reach GitHub\" before)",
