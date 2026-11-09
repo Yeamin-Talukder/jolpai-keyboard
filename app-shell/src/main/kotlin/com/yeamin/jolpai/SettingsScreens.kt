@@ -75,6 +75,7 @@ private fun layoutHint(id: LayoutId): String = when (id) {
     LayoutId.ENGLISH -> "QWERTY, accents on long-press"
     LayoutId.AVRO -> "Type how it sounds: ami → আমি · reph: rr"
     LayoutId.NATIONAL -> "Ridmik-style জাতীয় · hold a key for its corner letter"
+    LayoutId.PROBHAT -> "Probhat (প্রভাত) as on a computer · corners show the shifted letter"
 }
 
 /** Which layouts are on, which one to start with, and how to switch. */
@@ -271,7 +272,7 @@ private fun LongPressSetting(current: Int, onChange: (Int) -> Unit) {
             Text("Slower", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Spacer(Modifier.height(14.dp))
-        val presets = listOf("Quick" to 200, "Normal" to DEFAULT_LONG_PRESS_MS, "Relaxed" to 500)
+        val presets = listOf("Quick" to DEFAULT_LONG_PRESS_MS, "Normal" to 350, "Relaxed" to 500)
         SingleChoiceSegmentedButtonRow(indent.fillMaxWidth()) {
             presets.forEachIndexed { i, (label, ms) ->
                 SegmentedButton(
@@ -299,8 +300,13 @@ fun SuggestionsScreen(vm: MainViewModel, settings: KeyboardSettings, personalWor
         SettingsGroup {
             SettingsSwitch("Show suggestions", "Words above the keys, and Avro dictionary candidates", settings.showSuggestions, vm::setShowSuggestions, UiR.drawable.ms_lightbulb)
             SettingsSwitch("Autocorrect", "Fix obvious English typos when you press space. Backspace undoes it.", settings.autoCorrect, vm::setAutoCorrect, UiR.drawable.ms_spellcheck, enabled = settings.showSuggestions)
-            SettingsSwitch("Next-word suggestions", "Suggest the word you usually type next", settings.nextWordPrediction, vm::setNextWordPrediction, UiR.drawable.ms_auto_awesome, enabled = settings.showSuggestions)
+            SettingsSwitch("Next-word suggestions", "Suggest the word you usually type next, and with on-device AI the word that fits the sentence", settings.nextWordPrediction, vm::setNextWordPrediction, UiR.drawable.ms_auto_awesome, enabled = settings.showSuggestions)
             SettingsSwitch("Emoji suggestions", "pizza → 🍕, হাসি → 😄", settings.emojiSuggestions, vm::setEmojiSuggestions, UiR.drawable.ms_mood, enabled = settings.showSuggestions)
+            SettingsSwitch(
+                "On-device AI predictions",
+                "English: a small neural model reads your sentence to rank words, predict the next one, pick emoji by meaning (so tired → 😴) and catch their/there in Check. Runs only on this phone.",
+                settings.smartPredictions, vm::setSmartPredictions, UiR.drawable.ms_auto_awesome, enabled = settings.showSuggestions,
+            )
             SettingsSwitch("Block offensive words", "Never suggested (you can still type them)", settings.blockOffensiveWords, vm::setBlockOffensiveWords, UiR.drawable.ms_block, enabled = settings.showSuggestions)
         }
         SettingsGroup {

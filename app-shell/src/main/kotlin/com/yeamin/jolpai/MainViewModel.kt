@@ -64,6 +64,11 @@ class MainViewModel @Inject constructor(
     val snippets: StateFlow<List<SnippetEntity>> =
         clipboard.snippets.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    init {
+        // The ready-made snippet packs (Islamic greetings, everyday messages), added once.
+        viewModelScope.launch { clipboard.addPacksOnce() }
+    }
+
     fun setClipboardHistory(v: Boolean) {
         viewModelScope.launch { repository.setClipboardHistory(v) }
     }
@@ -119,6 +124,10 @@ class MainViewModel @Inject constructor(
 
     fun setEmojiSuggestions(v: Boolean) {
         viewModelScope.launch { repository.setEmojiSuggestions(v) }
+    }
+
+    fun setSmartPredictions(v: Boolean) {
+        viewModelScope.launch { repository.setSmartPredictions(v) }
     }
 
     fun setGiphyApiKey(key: String) {
@@ -323,6 +332,11 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch { clipboard.deleteSnippet(snippet) }
     }
 
+    /** Adds a ready-made pack's snippets that aren't saved yet; [done] gets how many were added. */
+    fun addSnippetPack(pack: com.yeamin.jolpai.clipboard.SnippetPack, done: (Int) -> Unit) {
+        viewModelScope.launch { done(clipboard.addSnippets(pack.items)) }
+    }
+
     val personalWords: StateFlow<List<PersonalWordEntity>> =
         historyDao.observePersonal().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
@@ -345,6 +359,9 @@ class MainViewModel @Inject constructor(
     }
     fun setDoubleSpacePeriod(v: Boolean) {
         viewModelScope.launch { repository.setDoubleSpacePeriod(v) }
+    }
+    fun setFestivalThemes(v: Boolean) {
+        viewModelScope.launch { repository.setFestivalThemes(v) }
     }
     fun setRememberLastLayout(v: Boolean) {
         viewModelScope.launch { repository.setRememberLastLayout(v) }

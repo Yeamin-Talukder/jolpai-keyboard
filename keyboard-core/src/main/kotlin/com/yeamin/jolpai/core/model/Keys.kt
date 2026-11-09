@@ -46,6 +46,15 @@ sealed interface KeyAction {
     /** Replace the snippet shortcut [shortcut] before the cursor with its text. */
     data class ExpandSnippet(val shortcut: String) : KeyAction
 
+    /** Insert a snippet's [text] (from the clipboard panel), filling in its variables like {date}. */
+    data class InsertSnippet(val text: String) : KeyAction
+
+    /**
+     * Text style from the editing panel: restyles the selection, or with nothing selected turns
+     * styled typing on ([style]) or off (null).
+     */
+    data class SetTextStyle(val style: com.yeamin.jolpai.core.tools.TextStyle?) : KeyAction
+
     /** A text-editing command from the editing panel or a gesture. */
     data class Edit(val command: EditCommand) : KeyAction
 
@@ -151,7 +160,8 @@ enum class ToolbarItem(val storageKey: String, val icon: String, val title: Stri
     }
 }
 
-enum class DateTimeKind { DATE, TIME }
+/** What the editing panel's date buttons insert; [BANGLA_DATE] is the Bangla calendar date (বঙ্গাব্দ). */
+enum class DateTimeKind { DATE, TIME, BANGLA_DATE }
 
 enum class EditCommand {
     SELECT_ALL, CUT, COPY, PASTE, UNDO, REDO,
@@ -212,12 +222,21 @@ enum class LayoutId(
 ) {
     ENGLISH("en", "English", "EN"),
     AVRO("bn-avro", "বাংলা (অভ্র)", "অভ্র"),
-    NATIONAL("bn-national", "বাংলা (জাতীয়)", "জাতীয়");
+    NATIONAL("bn-national", "বাংলা (জাতীয়)", "জাতীয়"),
+
+    /** Probhat (প্রভাত), the fixed Bangla layout of the free-software world (xkb `bd(probhat)`). */
+    PROBHAT("bn-probhat", "বাংলা (প্রভাত)", "প্রভাত");
 
     /** Shown faintly on the space bar, like Ridmik: "English", "অভ্র", "জাতীয়". */
     val spaceLabel: String get() = if (this == ENGLISH) displayName else shortLabel
 
+    /** A fixed Bangla layout (each key types a Bangla letter): Bangla symbol pages, digits and labels. */
+    val isFixedBangla: Boolean get() = this == NATIONAL || this == PROBHAT
+
     companion object {
         fun fromStorageKey(key: String?): LayoutId? = entries.firstOrNull { it.storageKey == key }
+
+        /** On for a fresh install. Probhat is one switch away in Languages & layouts. */
+        val DEFAULT_ENABLED: List<LayoutId> = listOf(ENGLISH, AVRO, NATIONAL)
     }
 }

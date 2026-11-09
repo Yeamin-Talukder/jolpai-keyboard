@@ -63,8 +63,17 @@ class AvroSuggester(
     /**
      * @param selections the user's previous pick for a Roman word, if any.
      * @param includeEnglish also offer the input exactly as typed.
+     * @param context how likely a Bangla word is in the sentence being written (natural-log
+     *   probability from the next-word model), or null without one: dictionary words are then
+     *   ordered by closeness to the conversion and fit to the sentence together (ভাত after আমি,
+     *   before খাই), [CONTEXT_POINTS] points per log unit against 10 per letter of difference.
      */
-    fun suggest(term: String, selections: (String) -> String?, includeEnglish: Boolean = true): AvroCandidates {
+    fun suggest(
+        term: String,
+        selections: (String) -> String?,
+        includeEnglish: Boolean = true,
+        context: ((String) -> Float?)? = null,
+    ): AvroCandidates {
         val split = SplitTerm.of(term)
         val preceding = phonetic.convert(split.preceding)
         val trailing = phonetic.convert(split.trailing)
@@ -82,7 +91,20 @@ class AvroSuggester(
         if (includeEnglish && term != split.preceding) wrapped += Ranked.Last(term, 3)
 
         // Equally close candidates: the more common word first (from the frequency list).
-        val sorted = wrapped.sortedWith(compareBy<Ranked> { it.order }.thenBy { it.value }.thenByDescending { frequency(it.text) })
+        val sorted = if (context == null) {
+            wrapped.sortedWith(compareBy<Ranked> { it.order }.thenBy { it.value }.thenByDescending { frequency(it.text) })
+        } else {
+            val fit = HashMap<String, Float>()
+            fun fit(r: Ranked): Float = fit.getOrPut(r.text) {
+                val core = r.text.removePrefix(preceding).removeSuffix(trailing)
+                context(core) ?: UNKNOWN_FIT
+            }
+            wrapped.sortedWith(
+                compareBy<Ranked> { it.order }
+                    .thenBy { if (it is Ranked.Other) it.distance - CONTEXT_POINTS * fit(it) else it.value.toFloat() }
+                    .thenByDescending { frequency(it.text) },
+            )
+        }
         val candidates = sorted.map { it.text }.distinct()
 
         val previous = previousSelection(split.word, selections)
@@ -143,6 +165,12 @@ class AvroSuggester(
     }
 
     companion object {
+        /** See [suggest]: points per natural-log unit of in-context probability. */
+        const val CONTEXT_POINTS = 3f
+
+        /** Log-probability given to a dictionary word the model does not know. */
+        private const val UNKNOWN_FIT = -12f
+
         /** Joins a base word and a Bangla suffix the way riti does (য় between vowel and kar, ৎ→ত, ং→ঙ). */
         fun joinSuffix(base: String, suffix: String): String {
             if (base.isEmpty() || suffix.isEmpty()) return base + suffix

@@ -59,7 +59,7 @@ fun HomeScreen(
     onSelectTheme: (String) -> Unit = {},
 ) {
     SettingsScaffold("Jolpai Keyboard", onBack = null) {
-        SetupCard(setup, onOpenKeyboardSettings, onPickKeyboard)
+        SetupCard(setup, settings.enabledLayouts, onOpenKeyboardSettings, onPickKeyboard)
         TryField(onMore = { onOpen(Destination.TEST_FIELDS) })
 
         SettingsGroup("Typing", tone = GroupTone.PRIMARY) {
@@ -158,7 +158,7 @@ fun HomeScreen(
 
 /** Setup steps while Jolpai isn't the keyboard yet; afterwards a small "ready" card. */
 @Composable
-private fun SetupCard(setup: SetupStatus, onOpenKeyboardSettings: () -> Unit, onPickKeyboard: () -> Unit) {
+private fun SetupCard(setup: SetupStatus, layouts: List<LayoutId>, onOpenKeyboardSettings: () -> Unit, onPickKeyboard: () -> Unit) {
     val ready = setup.enabled && setup.selected
     // A soft gradient from the theme's primary to tertiary container colours.
     val gradient = Brush.linearGradient(
@@ -188,7 +188,7 @@ private fun SetupCard(setup: SetupStatus, onOpenKeyboardSettings: () -> Unit, on
                         fontWeight = FontWeight.Medium,
                     )
                     Text(
-                        if (ready) "English, অভ্র and জাতীয় — private, on-device typing" else "Two quick steps and you can type",
+                        if (ready) "${layoutList(layouts)} — private, on-device typing" else "Two quick steps and you can type",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
                     )
@@ -284,8 +284,15 @@ private fun QuickThemes(themes: List<KeyboardTheme>, activeId: String, onSelect:
     }
 }
 
+/** The layouts that are on, as the space bar names them: "English, অভ্র and জাতীয়". */
+private fun layoutList(layouts: List<LayoutId>): String {
+    val names = layouts.map { it.spaceLabel }
+    return if (names.size < 2) names.joinToString() else names.dropLast(1).joinToString(", ") + " and " + names.last()
+}
+
 fun layoutBadge(id: LayoutId): String = when (id) {
     LayoutId.ENGLISH -> "En"
     LayoutId.AVRO -> "অ"
     LayoutId.NATIONAL -> "জা"
+    LayoutId.PROBHAT -> "প্র"
 }

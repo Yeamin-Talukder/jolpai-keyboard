@@ -57,6 +57,10 @@ minute after it was copied, unless you pin it.
   the text is proofread on the phone by Android's AICore system app; it is not sent to a server.
   The AI model is managed and downloaded by AICore when you first use it. The button only
   appears on phones that support it, and only for English text.
+- **On-device AI predictions** (English next words, ranking, word choice, emoji by meaning):
+  a small next-word model (4.7 MB) is part of the app and runs inside the keyboard on your
+  phone. It reads only the sentence you are typing, keeps nothing (it does not learn), and
+  nothing is downloaded or sent. Turn it off in Suggestions → On-device AI predictions.
 - **Typing stats** are counts only (how many words, corrections, emoji), kept on the phone,
   never counted in password or private fields; reset them under Typing stats.
 

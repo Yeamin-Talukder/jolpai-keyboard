@@ -102,6 +102,7 @@ private val NOTICES = listOf(
     Notice("Emoji data (Unicode Emoji 17.0, CLDR 49) — Unicode License V3", "/emoji/NOTICE.txt", "/emoji/LICENSE-UNICODE-V3.txt"),
     Notice("Icons (Material Symbols by Google) — Apache-2.0", "/icons/NOTICE.txt", "/en/LICENSE-APACHE-2.0.txt"),
     Notice("Bangla word frequencies (FrequencyWords, OpenSubtitles) — CC BY-SA 4.0; code MIT", "/bn/NOTICE.txt", "/bn/LICENSE-MIT-FrequencyWords.txt"),
+    Notice("English next-word model (Destin Moss, youcoded.ai; FineWeb and Tatoeba) — ODC-By 1.0 and CC BY 2.0 FR", "/lm/NOTICE.txt", "/lm/ODC-By-1.0.txt"),
     Notice("Key fonts: Hind Siliguri, Tiro Bangla, Galada, Atma (Google Fonts) — SIL Open Font License 1.1", "/fonts/NOTICE.txt", "/fonts/OFL.txt"),
 )
 

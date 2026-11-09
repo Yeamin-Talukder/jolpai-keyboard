@@ -45,19 +45,33 @@ class TextChecker(
     private val bangla: () -> BanglaDictionary?,
     private val history: UserHistory?,
     private val costs: TypingCosts = TypingCosts.DEFAULT,
+    /** The English next-word model: ranks spelling fixes by the sentence and finds wrong word choices. */
+    private val lm: LanguageModel? = null,
 ) {
+    /** True when the next-word model is loaded, so `check(useModel = true)` can add to the rules. */
+    val canUseModel: Boolean get() = lm?.loaded != null
+
     /**
      * Checks [text]; [ignored] holds originals the user chose to ignore. [endsAtFieldEnd]: the
      * text is the end of what was written (only then is a missing full stop reported).
-     * Issues are in text order and never overlap.
+     * [useModel]: use the next-word model (if loaded) for context. Issues are in text order and
+     * never overlap.
      */
-    fun check(text: String, ignored: Set<String> = emptySet(), endsAtFieldEnd: Boolean = true, limit: Int = MAX_ISSUES): List<TextIssue> {
+    fun check(
+        text: String,
+        ignored: Set<String> = emptySet(),
+        endsAtFieldEnd: Boolean = true,
+        limit: Int = MAX_ISSUES,
+        useModel: Boolean = false,
+    ): List<TextIssue> {
         if (text.isBlank()) return emptyList()
         val out = ArrayList<TextIssue>()
         val protected = protectedRanges(text)
+        val model = lm?.takeIf { useModel && it.loaded != null }
         punctuation(text, out)
         grammar(text, out)
-        spelling(text, protected, out)
+        if (model != null) wordChoice(text, protected, model, out)
+        spelling(text, protected, model, out)
         val kept = ArrayList<TextIssue>()
         fun keep(issue: TextIssue) {
             if (issue.original == issue.replacement) return
@@ -75,13 +89,13 @@ class TextChecker(
 
     // ------------------------------------------------------------------ spelling
 
-    private fun spelling(text: String, protected: List<IntRange>, out: MutableList<TextIssue>) {
+    private fun spelling(text: String, protected: List<IntRange>, model: LanguageModel?, out: MutableList<TextIssue>) {
         var checkedUnknown = 0
         WORD.findAll(text).forEach { m ->
             val word = m.value
             if (protected.any { m.range.first in it }) return@forEach
             if (checkedUnknown >= MAX_UNKNOWN_WORDS) return@forEach
-            val issue = if (isBangla(word)) banglaSpelling(text, word, m.range.first) else englishSpelling(text, word, m.range.first)
+            val issue = if (isBangla(word)) banglaSpelling(text, word, m.range.first) else englishSpelling(text, word, m.range.first, model.takeIf { checkedUnknown < MAX_MODEL_SPELLING })
             if (issue != null) {
                 out += issue
                 checkedUnknown++
@@ -89,7 +103,7 @@ class TextChecker(
         }
     }
 
-    private fun englishSpelling(text: String, word: String, start: Int): TextIssue? {
+    private fun englishSpelling(text: String, word: String, start: Int, model: LanguageModel?): TextIssue? {
         val dict = english() ?: return null
         if (word.length < 2 || word.any { it.isDigit() }) return null
         val lower = word.lowercase()
@@ -119,9 +133,20 @@ class TextChecker(
         // Like the prediction strip: several close words, ranked by how likely the slip is and how
         // common the word is, plus what the user writes: a word they've typed after the previous
         // one ("to talk") and words they use often come first.
+        // With the model, the words around it count too: how well each fix fits after the
+        // sentence so far, and how well the next word then follows ("i want to takl to you").
+        val left = if (model != null) sentenceBefore(text, start) else emptyList()
+        val right = if (model != null) wordAfter(text, start + word.length) else null
+        val leftPrediction = model?.predict(left)
         val ranked = dict.corrections(word, CANDIDATES, maxCost, costs = costs)
             .sortedByDescending { c ->
-                EnglishDictionary.rankCorrection(c.frequency, c.cost, costs) + contextBonus(Language.ENGLISH, previous, c.word)
+                var r = EnglishDictionary.rankCorrection(c.frequency, c.cost, costs) + contextBonus(Language.ENGLISH, previous, c.word)
+                // Same scale as the strip (see Suggester.blend); words the model doesn't know keep their frequency.
+                leftPrediction?.logProb(c.word)?.let { lp -> r += MODEL_WEIGHT * (FREQ_AT_CERTAIN + FREQ_PER_NAT * lp - c.frequency) }
+                if (right != null && model != null) {
+                    model.predict(left + c.word.lowercase())?.let { r += MODEL_WEIGHT * FREQ_PER_NAT * it.logProbOrUnknown(right) }
+                }
+                r
             }
         val best = ranked.firstOrNull() ?: return null
         // A capitalised first word may be a name: only suggest a very likely fix.
@@ -131,6 +156,68 @@ class TextChecker(
             start, start + word.length, word, choices.first(), IssueKind.SPELLING, "Possible misspelling",
             alternatives = choices.drop(1).take(MAX_ALTERNATIVES),
         )
+    }
+
+    // ------------------------------------------------------------------ word choice (English, model)
+
+    /**
+     * Easily confused words (their / there / they're, then / than …): each one in [text] is
+     * compared with the others of its set in its sentence, by the next-word model, over the word
+     * itself and the word after it (or the sentence end). Reported only when another choice is
+     * far more likely ([WORD_CHOICE_MARGIN]), so correct text is left alone.
+     */
+    private fun wordChoice(text: String, protected: List<IntRange>, model: LanguageModel, out: MutableList<TextIssue>) {
+        val found = WORD.findAll(text)
+            .filter { m -> CONFUSED[m.value.lowercase().replace('’', '\'')] != null && protected.none { m.range.first in it } }
+            .toList()
+            .takeLast(MAX_WORD_CHOICE) // the ones nearest the cursor, if a long text has many
+        for (m in found) {
+            val original = m.value.lowercase().replace('’', '\'')
+            val options = CONFUSED.getValue(original)
+            val left = sentenceBefore(text, m.range.first).flatMap { expand(it) }
+            val after = m.range.last + 1
+            val right = wordAfter(text, after)?.let { expand(it).take(1) }
+                ?: if (endsSentence(text, after)) listOf(LanguageModel.END_OF_SENTENCE) else emptyList()
+            if (left.isEmpty() && right.isEmpty()) continue
+            // A contraction can mean more than one thing ("it's been" = it has): its best reading counts.
+            fun score(word: String) = readings(word).maxOf { model.sequenceLogProb(left, it + right) ?: Float.NEGATIVE_INFINITY }
+            val own = score(original)
+            val best = options.filter { it != original }.maxByOrNull { score(it) } ?: continue
+            if (score(best) - own < WORD_CHOICE_MARGIN) continue
+            out += TextIssue(
+                m.range.first, after, m.value, matchCase(m.value, best), IssueKind.GRAMMAR,
+                "“$best” fits this sentence better than “$original”",
+            )
+        }
+    }
+
+    /** "they're" → they are (the model reads letters only); other words as they are. */
+    private fun expand(word: String): List<String> = readings(word).first()
+
+    /** Every way the model can read [word]: "it's" → it is / it has; other words as they are. */
+    private fun readings(word: String): List<List<String>> {
+        val w = word.lowercase().replace('’', '\'')
+        return CONTRACTIONS[w] ?: listOf(listOf(w))
+    }
+
+    /** The words of the sentence before [at] (after the last . ! ? or line break), oldest first. */
+    private fun sentenceBefore(text: String, at: Int): List<String> {
+        var i = at - 1
+        while (i >= 0 && text[i] !in ".!?।\n") i--
+        return WORD.findAll(text.substring(i + 1, at)).map { it.value }.filter { !isBangla(it) }.toList()
+    }
+
+    /** The word right after [at] (only spaces or a comma-free gap between), or null. */
+    private fun wordAfter(text: String, at: Int): String? {
+        var i = at
+        while (i < text.length && text[i] == ' ') i++
+        return WORD.matchAt(text, i)?.value?.takeIf { !isBangla(it) }
+    }
+
+    private fun endsSentence(text: String, at: Int): Boolean {
+        var i = at
+        while (i < text.length && text[i] == ' ') i++
+        return i >= text.length || text[i] in ".!?\n"
     }
 
     /**
@@ -352,6 +439,41 @@ class TextChecker(
          */
         private const val PAIR_BONUS = 40f
         private const val USE_BONUS = 2f
+
+        /** Spelling with the model: its share against the word list (as in [Suggester]). */
+        private const val MODEL_WEIGHT = 0.5f
+        private const val FREQ_AT_CERTAIN = 259f
+        private const val FREQ_PER_NAT = 12.3f
+
+        /** Word choice: another word must be this many log units (about 55×) more likely. */
+        internal const val WORD_CHOICE_MARGIN = 4f
+        private const val MAX_WORD_CHOICE = 8
+
+        /** Misspellings per check ranked with the model (each costs a few model runs). */
+        private const val MAX_MODEL_SPELLING = 8
+
+        private val CONTRACTIONS = mapOf(
+            "they're" to listOf(listOf("they", "are")), "you're" to listOf(listOf("you", "are")),
+            "it's" to listOf(listOf("it", "is"), listOf("it", "has")),
+            "who's" to listOf(listOf("who", "is"), listOf("who", "has")),
+        )
+
+        /** Each confusable word → the set it belongs to. */
+        private val CONFUSED: Map<String, List<String>> = listOf(
+            listOf("their", "there", "they're"),
+            listOf("your", "you're"),
+            listOf("its", "it's"),
+            listOf("whose", "who's"),
+            listOf("then", "than"),
+            listOf("lose", "loose"),
+            listOf("quiet", "quite"),
+            listOf("affect", "effect"),
+            listOf("accept", "except"),
+            listOf("weather", "whether"),
+            listOf("advice", "advise"),
+            listOf("breath", "breathe"),
+            listOf("peace", "piece"),
+        ).flatMap { set -> set.map { it to set } }.toMap()
 
         private const val MIN_WORDS_FOR_FULL_STOP = 4
 

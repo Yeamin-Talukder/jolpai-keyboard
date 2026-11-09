@@ -49,6 +49,7 @@ class LayoutFactory(
                 LayoutId.ENGLISH -> qwerty(LayoutId.ENGLISH, shifted, field, enter)
                 LayoutId.AVRO -> qwerty(LayoutId.AVRO, shifted, field, enter)
                 LayoutId.NATIONAL -> national(shifted, field, enter)
+                LayoutId.PROBHAT -> probhat(shifted, field, enter)
             }
             KeyboardPage.SYMBOLS -> symbols(id, field, enter)
             KeyboardPage.SYMBOLS_MORE -> moreSymbols(id, field, enter)
@@ -113,10 +114,39 @@ class LayoutFactory(
         return KeyboardLayout(digits + rows.map { KeyRow(it) } + bottomRow(LayoutId.NATIONAL, field, enter, "?১২৩", KeyboardPage.SYMBOLS))
     }
 
+    // ---------------------------------------------------------------- Probhat (প্রভাত)
+
+    /**
+     * Probhat on a 12-key grid ([ProbhatKeyMap]), as the user's reference keyboard has it: 12
+     * letters, 9 wider letters (1.2 units each), then shift, 9 letters and delete. A key's corner
+     * shows its first long-press choice (mostly the shifted letter); the first ten keys of the top
+     * row also hold the Bangla digits when there is no number row.
+     */
+    private fun probhat(shifted: Boolean, field: FieldInfo, enter: Key): KeyboardLayout {
+        val primary = if (shifted) ProbhatKeyMap.SHIFT else ProbhatKeyMap.NORMAL
+        val other = if (shifted) ProbhatKeyMap.NORMAL else ProbhatKeyMap.SHIFT
+        val rows = primary.indices.map { r ->
+            val width = if (r == 1) ProbhatKeyMap.MIDDLE_ROW_WIDTH else 1f
+            val keys = primary[r].indices.map { k ->
+                val label = primary[r][k]
+                val hint = ProbhatKeyMap.hint(label, other[r][k], shifted)
+                val digit = if (r == 0 && k < BANGLA_DIGITS.size && !numberRow) BANGLA_DIGITS[k].toString() else null
+                val choices = (listOfNotNull(hint, other[r][k], digit) + ProbhatKeyMap.EXTRAS[label].orEmpty())
+                    .distinct()
+                    .filter { it != label }
+                Key(label, KeyAction.Text(label), width = width, hint = hint, popup = choices.map { PopupItem(it, KeyAction.Text(it)) })
+            }
+            if (r == 2) listOf(shiftKey()) + keys + deleteKey() else keys
+        }
+        val digits = if (numberRow) listOf(KeyRow(BANGLA_DIGITS.mapIndexed { i, d -> textKey(d.toString(), listOf(DIGITS[i].toString())) })) else emptyList()
+        // The grid is 12 keys wide: the space bar takes the two extra units.
+        return KeyboardLayout(digits + rows.map { KeyRow(it) } + bottomRow(LayoutId.PROBHAT, field, enter, "?১২৩", KeyboardPage.SYMBOLS, extraSpace = 2f))
+    }
+
     // ---------------------------------------------------------------- Symbols
 
     private fun symbols(id: LayoutId, field: FieldInfo, enter: Key): KeyboardLayout {
-        val bangla = id == LayoutId.NATIONAL
+        val bangla = id.isFixedBangla
         val back = if (bangla) "কখগ" else "ABC"
         val rows = if (bangla) {
             // Ridmik's ?১২৩ page: Bangla digits (English digit on long-press), then symbols.
@@ -141,7 +171,7 @@ class LayoutFactory(
     }
 
     private fun moreSymbols(id: LayoutId, field: FieldInfo, enter: Key): KeyboardLayout {
-        val bangla = id == LayoutId.NATIONAL
+        val bangla = id.isFixedBangla
         val back = if (bangla) "কখগ" else "ABC"
         if (bangla) {
             // Ridmik's ALT page, including Tab and র‍্য (র + ZWJ + ্য, as in র‍্যাব).
@@ -232,7 +262,7 @@ class LayoutFactory(
     }
 
     /** On the number and phone pads: go to the letters. */
-    private fun lettersKey(id: LayoutId) = Key(if (id == LayoutId.NATIONAL) "কখগ" else "ABC", KeyAction.SwitchPage(KeyboardPage.LETTERS), style = KeyStyle.FUNCTION)
+    private fun lettersKey(id: LayoutId) = Key(if (id.isFixedBangla) "কখগ" else "ABC", KeyAction.SwitchPage(KeyboardPage.LETTERS), style = KeyStyle.FUNCTION)
 
     /** A narrow symbol key at the side of a pad. */
     private fun sideKey(text: String, vararg extras: String) = textKey(text, extras.toList(), KeyStyle.FUNCTION)
@@ -243,7 +273,7 @@ class LayoutFactory(
      * `?123 😊 , [space] . ↵` (the language button is in the top bar). The National letters page has `,` and `।` like Ridmik's; the
      * comma key changes to @ or / in email and URL fields. Password fields have no emoji key.
      */
-    private fun bottomRow(id: LayoutId, field: FieldInfo, enter: Key, label: String, target: KeyboardPage): KeyRow {
+    private fun bottomRow(id: LayoutId, field: FieldInfo, enter: Key, label: String, target: KeyboardPage, extraSpace: Float = 0f): KeyRow {
         // In number and phone fields, the letters' ?123 key goes back to the number / dial pad.
         val padPage = when (field.kind) {
             FieldKind.NUMBER, FieldKind.DATETIME -> KeyboardPage.NUMBER
@@ -251,8 +281,8 @@ class LayoutFactory(
             else -> null
         }
         val pageTarget = if (target == KeyboardPage.SYMBOLS && padPage != null) padPage else target
-        val pageLabel = if (pageTarget == padPage) (if (id == LayoutId.NATIONAL) "১২৩" else "123") else label
-        val banglaLetters = id == LayoutId.NATIONAL && pageTarget != KeyboardPage.LETTERS
+        val pageLabel = if (pageTarget == padPage) (if (id.isFixedBangla) "১২৩" else "123") else label
+        val banglaLetters = id.isFixedBangla && pageTarget != KeyboardPage.LETTERS
         val comma = when {
             field.kind == FieldKind.EMAIL -> textKey("@", style = KeyStyle.FUNCTION)
             field.kind == FieldKind.URI -> textKey("/", style = KeyStyle.FUNCTION)
@@ -267,7 +297,7 @@ class LayoutFactory(
         return KeyRow(
             listOf(
                 pageKey(pageLabel, pageTarget),
-                *(if (field.isPassword) arrayOf(comma.copy(zone = GestureZone.COMMA), spaceKey(id, 5f)) else arrayOf(emojiKey(), comma.copy(zone = GestureZone.COMMA), spaceKey(id, 4f))),
+                *(if (field.isPassword) arrayOf(comma.copy(zone = GestureZone.COMMA), spaceKey(id, 5f + extraSpace)) else arrayOf(emojiKey(), comma.copy(zone = GestureZone.COMMA), spaceKey(id, 4f + extraSpace))),
                 period.copy(zone = GestureZone.PERIOD),
                 enter,
             ),
@@ -406,5 +436,51 @@ object NationalKeyMap {
     val SYMBOL_HINTS: Map<String, String> = mapOf(
         "৳" to "$", "*" to "★", "-" to "_", "(" to "<", ")" to ">", "'" to "’", ":" to "ঃ",
         "π" to "Π", "^" to "→", "=" to "≠",
+    )
+}
+
+/**
+ * Probhat (প্রভাত), the letters of xkeyboard-config's `in(ben_probhat)` (used by `bd(probhat)`),
+ * arranged as on the phone keyboard the user asked to copy (2026-11-08 screenshots):
+ * a 12-key top row ending in ে ো (`[` `]` on a computer), 9 wider keys a…l, and a bottom row
+ * য় … ম then ৃ and ্ (shifted: ৃ and ঁ). ড় ঢ় য় are the precomposed characters
+ * (U+09DC, U+09DD, U+09DF), as everywhere in the app.
+ */
+object ProbhatKeyMap {
+    val NORMAL: List<List<String>> = listOf(
+        listOf("দ", "ূ", "ী", "র", "ট", "এ", "ু", "ি", "ও", "প", "ে", "ো"),
+        listOf("া", "স", "ড", "ত", "গ", "হ", "জ", "ক", "ল"),
+        listOf("য়", "শ", "চ", "আ", "ব", "ন", "ম", "ৃ", "্"),
+    )
+    val SHIFT: List<List<String>> = listOf(
+        listOf("ধ", "ঊ", "ঈ", "ড়", "ঠ", "ঐ", "উ", "ই", "ঔ", "ফ", "ৈ", "ৌ"),
+        listOf("অ", "ষ", "ঢ", "থ", "ঘ", "ঃ", "ঝ", "খ", "ং"),
+        listOf("য", "ঢ়", "ছ", "ঋ", "ভ", "ণ", "ঙ", "ৃ", "ঁ"),
+    )
+
+    /** The middle row has 9 keys across the 12-key width, so they are wider. */
+    const val MIDDLE_ROW_WIDTH = 1.2f
+
+    /** Corner letters other than "the shifted letter" on unshifted keys, and the few shifted keys show. */
+    private val NORMAL_HINTS: Map<String, String> = mapOf("য়" to "্য", "্" to "ঁ")
+    private val SHIFT_HINTS: Map<String, String> = mapOf("ড়" to "র্", "য" to "্য")
+
+    /** The corner letter of [label]; [other] is the letter on the same key in the other shift state. */
+    fun hint(label: String, other: String, shifted: Boolean): String? = when {
+        shifted -> SHIFT_HINTS[label]
+        label in NORMAL_HINTS -> NORMAL_HINTS[label]
+        else -> other.takeIf { it != label }
+    }
+
+    /** More long-press choices (after the corner letter, the other shift state and the digit). */
+    val EXTRAS: Map<String, List<String>> = mapOf(
+        "র" to listOf("্র", "র্", "র‍্য"),
+        "ড়" to listOf("্র", "র‍্য"),
+        "জ" to listOf("ঞ"),
+        "ঝ" to listOf("ঞ"),
+        "ত" to listOf("ৎ"),
+        "থ" to listOf("ৎ"),
+        "্" to listOf("্র", "্য", "ৎ"),
+        "ঁ" to listOf("ং"),
     )
 }

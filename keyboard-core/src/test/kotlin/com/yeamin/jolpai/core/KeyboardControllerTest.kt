@@ -115,6 +115,23 @@ class KeyboardControllerTest {
         assertEquals(LayoutId.ENGLISH, controller.state.value.layoutId)
     }
 
+    @Test fun `probhat is off by default and joins the cycle once enabled`() {
+        repeat(3) { key(KeyAction.NextLayout) }
+        assertTrue(LayoutId.PROBHAT !in chosen)
+        controller.updateSettings(KeyboardSettings(enabledLayouts = listOf(LayoutId.ENGLISH, LayoutId.PROBHAT)))
+        key(KeyAction.NextLayout)
+        assertEquals(LayoutId.PROBHAT, controller.state.value.layoutId)
+    }
+
+    @Test fun `probhat composes like the national layout`() {
+        controller.updateSettings(KeyboardSettings(enabledLayouts = listOf(LayoutId.ENGLISH, LayoutId.PROBHAT)))
+        key(KeyAction.SelectLayout(LayoutId.PROBHAT))
+        // ক ি → কি, ে then া → ো, a kar with nothing before it → the full vowel
+        listOf("ক", "ি", " ", "ক", "ে", "া", " ", "ি").forEach { key(if (it == " ") KeyAction.Space else KeyAction.Text(it)) }
+        assertEquals("কি কো ই", editor.text.toString())
+        assertEquals(ShiftState.OFF, shift)
+    }
+
     @Test fun `disabling the active layout switches away from it`() {
         key(KeyAction.SelectLayout(LayoutId.AVRO))
         controller.updateSettings(KeyboardSettings(enabledLayouts = listOf(LayoutId.NATIONAL)))

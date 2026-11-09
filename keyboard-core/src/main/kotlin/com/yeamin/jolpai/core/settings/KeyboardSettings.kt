@@ -36,10 +36,10 @@ data class KeyboardSettings(
     val defaultLayout: LayoutId = LayoutId.ENGLISH,
     val lastLayout: LayoutId = LayoutId.ENGLISH,
     /** Layouts the 🌐 key cycles through, in [LayoutId] order. Never empty. */
-    val enabledLayouts: List<LayoutId> = LayoutId.entries,
+    val enabledLayouts: List<LayoutId> = LayoutId.DEFAULT_ENABLED,
     val showSuggestions: Boolean = true,
     /** Fix obvious English typos when space is pressed. */
-    val autoCorrect: Boolean = true,
+    val autoCorrect: Boolean = false,
     val nextWordPrediction: Boolean = true,
     /** Learn words and word pairs from typing (never in password or private fields). */
     val personalizedLearning: Boolean = true,
@@ -68,11 +68,15 @@ data class KeyboardSettings(
     val emojiSkinTone: Int = 0,
     /** Suggest emoji for the word being typed (English and Bangla keywords). */
     val emojiSuggestions: Boolean = true,
+    /** Use the on-device next-word model (English): next words, ranking by context, word choice, emoji by meaning. */
+    val smartPredictions: Boolean = true,
     val voiceLanguage: VoiceLanguage = VoiceLanguage.AUTO,
     /** The user's own GIPHY API key; GIF search is off until one is set. Stored only on the device. */
     val giphyApiKey: String = "",
     /** "system" (Material You, light/dark with the phone), a built-in id ("builtin:ocean") or "custom:<n>". Default: Olive night. */
     val themeId: String = KeyboardTheme.DEFAULT_ID,
+    /** On festival days (Pohela Boishakh, 21 February, Eid, Ramadan, 26 March, 16 December) use that day's theme. */
+    val festivalThemes: Boolean = true,
     /** Keyboard height, percent of normal (70–140), separately for portrait and landscape. */
     val heightPortrait: Int = 100,
     val heightLandscape: Int = 100,
@@ -87,7 +91,7 @@ data class KeyboardSettings(
     val floatX: Float = 0.5f,
     val floatY: Float = 0.0f,
     val haptics: HapticLevel = HapticLevel.SYSTEM,
-    val keySound: Boolean = false,
+    val keySound: Boolean = true,
     /** 0–1. */
     val soundVolume: Float = 0.4f,
 ) {
@@ -127,7 +131,7 @@ enum class SplitKeys(val storageKey: String, val label: String) {
 }
 
 /** Default hold time (ms) before a key shows its hidden characters. */
-const val DEFAULT_LONG_PRESS_MS = 350
+const val DEFAULT_LONG_PRESS_MS = 200
 
 /** Hold times the settings allow (ms): quick for Bangla hint letters, slower for careful typists. */
 val LONG_PRESS_RANGE = 150..800
@@ -168,9 +172,9 @@ class KeyboardSettingsRepository @Inject constructor(
                 enabledLayouts = p[ENABLED_LAYOUTS]
                     ?.let { keys -> LayoutId.entries.filter { it.storageKey in keys } }
                     ?.ifEmpty { null }
-                    ?: LayoutId.entries,
+                    ?: LayoutId.DEFAULT_ENABLED,
                 showSuggestions = p[SHOW_SUGGESTIONS] ?: true,
-                autoCorrect = p[AUTO_CORRECT] ?: true,
+                autoCorrect = p[AUTO_CORRECT] ?: false,
                 nextWordPrediction = p[NEXT_WORD] ?: true,
                 personalizedLearning = p[LEARNING] ?: true,
                 blockOffensiveWords = p[BLOCK_OFFENSIVE] ?: true,
@@ -194,9 +198,11 @@ class KeyboardSettingsRepository @Inject constructor(
                     ?: ToolbarItem.DEFAULT,
                 emojiSkinTone = (p[EMOJI_TONE] ?: 0).coerceIn(0, 5),
                 emojiSuggestions = p[EMOJI_SUGGESTIONS] ?: true,
+                smartPredictions = p[SMART_PREDICTIONS] ?: true,
                 voiceLanguage = VoiceLanguage.fromStorageKey(p[VOICE_LANGUAGE]),
                 giphyApiKey = p[GIPHY_KEY].orEmpty(),
                 themeId = p[THEME_ID] ?: KeyboardTheme.DEFAULT_ID,
+                festivalThemes = p[FESTIVAL_THEMES] ?: true,
                 heightPortrait = (p[HEIGHT_PORTRAIT] ?: 100).coerceIn(70, 140),
                 heightLandscape = (p[HEIGHT_LANDSCAPE] ?: 100).coerceIn(70, 140),
                 numberRow = p[NUMBER_ROW] ?: false,
@@ -208,7 +214,7 @@ class KeyboardSettingsRepository @Inject constructor(
                 floatX = (p[FLOAT_X] ?: 0.5f).coerceIn(0f, 1f),
                 floatY = (p[FLOAT_Y] ?: 0f).coerceIn(0f, 1f),
                 haptics = HapticLevel.entries.firstOrNull { it.storageKey == p[HAPTICS] } ?: HapticLevel.SYSTEM,
-                keySound = p[KEY_SOUND] ?: false,
+                keySound = p[KEY_SOUND] ?: true,
                 soundVolume = (p[SOUND_VOLUME] ?: 0.4f).coerceIn(0f, 1f),
             )
         }
@@ -217,7 +223,7 @@ class KeyboardSettingsRepository @Inject constructor(
     /** Turns a layout on or off. The last enabled layout cannot be turned off. */
     suspend fun setLayoutEnabled(layout: LayoutId, enabled: Boolean) {
         dataStore.edit { p ->
-            val current = p[ENABLED_LAYOUTS] ?: LayoutId.entries.map { it.storageKey }.toSet()
+            val current = p[ENABLED_LAYOUTS] ?: LayoutId.DEFAULT_ENABLED.map { it.storageKey }.toSet()
             val next = if (enabled) current + layout.storageKey else current - layout.storageKey
             if (next.isNotEmpty()) p[ENABLED_LAYOUTS] = next
         }
@@ -250,9 +256,11 @@ class KeyboardSettingsRepository @Inject constructor(
     }
     suspend fun setEmojiSkinTone(value: Int) = dataStore.edit { it[EMOJI_TONE] = value.coerceIn(0, 5) }
     suspend fun setEmojiSuggestions(value: Boolean) = dataStore.edit { it[EMOJI_SUGGESTIONS] = value }
+    suspend fun setSmartPredictions(value: Boolean) = dataStore.edit { it[SMART_PREDICTIONS] = value }
     suspend fun setVoiceLanguage(value: VoiceLanguage) = dataStore.edit { it[VOICE_LANGUAGE] = value.storageKey }
     suspend fun setGiphyApiKey(value: String) = dataStore.edit { it[GIPHY_KEY] = value.trim() }
     suspend fun setThemeId(value: String) = dataStore.edit { it[THEME_ID] = value }
+    suspend fun setFestivalThemes(value: Boolean) = dataStore.edit { it[FESTIVAL_THEMES] = value }
     suspend fun setHeight(portrait: Boolean, percent: Int) = dataStore.edit {
         it[if (portrait) HEIGHT_PORTRAIT else HEIGHT_LANDSCAPE] = percent.coerceIn(70, 140)
     }
@@ -298,6 +306,7 @@ class KeyboardSettingsRepository @Inject constructor(
     private companion object {
         val AUTO_CAPITALIZE = booleanPreferencesKey("auto_capitalize")
         val DOUBLE_SPACE_PERIOD = booleanPreferencesKey("double_space_period")
+        val FESTIVAL_THEMES = booleanPreferencesKey("festival_themes")
         val REMEMBER_LAST_LAYOUT = booleanPreferencesKey("remember_last_layout")
         val DEFAULT_LAYOUT = stringPreferencesKey("default_layout")
         val LAST_LAYOUT = stringPreferencesKey("last_layout")
@@ -326,6 +335,7 @@ class KeyboardSettingsRepository @Inject constructor(
         val LEGACY_TOOLBAR_KEYS = setOf("emoji", "clipboard", "voice", "edit")
         val EMOJI_TONE = intPreferencesKey("emoji_skin_tone")
         val EMOJI_SUGGESTIONS = booleanPreferencesKey("emoji_suggestions")
+        val SMART_PREDICTIONS = booleanPreferencesKey("smart_predictions")
         val VOICE_LANGUAGE = stringPreferencesKey("voice_language")
         val GIPHY_KEY = stringPreferencesKey("giphy_api_key")
         val THEME_ID = stringPreferencesKey("theme_id")
@@ -347,9 +357,9 @@ class KeyboardSettingsRepository @Inject constructor(
         val BACKUP_KEYS: Set<String> = listOf(
             AUTO_CAPITALIZE, DOUBLE_SPACE_PERIOD, REMEMBER_LAST_LAYOUT, DEFAULT_LAYOUT, LAST_LAYOUT, ENABLED_LAYOUTS,
             SHOW_SUGGESTIONS, AUTO_CORRECT, NEXT_WORD, LEARNING, BLOCK_OFFENSIVE, CLIPBOARD_HISTORY, CLIPBOARD_IMAGES,
-            CLIPBOARD_RETENTION, CURSOR_SWIPE, TRACKPAD_VERTICAL, LONG_PRESS, PREDICTIVE_TOUCH, TOUCH_CALIBRATION, GESTURES, TOOLBAR, TOOLBAR_SEEN, EMOJI_TONE, EMOJI_SUGGESTIONS, VOICE_LANGUAGE, THEME_ID,
+            CLIPBOARD_RETENTION, CURSOR_SWIPE, TRACKPAD_VERTICAL, LONG_PRESS, PREDICTIVE_TOUCH, TOUCH_CALIBRATION, GESTURES, TOOLBAR, TOOLBAR_SEEN, EMOJI_TONE, EMOJI_SUGGESTIONS, SMART_PREDICTIONS, VOICE_LANGUAGE, THEME_ID,
             HEIGHT_PORTRAIT, HEIGHT_LANDSCAPE, NUMBER_ROW, ONE_HANDED, FLOATING, FLOAT_X, FLOAT_Y, HAPTICS, KEY_SOUND, SOUND_VOLUME,
-            KEY_FONT, SOUND_PACK, SPLIT_KEYS,
+            KEY_FONT, SOUND_PACK, SPLIT_KEYS, FESTIVAL_THEMES,
         ).map { it.name }.toSet()
     }
 }

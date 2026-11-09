@@ -11,6 +11,9 @@ enum class TypingScript { ENGLISH, AVRO, NATIONAL }
 class NextChars(val script: TypingScript, val prefix: String, private val probabilities: Map<Char, Float>) {
     fun probability(c: Char): Float = probabilities[c] ?: 0f
 
+    /** The characters with a probability. */
+    val chars: Set<Char> get() = probabilities.keys
+
     /** True when nothing is known (no dictionary yet, or a prefix no word starts with). */
     val isEmpty: Boolean get() = probabilities.isEmpty()
 
@@ -38,6 +41,7 @@ class NextCharPredictor(
     private val bangla: () -> BanglaDictionary?,
     private val avro: () -> AvroSuggester?,
     private val history: UserHistory,
+    private val lm: LanguageModel? = null,
 ) {
     private val cache = object : LinkedHashMap<String, NextChars>(64, 0.75f, true) {
         override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, NextChars>?) = size > 128
@@ -51,8 +55,14 @@ class NextCharPredictor(
         if (!value.isEmpty) cache[key] = value // not cached while dictionaries are still loading
     }
 
-    fun predict(script: TypingScript, prefix: String): NextChars {
-        val key = "${script.ordinal}:$prefix"
+    /**
+     * [context] (the sentence before the word, oldest first) is used for English when
+     * [useModel] is set and the next-word model is loaded: its view of the next word is mixed
+     * half and half with the word list's, so letters of words that fit the sentence weigh more.
+     */
+    fun predict(script: TypingScript, prefix: String, context: List<String> = emptyList(), useModel: Boolean = false): NextChars {
+        val prediction = if (useModel && script == TypingScript.ENGLISH) lm?.predict(context) else null
+        val key = "${script.ordinal}:$prefix" + if (prediction != null) "|" + context.takeLast(LanguageModel.MAX_CONTEXT).joinToString(" ") else ""
         cached(key)?.let { return it }
         val weights = HashMap<Char, Float>()
         val whole = when (script) {
@@ -60,9 +70,23 @@ class NextCharPredictor(
             TypingScript.NATIONAL -> banglaWeights(prefix, weights)
             TypingScript.AVRO -> avroWeights(prefix, weights)
         }
-        val result = normalise(script, prefix, weights, whole)
+        var result = normalise(script, prefix, weights, whole)
+        if (prediction != null && !result.isEmpty) result = mixWithModel(result, prediction)
         store(key, result)
         return result
+    }
+
+    private fun mixWithModel(fromList: NextChars, prediction: Prediction): NextChars {
+        val p = fromList.prefix.lowercase()
+        if (!p.all { it in 'a'..'z' }) return fromList
+        val dict = english()
+        val model = HashMap<Char, Float>()
+        val whole = prediction.nextCharWeights(p, model) { w -> dict == null || !dict.isOffensive(w) }
+        val total = model.values.sum() + whole
+        if (total <= 0f) return fromList
+        val chars = model.keys + fromList.chars
+        val mixed = chars.associateWith { c -> (1 - MODEL_SHARE) * fromList.probability(c) + MODEL_SHARE * (model[c] ?: 0f) / total }
+        return NextChars(fromList.script, fromList.prefix, mixed)
     }
 
     private fun englishWeights(prefix: String, out: HashMap<Char, Float>): Float {
@@ -116,5 +140,8 @@ class NextCharPredictor(
         const val LEARNED_ENGLISH = 4096f
         const val LEARNED_BANGLA = 20f
         const val LEARNED_AVRO = 3f
+
+        /** English with the model: its share of the next-letter probabilities. */
+        const val MODEL_SHARE = 0.5f
     }
 }

@@ -127,6 +127,8 @@ data class KeyboardUiState(
     /** BCP-47 tag voice typing should listen for, e.g. "bn-BD". */
     val voiceLanguageTag: String = "en-US",
     val emojiSkinTone: Int = 0,
+    /** Styled typing (𝐁𝐨𝐥𝐝, 𝐼𝑡𝑎𝑙𝑖𝑐 …) turned on from the editing panel, or null. */
+    val textStyle: com.yeamin.jolpai.core.tools.TextStyle? = null,
 )
 
 /**
@@ -179,8 +181,12 @@ class KeyboardController(
     private val emojiFor: (String) -> List<String> = { emptyList() },
     /** Emoji matching a search query, for searching from the emoji panel. */
     private val emojiSearch: (String) -> List<String> = { emptyList() },
+    /** Emoji that fit a sentence's words (oldest first), by meaning; called in the background. */
+    private val emojiPredict: (List<String>) -> List<String> = { emptyList() },
     /** Where next-letter predictions for predictive touch are computed. */
     private val touchRunner: BackgroundWork = BackgroundWork.IMMEDIATE,
+    /** Where the check card's next-word-model pass runs (word choice, spelling by context). */
+    private val checkRunner: BackgroundWork = BackgroundWork.IMMEDIATE,
 ) {
     /** Called when the user explicitly picks a layout, so it can be saved as the last-used one. */
     var onLayoutChosen: ((LayoutId) -> Unit)? = null
@@ -279,6 +285,8 @@ class KeyboardController(
     private var wordContext = WordContext.EMPTY
     private var wordSuggestions = WordSuggestions.EMPTY
     private var nextWords: List<String> = emptyList()
+    /** Emoji that fit the sentence, shown after a space with the next words. */
+    private var nextEmoji: List<String> = emptyList()
 
     /** The last space autocorrected [original] to [replacement]; Backspace right now undoes it. */
     private data class AutoCorrection(val original: String, val replacement: String)
@@ -301,14 +309,24 @@ class KeyboardController(
     private var panel = Panel.NONE
     private var selecting = false
 
+    /** Styled typing from the editing panel: typed English letters come out in this style. */
+    private var textStyle: com.yeamin.jolpai.core.tools.TextStyle? = null
+
     private val processors: Map<LayoutId, InputProcessor> = mapOf(
         LayoutId.ENGLISH to EnglishProcessor { settings.doubleSpacePeriod },
         LayoutId.AVRO to AvroProcessor(
             engine = { avroEngine.value },
             doubleSpaceEnabled = { settings.doubleSpacePeriod },
-            candidatesFor = { term -> if (suggestionsEnabled) suggester?.avro(term) else null },
+            candidatesFor = { term ->
+                if (!suggestionsEnabled) null
+                // With the Bangla model, the words before this one rank the candidates.
+                else if (settings.smartPredictions) suggester?.avro(term, SuggestOptions(context = banglaContextBefore().sentence, useModel = true))
+                else suggester?.avro(term)
+            },
         ),
         LayoutId.NATIONAL to NationalProcessor({ settings.doubleSpacePeriod }),
+        // Probhat types in the same logical order as the National layout, so it shares its composer.
+        LayoutId.PROBHAT to NationalProcessor({ settings.doubleSpacePeriod }),
     )
 
     private val processor: InputProcessor get() = processors.getValue(activeLayout)
@@ -343,6 +361,7 @@ class KeyboardController(
         editorField = newField
         if (!restarting) {
             speed.flush()
+            textStyle = null // styled typing is for the field it was turned on in
             endTranslate()
             endCheck()
             processors.values.forEach { it.reset() }
@@ -373,6 +392,7 @@ class KeyboardController(
         wordContext = WordContext.EMPTY
         wordSuggestions = WordSuggestions.EMPTY
         nextWords = emptyList()
+        nextEmoji = emptyList()
         publish()
     }
 
@@ -425,8 +445,11 @@ class KeyboardController(
 
         when (action) {
             is KeyAction.Text -> {
-                if (endsWord(action.text)) finishWord(autoCorrect = true)
-                processor.onText(action.text, editor)
+                val style = textStyle
+                if (style == null || !styledTyping(style, action.text)) {
+                    if (endsWord(action.text)) finishWord(autoCorrect = true)
+                    processor.onText(action.text, editor)
+                }
                 if (shift == ShiftState.ON) {
                     shift = ShiftState.OFF
                     shiftIsAutomatic = false
@@ -438,7 +461,7 @@ class KeyboardController(
                 if (shortcut != null && snippetFor(shortcut) != null) {
                     expandSnippet(shortcut)
                 } else if (composition != null) {
-                    val previous = banglaContextBefore().previous
+                    val previous = banglaContextBefore()
                     processor.onSpace(editor, clock())
                     learnAvro(composition, composition.bangla, previous)
                 } else {
@@ -464,7 +487,7 @@ class KeyboardController(
             } else {
                 val composition = processor.composition
                 if (composition != null) {
-                    val previous = banglaContextBefore().previous
+                    val previous = banglaContextBefore()
                     processor.finishComposing(editor)
                     learnAvro(composition, composition.bangla, previous)
                 } else {
@@ -494,6 +517,14 @@ class KeyboardController(
                 endComposing()
                 editor.commit(action.text)
             }
+            is KeyAction.InsertSnippet -> {
+                endComposing()
+                val start = editor.selectionStart()
+                val filled = fillSnippet(action.text)
+                editor.commit(filled.text)
+                filled.cursor?.let { at -> if (start >= 0) editor.setSelection(start + at, start + at) }
+            }
+            is KeyAction.SetTextStyle -> setTextStyle(action.style)
             is KeyAction.Shortcut -> runShortcut(action)
             is KeyAction.OpenEmojiTab -> {
                 if (searchPanel != null) endSearch(keepQuery = false)
@@ -693,9 +724,26 @@ class KeyboardController(
         checkBase = cursor - before.length + cut
         checkText = text
         checkEmpty = text.isBlank()
-        checkIssues = suggester?.checker?.check(text, checkIgnored, endsAtFieldEnd = after.length < CHECK_WINDOW).orEmpty()
+        val checker = suggester?.checker
+        val endsAtFieldEnd = after.length < CHECK_WINDOW
+        // The rules first, at once; then the next-word model (word choice, spelling by context) in
+        // the background, replacing the list if the text is still the same.
+        checkIssues = checker?.check(text, checkIgnored, endsAtFieldEnd).orEmpty()
         checkStale = false
+        val generation = ++checkGeneration
+        if (checker != null && settings.smartPredictions && checker.canUseModel) {
+            val ignored = checkIgnored.toSet()
+            checkRunner.run(work = { checker.check(text, ignored, endsAtFieldEnd, useModel = true) }) { issues ->
+                if (generation == checkGeneration && checking && !checkStale && checkText == text) {
+                    checkIssues = issues.filter { it.original !in checkIgnored }
+                    publish()
+                }
+            }
+        }
     }
+
+    /** Bumped by every check, so a slower model pass never overwrites a newer result. */
+    private var checkGeneration = 0
 
     /** Applies [issues] (positions in [checkText]) from last to first, then puts the cursor back. */
     private fun applyFixes(issues: List<com.yeamin.jolpai.suggest.TextIssue>) {
@@ -848,7 +896,7 @@ class KeyboardController(
     private fun endComposing() {
         val composition = processor.composition
         if (composition != null) {
-            val previous = banglaContextBefore().previous
+            val previous = banglaContextBefore()
             processor.finishComposing(editor)
             learnAvro(composition, composition.bangla, previous)
         }
@@ -940,28 +988,94 @@ class KeyboardController(
         }
     }
 
-    /** Replaces the typed snippet shortcut with the snippet text, followed by a space. */
+    /**
+     * Replaces the typed snippet shortcut with the snippet text (its variables filled in),
+     * followed by a space, or with the cursor where the snippet's {cursor} is.
+     */
     private fun expandSnippet(shortcut: String) {
-        val text = snippetFor(shortcut) ?: return
+        val raw = snippetFor(shortcut) ?: return
+        val filled = fillSnippet(raw)
         val composition = processor.composition
         if (composition != null && composition.roman == shortcut) {
-            processor.commitCandidate(text, editor, clock())
-            return
+            if (filled.cursor == null) {
+                processor.commitCandidate(filled.text, editor, clock())
+                return
+            }
+            processor.reset()
+            editor.commit(filled.text) // replaces the composing shortcut
+        } else {
+            val before = editor.textBeforeCursor(shortcut.length)
+            if (before.toString() != shortcut) return
+            editor.replaceBefore(shortcut.length, filled.text)
+            if (filled.cursor == null) {
+                processor.onSpace(editor, clock())
+                return
+            }
         }
-        val before = editor.textBeforeCursor(shortcut.length)
-        if (before.toString() != shortcut) return
-        editor.replaceBefore(shortcut.length, text)
-        processor.onSpace(editor, clock())
+        // {cursor}: put the cursor there instead of adding a space.
+        val end = editor.selectionStart()
+        if (end >= 0) {
+            val at = end - filled.text.length + filled.cursor
+            editor.setSelection(at, at)
+        }
     }
+
+    /** A snippet's text with {date}, {time}, {bangla_date}, {clipboard} … filled in. */
+    private fun fillSnippet(text: String): com.yeamin.jolpai.core.tools.SnippetVariables.Expanded =
+        com.yeamin.jolpai.core.tools.SnippetVariables.expand(text, wallClock(), clipboard = { boxClipboard?.paste() })
 
     /** Today's date or the time, in Bangla (digits and month names) on the Bangla layouts. */
     private fun formatDateTime(kind: DateTimeKind): String {
+        if (kind == DateTimeKind.BANGLA_DATE) {
+            val today = java.time.Instant.ofEpochMilli(wallClock()).atZone(java.time.ZoneId.systemDefault()).toLocalDate()
+            return com.yeamin.jolpai.core.tools.BanglaCalendar.format(today)
+        }
         val locale = if (language == Language.BANGLA) Locale.forLanguageTag("bn-BD") else Locale.getDefault()
         val format = when (kind) {
-            DateTimeKind.DATE -> DateFormat.getDateInstance(DateFormat.LONG, locale)
             DateTimeKind.TIME -> DateFormat.getTimeInstance(DateFormat.SHORT, locale)
+            else -> DateFormat.getDateInstance(DateFormat.LONG, locale)
         }
         return format.format(Date(wallClock()))
+    }
+
+    // ------------------------------------------------------------------ text styles
+
+    /**
+     * From the editing panel: with text selected, restyle it (and keep it selected so another
+     * style can be tried); with nothing selected, turn styled typing on or off.
+     */
+    private fun setTextStyle(style: com.yeamin.jolpai.core.tools.TextStyle?) {
+        val selected = if (editor.hasSelection()) editor.selectedText().toString() else ""
+        if (selected.isNotEmpty()) {
+            val start = editor.selectionStart()
+            val styled = if (style == null) {
+                com.yeamin.jolpai.core.tools.TextStyle.plain(selected)
+            } else {
+                com.yeamin.jolpai.core.tools.TextStyle.apply(style, selected)
+            }
+            editor.commit(styled)
+            if (start >= 0) editor.setSelection(start, start + styled.length)
+            return
+        }
+        endComposing()
+        textStyle = if (style == textStyle) null else style
+    }
+
+    /**
+     * Styled typing: commits [text] in [style] when it is something the style changes (English
+     * letters and digits; any letter for strike and underline). Returns false to type it normally.
+     */
+    private fun styledTyping(style: com.yeamin.jolpai.core.tools.TextStyle, text: String): Boolean {
+        if (text.isEmpty() || typingInBox || editorField.isSensitive) return false
+        val cp = text.codePointAt(0)
+        val markStyle = style == com.yeamin.jolpai.core.tools.TextStyle.STRIKE || style == com.yeamin.jolpai.core.tools.TextStyle.UNDERLINE
+        // English letters and digits (Bangla can be struck or underlined by selecting it instead).
+        val styleable = if (markStyle) Character.isLetterOrDigit(cp) && activeLayout == LayoutId.ENGLISH else
+            text.length == 1 && com.yeamin.jolpai.core.tools.TextStyle.styles(style, cp)
+        if (!styleable) return false
+        endComposing()
+        editor.commit(com.yeamin.jolpai.core.tools.TextStyle.apply(style, text))
+        return true
     }
 
     // ------------------------------------------------------------------ words, autocorrect, learning
@@ -993,10 +1107,21 @@ class KeyboardController(
         get() = suggestionsEnabled && activeLayout == LayoutId.ENGLISH && !translating &&
             settings.autoCorrect && editorField.kind == FieldKind.TEXT
 
-    private fun suggestOptions(typed: String) = SuggestOptions(
+    private fun suggestOptions(typed: String, ctx: WordContext = wordContext) = SuggestOptions(
         autoCorrect = autoCorrectEnabled && typed != rejectedWord,
         blockOffensive = settings.blockOffensiveWords,
+        context = ctx.sentence,
+        // Each language uses its own model (English, or Bangla for Avro, জাতীয় and প্রভাত).
+        useModel = settings.smartPredictions,
     )
+
+    /** The next-word model is used for English typing (it knows English only). */
+    private val modelEnabled: Boolean
+        get() = settings.smartPredictions && activeLayout == LayoutId.ENGLISH
+
+    /** Emoji by meaning for a sentence, when emoji suggestions and the model are both on. */
+    private fun predictEmoji(words: List<String>): List<String> =
+        if (settings.emojiSuggestions && modelEnabled && words.isNotEmpty()) emojiPredict(words) else emptyList()
 
     private fun readContext(): WordContext {
         val before = editor.textBeforeCursor(CONTEXT_CHARS)
@@ -1021,7 +1146,7 @@ class KeyboardController(
         var word = ctx.current
         var correction: AutoCorrection? = null
         if (autoCorrect && autoCorrectEnabled && word != rejectedWord) {
-            val s = if (wordSuggestions.typed == word) wordSuggestions else suggester.english(word, suggestOptions(word))
+            val s = if (wordSuggestions.typed == word) wordSuggestions else suggester.english(word, suggestOptions(word, ctx))
             val fix = s.autoCorrect
             if (fix != null && fix != word) {
                 editor.replaceBefore(word.length, fix)
@@ -1030,7 +1155,7 @@ class KeyboardController(
                 if (countStats) stats?.autocorrected()
             }
         }
-        learn(language, word, ctx.previous)
+        learn(language, word, ctx.previous, ctx.secondPrevious())
         if (word != rejectedWord) rejectedWord = null
         return correction
     }
@@ -1048,7 +1173,7 @@ class KeyboardController(
     private fun commitCandidate(action: KeyAction.CommitCandidate) {
         val composition = processor.composition
         if (composition != null) {
-            val previous = banglaContextBefore().previous
+            val previous = banglaContextBefore()
             if (countStats) speed.typed(clock())
             processor.commitCandidate(action.text, editor, clock())
             learnAvro(composition, action.text, previous)
@@ -1062,7 +1187,7 @@ class KeyboardController(
         }
         if (ctx.current.isNotEmpty()) editor.replaceBefore(ctx.current.length, action.text) else editor.commit(action.text)
         processor.onSpace(editor, clock())
-        learn(language, action.text, ctx.previous)
+        learn(language, action.text, ctx.previous, ctx.secondPrevious())
         if (action.verbatim) {
             rejectedWord = action.text
             val known = wordSuggestions.typed == action.text && wordSuggestions.typedIsKnown
@@ -1083,19 +1208,30 @@ class KeyboardController(
         history.recordWord(language, chosen, previous)
     }
 
-    private fun learn(language: Language, word: String, previous: String?) {
+    private fun learn(language: Language, word: String, previous: String?, previous2: String? = null) {
         if (countStats && word.isNotBlank()) stats?.word(language == Language.BANGLA)
         if (!learningEnabled || word.isBlank()) return
-        suggester?.history?.recordWord(language, word, previous)
+        suggester?.history?.recordWord(language, word, previous, previous2)
     }
 
-    private fun learnAvro(composition: Composition, committed: String, previous: String?) {
+    /**
+     * The word before [WordContext.previous] in the same sentence, for learning three-word
+     * sequences; null at a sentence's start or when the previous word isn't the sentence's last.
+     */
+    private fun WordContext.secondPrevious(): String? {
+        val p = previous ?: return null
+        if (sentence.size < 2 || !sentence.last().equals(p, ignoreCase = true)) return null
+        return sentence[sentence.size - 2]
+    }
+
+    private fun learnAvro(composition: Composition, committed: String, before: WordContext) {
+        val previous = before.previous
         if (countStats && committed.isNotBlank()) stats?.word(committed.any { it in 'ঀ'..'৿' })
         if (!learningEnabled) return
         val s = suggester ?: return
         s.recordAvroSelection(composition.roman, committed)
         val isBangla = committed.any { it in 'ঀ'..'৿' }
-        s.history.recordWord(if (isBangla) Language.BANGLA else Language.ENGLISH, committed, previous)
+        s.history.recordWord(if (isBangla) Language.BANGLA else Language.ENGLISH, committed, previous, before.secondPrevious())
     }
 
     /**
@@ -1124,6 +1260,7 @@ class KeyboardController(
             wordContext = WordContext.EMPTY
             wordSuggestions = WordSuggestions.EMPTY
             nextWords = emptyList()
+            nextEmoji = emptyList()
             return changed
         }
         if (composition != null) return toolsChanged // Avro candidates come with the composition
@@ -1133,14 +1270,43 @@ class KeyboardController(
         wordContext = ctx
         if (ctx.current.isEmpty()) {
             wordSuggestions = WordSuggestions.EMPTY
-            nextWords = if (settings.nextWordPrediction) s.nextWords(language, ctx.previous) else emptyList()
+            nextWords = emptyList()
+            nextEmoji = emptyList()
+            if (settings.nextWordPrediction) {
+                // In the background: with the model this reads the whole sentence.
+                val lang = language
+                val options = suggestOptions("", ctx)
+                val emojiWords = if (lang == Language.ENGLISH) ctx.sentence else emptyList()
+                runner.run(
+                    work = {
+                        WordSuggestions("", s.nextWords(lang, ctx.previous, options = options), null, false, emoji = predictEmoji(emojiWords))
+                    },
+                    deliver = { result ->
+                        if (wordContext == ctx) {
+                            nextWords = result.candidates
+                            nextEmoji = result.emoji
+                            publish()
+                        }
+                    },
+                )
+            }
         } else {
             nextWords = emptyList()
+            nextEmoji = emptyList()
             val typed = ctx.current
             val lang = language
-            val options = suggestOptions(typed)
+            val options = suggestOptions(typed, ctx)
             runner.run(
-                work = { if (lang == Language.ENGLISH) s.english(typed, options) else s.bangla(typed) },
+                work = {
+                    if (lang == Language.ENGLISH) {
+                        val r = s.english(typed, options)
+                        // Emoji by meaning, for the sentence with the word as it will be.
+                        val emoji = if (r.typedIsKnown || r.autoCorrect != null) predictEmoji(ctx.sentence + (r.autoCorrect ?: typed)) else emptyList()
+                        r.copy(emoji = emoji)
+                    } else {
+                        s.bangla(typed, options = options)
+                    }
+                },
                 deliver = { result ->
                     if (wordContext.current == result.typed) {
                         wordSuggestions = result
@@ -1157,7 +1323,15 @@ class KeyboardController(
         get() = !typingInBox && !editorField.isPassword && !editorField.noSuggestions &&
             (editorField.kind == FieldKind.TEXT || editorField.kind == FieldKind.URI)
 
+    /** The strip; while styled typing is on, it starts with the style's name and ✕ to turn it off. */
     private fun buildStrip(): List<StripItem> {
+        val items = stripItems()
+        val style = textStyle ?: return items
+        if (panel != Panel.NONE || searchPanel != null || translating || checking) return items
+        return listOf(StripItem("${style.sample} ✕", KeyAction.SetTextStyle(null), emphasized = true)) + items.take(2)
+    }
+
+    private fun stripItems(): List<StripItem> {
         searchPanel?.let { target ->
             // Search mode: cancel, the query (tap = search), and live emoji results.
             val query = searchBuffer.text
@@ -1194,7 +1368,14 @@ class KeyboardController(
         }
         if (snippetItem != null) return listOf(snippetItem)
         val typed = wordContext.current
-        if (typed.isEmpty()) return nextWords.map { StripItem(it, KeyAction.CommitCandidate(it)) }
+        if (typed.isEmpty()) {
+            // At a sentence start (shift is on) the words are offered with a capital, as they'd be typed.
+            val capital = activeLayout == LayoutId.ENGLISH && shift == ShiftState.ON
+            val words = nextWords.map { if (capital) it.replaceFirstChar { c -> c.uppercaseChar() } else it }
+            val emoji = nextEmoji.firstOrNull()
+            return words.take(if (emoji != null) 2 else 3).map { StripItem(it, KeyAction.CommitCandidate(it)) } +
+                listOfNotNull(emoji?.let { StripItem(it, KeyAction.InsertEmoji(it, afterWord = false)) })
+        }
 
         val s = wordSuggestions.takeIf { it.typed == typed }
         val auto = s?.autoCorrect
@@ -1206,7 +1387,7 @@ class KeyboardController(
             (s ?: wordSuggestions).candidates.forEach { if (it != auto && it != typed) add(it) }
         }.distinct()
         // Three slots: typed word, best suggestion, then a matching emoji if there is one.
-        val emoji = emojiSuggestions(auto ?: typed).firstOrNull()
+        val emoji = emojiSuggestions(auto ?: typed).firstOrNull() ?: s?.emoji?.firstOrNull()?.takeIf { settings.emojiSuggestions }
         others.take(if (emoji != null) 1 else 2).forEachIndexed { i, word ->
             items += StripItem(word, KeyAction.CommitCandidate(word), emphasized = auto != null && i == 0)
         }
@@ -1235,7 +1416,7 @@ class KeyboardController(
     private fun selectLayout(id: LayoutId) {
         val composition = processor.composition
         if (composition != null) {
-            val previous = banglaContextBefore().previous
+            val previous = banglaContextBefore()
             processor.finishComposing(editor)
             learnAvro(composition, composition.bangla, previous)
         }
@@ -1303,25 +1484,29 @@ class KeyboardController(
         }
         val script: TypingScript
         val prefix: String
+        var sentence: List<String> = emptyList()
         when (activeLayout) {
             LayoutId.ENGLISH -> {
                 script = TypingScript.ENGLISH
-                prefix = WordContext.english(editor.textBeforeCursor(CONTEXT_CHARS)).current
+                val ctx = WordContext.english(editor.textBeforeCursor(CONTEXT_CHARS))
+                prefix = ctx.current
+                if (modelEnabled) sentence = ctx.sentence
             }
             LayoutId.AVRO -> {
                 script = TypingScript.AVRO
                 prefix = processor.composition?.roman.orEmpty()
             }
-            LayoutId.NATIONAL -> {
+            LayoutId.NATIONAL, LayoutId.PROBHAT -> {
                 script = TypingScript.NATIONAL
                 prefix = WordContext.bangla(editor.textBeforeCursor(CONTEXT_CHARS)).current
             }
         }
-        val key = "${script.name}:$prefix"
+        val useModel = script == TypingScript.ENGLISH && modelEnabled
+        val key = "${script.name}:$prefix" + if (useModel) "|" + sentence.joinToString(" ") else ""
         if (key == nextCharsKey) return
         nextCharsKey = key
         nextChars = null // never use a prediction for a different prefix
-        touchRunner.run(work = { predictor!!.predict(script, prefix) }) { result ->
+        touchRunner.run(work = { predictor!!.predict(script, prefix, sentence, useModel) }) { result ->
             if (nextCharsKey == key) {
                 nextChars = result
                 _state.value = buildState()
@@ -1364,11 +1549,12 @@ class KeyboardController(
             else -> settings.voiceLanguage.storageKey
         },
         emojiSkinTone = settings.emojiSkinTone,
+        textStyle = textStyle,
     )
 
     private companion object {
         const val DOUBLE_TAP_MS = 350L
-        const val CONTEXT_CHARS = 64
+        const val CONTEXT_CHARS = 128
         const val SEARCH_RESULTS = 16
 
         /** Characters read on each side of the cursor for the Check card. */

@@ -26,3 +26,6 @@ include(":emoji-engine")
 include(":voice-input")
 include(":media")
 include(":theme-engine")
+
+// PC-only tool: trains the next-word models (not part of the app).
+include(":lm-trainer")

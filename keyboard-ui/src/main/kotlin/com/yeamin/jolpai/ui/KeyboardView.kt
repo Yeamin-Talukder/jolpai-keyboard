@@ -483,11 +483,13 @@ class KeyboardView(context: Context, private val palette: KeyboardPalette) : Vie
             labelPaint.typeface = if (key.style == KeyStyle.CHARACTER) regular else medium
             val fm = labelPaint.fontMetrics
             val baseline = r.centerY() - (fm.ascent + fm.descent) / 2
-            canvas.drawText(cell.label, r.centerX(), baseline, labelPaint)
+            if (DisplayLabel.isSign(cell.label)) DisplayLabel.drawSignCentered(canvas, cell.label, r.centerX(), r.centerY(), labelPaint)
+            else canvas.drawText(cell.label, r.centerX(), baseline, labelPaint)
         }
 
         cell.hint?.let { hint ->
-            canvas.drawText(hint, r.right - 4 * density, r.top + 3 * density + hintPaint.textSize, hintPaint)
+            if (DisplayLabel.isSign(hint)) DisplayLabel.drawSignTopRight(canvas, hint, r.right - 4 * density, r.top + 5 * density, hintPaint)
+            else canvas.drawText(hint, r.right - 4 * density, r.top + 3 * density + hintPaint.textSize, hintPaint)
         }
     }
 

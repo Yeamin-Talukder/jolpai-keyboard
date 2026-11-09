@@ -158,6 +158,28 @@ class JolpaiImeService : InputMethodService(), LifecycleOwner, SavedStateRegistr
         }
     }
 
+    // The check card's next-word-model pass: its own job, so touch predictions never cancel it.
+    private var checkJob: Job? = null
+    private val checkRunner = object : BackgroundWork {
+        override fun <T> run(work: () -> T, deliver: (T) -> Unit) {
+            checkJob?.cancel()
+            checkJob = scope.launch {
+                val result = withContext(Dispatchers.Default) { work() }
+                deliver(result)
+            }
+        }
+    }
+
+    /** Emoji by meaning; built once both the next-word model and the emoji data are loaded. */
+    @Volatile private var emojiPredictor: com.yeamin.jolpai.suggest.EmojiPredictor? = null
+
+    private fun buildEmojiPredictor() {
+        val model = suggestionResources.englishModel ?: return
+        val data = emojiData ?: return
+        val usable = data.all.filter { it.group != com.yeamin.jolpai.emoji.EmojiGroup.FLAGS }.map { it.value }.toSet()
+        emojiPredictor = com.yeamin.jolpai.suggest.EmojiPredictor(model, data.englishKeywords.filterKeys { it in usable }.toList())
+    }
+
     /** Where this user touches each key; kept in a private preferences file, never backed up. */
     private val touchCalibration = TouchCalibration()
     private val touchPrefs by lazy { getSharedPreferences(TOUCH_PREFS, MODE_PRIVATE) }
@@ -176,6 +198,7 @@ class JolpaiImeService : InputMethodService(), LifecycleOwner, SavedStateRegistr
 
     override fun onCreate() {
         super.onCreate() // Hilt injects here
+        scope.launch { clipboardRepository.addPacksOnce() } // ready-made snippet packs, once
         savedStateController.performAttach()
         savedStateController.performRestore(null)
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_RESUME)
@@ -186,6 +209,7 @@ class JolpaiImeService : InputMethodService(), LifecycleOwner, SavedStateRegistr
             suggester = suggestionResources.suggester,
             runner = backgroundRunner,
             touchRunner = touchRunner,
+            checkRunner = checkRunner,
             avroEngine = suggestionResources.phonetic,
             snippetFor = { shortcut -> snippets[shortcut] },
             emojiFor = { word ->
@@ -193,6 +217,10 @@ class JolpaiImeService : InputMethodService(), LifecycleOwner, SavedStateRegistr
             },
             emojiSearch = { query ->
                 emojiData?.search(query).orEmpty().filter { canDraw(it.value) }.map { it.withTone(settings.emojiSkinTone) }
+            },
+            emojiPredict = { words ->
+                emojiPredictor?.predict(words, limit = 3).orEmpty().filter { canDraw(it) }
+                    .map { e -> emojiData?.find(e)?.withTone(settings.emojiSkinTone) ?: e }
             },
         )
         touchCalibration.decode(touchPrefs.getString(KEY_CALIBRATION, "").orEmpty())
@@ -242,6 +270,7 @@ class JolpaiImeService : InputMethodService(), LifecycleOwner, SavedStateRegistr
             controller.preloadAvro()
             suggestionResources.loadAll { scope.launch { controller.onSuggestionDataLoaded() } }
             emojiData = EmojiData.load()
+            buildEmojiPredictor()
             scope.launch { controller.onSuggestionDataLoaded() }
         }
 
@@ -418,8 +447,13 @@ class JolpaiImeService : InputMethodService(), LifecycleOwner, SavedStateRegistr
 
     // ------------------------------------------------------------------ appearance
 
-    private fun currentTheme(): KeyboardTheme =
-        ThemeRepository.resolve(settings.themeId, customThemes, KeyboardPalette.isNight(this))
+    /** The chosen theme, or on a festival day (with "Festival themes" on) that day's theme. */
+    private fun currentTheme(): KeyboardTheme {
+        if (settings.festivalThemes) {
+            com.yeamin.jolpai.theme.Festivals.on(java.time.LocalDate.now())?.let { return it.theme }
+        }
+        return ThemeRepository.resolve(settings.themeId, customThemes, KeyboardPalette.isNight(this))
+    }
 
     private fun layoutOptions(): KeyboardContainer.LayoutOptions {
         val landscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
@@ -751,6 +785,7 @@ class JolpaiImeService : InputMethodService(), LifecycleOwner, SavedStateRegistr
 
     private val clipboardActions = object : ClipboardPanelActions {
         override fun pasteText(text: String) = controller.onKey(KeyAction.PasteText(text))
+        override fun insertSnippet(text: String) = controller.onKey(KeyAction.InsertSnippet(text))
 
         override fun pasteImage(clip: ClipEntity): Boolean {
             val uri = clipboardRepository.contentUri(clip) ?: return false

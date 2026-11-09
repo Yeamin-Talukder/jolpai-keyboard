@@ -42,6 +42,8 @@ class EmojiData private constructor(
     /** Lower-cased keyword or name → emoji, for both languages. */
     private val keywordIndex: Map<String, List<Emoji>>,
     private val banglaNames: Map<String, String>,
+    /** Emoji â its English CLDR keywords (and name words), in file order. */
+    val englishKeywords: Map<String, List<String>> = emptyMap(),
 ) {
     private val byGroup: Map<EmojiGroup, List<Emoji>> = all.groupBy { it.group }
 
@@ -116,6 +118,7 @@ class EmojiData private constructor(
             }
             all.forEach { e -> addKeyword(e.name, e) }
             val banglaNames = HashMap<String, String>()
+            val englishKeywords = LinkedHashMap<String, List<String>>()
             for ((lines, isBangla) in listOf(englishLines to false, banglaLines to true)) {
                 lines.forEach { line ->
                     val parts = line.split('\t')
@@ -125,10 +128,12 @@ class EmojiData private constructor(
                         addKeyword(name, e)
                         if (isBangla) banglaNames[e.value] = name
                     }
-                    parts.getOrElse(2) { "" }.split('|').forEach { addKeyword(it, e) }
+                    val keywords = parts.getOrElse(2) { "" }.split('|')
+                    keywords.forEach { addKeyword(it, e) }
+                    if (!isBangla) englishKeywords[e.value] = (keywords + name.split(' ')).map { it.trim().lowercase() }.filter { it.isNotEmpty() }.distinct()
                 }
             }
-            return EmojiData(all, byValue, index, banglaNames)
+            return EmojiData(all, byValue, index, banglaNames, englishKeywords)
         }
 
         private fun readLines(path: String): List<String> {

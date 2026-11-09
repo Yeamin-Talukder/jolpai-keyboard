@@ -213,6 +213,8 @@ class KeyPopupView(context: Context, private val palette: KeyboardPalette) : Vie
     }
 
     private fun drawCentered(canvas: Canvas, label: String, r: RectF) {
+        // A sign on its own (à¦¿ à§ à§ â¦) is centred by its drawn shape, like on the key.
+        if (DisplayLabel.isSign(label)) return DisplayLabel.drawSignCentered(canvas, label, r.centerX(), r.centerY(), textPaint)
         val fm = textPaint.fontMetrics
         canvas.drawText(label, r.centerX(), r.centerY() - (fm.ascent + fm.descent) / 2, textPaint)
     }

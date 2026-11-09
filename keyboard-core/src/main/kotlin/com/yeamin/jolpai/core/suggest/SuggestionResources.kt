@@ -7,6 +7,7 @@ import com.yeamin.jolpai.suggest.AvroDictionarySearch
 import com.yeamin.jolpai.suggest.AvroSuggester
 import com.yeamin.jolpai.suggest.BanglaDictionary
 import com.yeamin.jolpai.suggest.EnglishDictionary
+import com.yeamin.jolpai.suggest.NextWordModel
 import com.yeamin.jolpai.suggest.Suggester
 import com.yeamin.jolpai.suggest.UserHistory
 import java.util.concurrent.atomic.AtomicBoolean
@@ -32,7 +33,15 @@ class SuggestionResources @Inject constructor(private val store: RoomHistoryStor
     @Volatile private var bangla: BanglaDictionary? = null
     @Volatile private var avro: AvroSuggester? = null
 
-    val suggester = Suggester({ english }, { bangla }, { avro }, history)
+    /** The English next-word model (4.7 MB, loaded with the dictionaries); null until then or if damaged. */
+    @Volatile var englishModel: NextWordModel? = null
+        private set
+
+    /** The Bangla next-word model (Avro, জাতীয়, প্রভাত); null until loaded or if missing. */
+    @Volatile var banglaModel: NextWordModel? = null
+        private set
+
+    val suggester = Suggester({ english }, { bangla }, { avro }, history, model = { englishModel }, banglaModel = { banglaModel })
 
     private val started = AtomicBoolean(false)
 
@@ -46,6 +55,10 @@ class SuggestionResources @Inject constructor(private val store: RoomHistoryStor
         runCatching { history.load(store.loadSnapshot()) }
         onProgress()
         english = EnglishDictionary.load()
+        onProgress()
+        englishModel = NextWordModel.loadEnglish()
+        onProgress()
+        banglaModel = NextWordModel.loadBangla()
         onProgress()
         val b = BanglaDictionary.load()
         bangla = b

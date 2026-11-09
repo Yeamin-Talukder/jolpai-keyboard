@@ -63,21 +63,24 @@ Earlier, in 0.9.0: Check offers the fix plus 2 other likely words (the right wor
 |---|---|
 | **Avro Phonetic (অভ্র)** | Type how a word sounds in English letters: `ami banglay likhi` → আমি বাংলায় লিখি. Dictionary candidates, remembers your picks, reph with `rr` (`korrm` → কর্ম). Checked against a 413-case Avro test corpus. |
 | **National (জাতীয়) layout** | The Bangladesh national standard layout, arranged like Ridmik Keyboard. Hold a key for the letter in its corner (ু → উ, ত → ৎ); reph is Shift + ্. |
+| **Probhat (প্রভাত) layout** | The fixed Bangla layout used on Linux computers, laid out 12 · 9 · 9 as on popular Bangla phone keyboards. The corner shows the shifted letter; hold for it, or for ঞ ৎ ্র র্. Turn it on in Languages & layouts. |
 | **English QWERTY** | Autocorrect with undo on Backspace, word completion, accents on long-press. |
-| **One-tap switching** | Switch English ↔ বাংলা (অভ্র) ↔ বাংলা (জাতীয়) from the top bar; choose which layouts are on. |
+| **One-tap switching** | Switch English ↔ বাংলা (অভ্র) ↔ বাংলা (জাতীয়) ↔ বাংলা (প্রভাত) from the top bar; choose which layouts are on. |
 | **Bangla digits & punctuation** | Hold a digit for ০–৯; two spaces type `।` in Bangla and `. ` in English. |
 
 ### 🧠 Smart suggestions (on-device)
 - Word completion and autocorrect for **English and Bangla**. English autocorrect understands phone slips (a neighbouring key, swapped letters) and spelling-by-sound mistakes (doubled letters, vowels, c/k/s), and only corrects when one fix is clearly best; otherwise it offers the choices.
-- **Next-word prediction** learned from your own typing.
+- **Next-word prediction** from a small **on-device neural model** that reads your whole sentence (English), mixed with what you usually type next. It also ranks completions and autocorrect by the sentence: "i want to takl" → talk.
+- **Bangla next words from day one**: a ranked list counted from 91 million words of open Bangla text (কেমন → আছেন, আমি তোমাকে → ভালোবাসি), looking at the last one or two words.
+- **Learns your phrases**: which word you type after one word and after two words, and old habits fade (half the weight every 30 days unused), so new ones take over.
 - **Personal dictionary**: add words so they are never "corrected".
-- **Emoji suggestions** for the word you type, in English and Bangla.
+- **Emoji suggestions** for the word you type, in English and Bangla. In English the model also picks emoji by meaning ("so tired" → 😴, "my dog is sick" → 🐶).
 - **Predictive touch**: likely next keys get a slightly larger tap area (invisible), and it learns where you tap.
 - **Bangla word frequencies**: common Bangla words come first in completions, Avro candidates and spelling fixes (মানষ → মানুষ).
 - **✨ AI proofreading** on phones with Google's on-device AI (Gemini Nano): an extra English check in the Check card, done on the phone.
 
 ### ✓ Spelling and grammar check (offline)
-- **Check** in the top bar lists what may be wrong in the text you're writing: **spelling** (English and Bangla, including Bangla word endings and look-alike letters such as ি/ী, শ/ষ/স), **punctuation** (spaces around marks, দাঁড়ি in Bangla, a missing full stop) and common **English grammar** (a/an, "i" → "I", "could of", "better then", "he don't" …).
+- **Check** in the top bar lists what may be wrong in the text you're writing: **spelling** (English and Bangla, including Bangla word endings and look-alike letters such as ি/ী, শ/ষ/স), **punctuation** (spaces around marks, দাঁড়ি in Bangla, a missing full stop) and common **English grammar** (a/an, "i" → "I", "could of", "better then", "he don't" …). With the on-device model it also catches **wrong word choices** ("their going" → they're, then/than, its/it's, your/you're) and ranks spelling fixes by the sentence.
 - Fix one, **Fix all**, ignore, or add a word to your dictionary. Names, links, numbers and e-mail addresses are left alone.
 
 ### 🎨 Make it yours
@@ -94,8 +97,9 @@ Earlier, in 0.9.0: Check offers the fix plus 2 other likely words (the right wor
 
 ### 📋 Clipboard and productivity
 - **Clipboard history** (text and images), with pins, folders and **automatic categories** (links, emails, OTP codes, phone numbers, addresses, code).
-- **Snippets / text expansion**: type `@addr` + space to insert your address.
-- **Editing panel**: select, cut/copy/paste, arrow keys, word delete, undo/redo, date & time.
+- **Snippets / text expansion**: type `@addr` + space to insert your address. Snippets can hold `{date}`, `{bangla_date}`, `{day}`, `{time}`, `{clipboard}` and `{cursor}`; ready-made packs of everyday messages and Islamic greetings (`@salam` → আসসালামু আলাইকুম).
+- **Editing panel**: select, cut/copy/paste, arrow keys, word delete, undo/redo, date & time, and **বাংলা তারিখ** (today's Bangla calendar date, e.g. ২৩ কার্তিক ১৪৩৩).
+- **Text styles**: 𝐁𝐨𝐥𝐝, 𝐼𝑡𝑎𝑙𝑖𝑐, 𝓢𝓬𝓻𝓲𝓹𝓽, 𝔊𝔬𝔱𝔥𝔦𝔠, 𝕆𝕦𝕥𝕝𝕚𝕟𝕖, 𝙼𝚘𝚗𝚘, Ⓒⓘⓡⓒⓛⓔ, Sᴍᴀʟʟ ᴄᴀᴘs, S̶t̶r̶i̶k̶e̶ and more for Facebook, WhatsApp and bios: restyle a selection, or type in a style.
 - **Space-bar trackpad** (iPhone-style) to move the cursor, plus **Backspace swipe** to delete whole words.
 - **Custom gestures**: assign swipes, holds and double-taps to actions, or to insert your own text.
 - **Smart field handling**: calculator number pad, phone dial pad, and Send/Search/Go Enter keys.
@@ -103,6 +107,7 @@ Earlier, in 0.9.0: Check offers the fix plus 2 other likely words (the right wor
 ### 🎨 Themes and customisation
 - **64 built-in themes**: Material You (default; follows your wallpaper, light and dark), soft pastels, jewel tones, gradients, AMOLED black, High contrast, and soft dark themes like *Olive night*, *Misty blue* and *Moonlight*.
 - **Theme editor**: your own colours, gradients or a background photo. Share themes as text.
+- **Festival themes**: পহেলা বৈশাখ, একুশে ফেব্রুয়ারি, বিজয় দিবস, রমজান and ঈদ themes, used automatically on those days (you can turn it off).
 - Keyboard **height** (portrait/landscape), **number row**, **one-handed** mode, **floating** keyboard.
 - Key **sound and vibration** strength, long-press delay, and soft key-press animations.
 
@@ -364,10 +369,11 @@ signed APKs, and publishes them with the notes and checksums.
 - **Language button (top bar, right):** tap to switch between English, বাংলা (অভ্র) and বাংলা (জাতীয়). Hold it for Android's keyboard chooser. Choose which layouts are on in the app.
 - **Avro:** type how a word sounds (`ami` → আমি). The underlined word is the best dictionary match; the strip shows the other candidates, with your English spelling last. Tap one to use it, and Jolpai remembers your pick for that spelling. Case matters (`t` ত, `T` ট); reph is `rr` (`korrm` → কর্ম).
 - **জাতীয়:** Ridmik-style National layout. Hold a key to type the small letter in its corner (ু → উ, ত → ৎ). ্র is ্ then র (or hold র); reph is Shift + ্.
-- **Suggestions:** the strip shows what you typed, the best suggestion and one more. If the middle one is highlighted, space autocorrects to it; press Backspace right after to undo. Tap your own word to keep it, then "Add to dictionary".
-- **Next word:** after a space, the strip suggests words you often type next.
+- **প্রভাত:** Probhat, laid out 12 · 9 · 9 like popular Bangla phone keyboards. The corner shows the shifted letter (য়: য-ফলা, ্: ঁ); hold a key for it. ৃ and ্ sit beside ম (shifted: ৃ and ঁ); ঞ is on জ, ৎ on ত. Off until you turn it on in Languages & layouts.
+- **Suggestions:** the strip shows what you typed, the best suggestion and one more. With Autocorrect on (Suggestions settings; off by default), a highlighted middle suggestion is what space turns your word into; press Backspace right after to undo. Tap your own word to keep it, then "Add to dictionary".
+- **Next word:** after a space, the strip suggests words you often type next (after the last one or two words; recent habits count more). In Bangla it also uses a ranked list from open text, so it works from the first word.
 - **Shift:** tap for one capital; double-tap for caps lock. **Two spaces** type `. ` (English) or `। ` (Bangla).
-- **Hold a key** for more characters (accents, digits, the shifted Bangla letter, ৎ ঃ ঁ). Set the hold time (150–800 ms) in Typing & gestures.
+- **Hold a key** for more characters (accents, digits, the shifted Bangla letter, ৎ ঃ ঁ). Set the hold time (150–800 ms, 200 ms by default) in Typing & gestures.
 - **Number fields** get a calculator-style pad, phone fields a dial pad. Hold a digit for its Bangla form (hold 0 on the dial pad for +).
 - **Calculator:** type `250*4` and tap `= 1000` in the strip (or type `12*3+4=` to add the answer after "=").
 - **Predictive touch:** likely next keys get a little more room near their edges; a tap in the middle of a key always types it. Turn it off or reset it in Typing & gestures.
@@ -382,7 +388,7 @@ signed APKs, and publishes them with the notes and checksums.
 - **Backspace swipe:** slide left from ⌫ to select words, back right to select fewer, and let go to delete (slide all the way back to cancel). Hold ⌫ to keep deleting.
 - **Cut, copy, paste:** hold x, c or v (English and Avro).
 - **✎ Editing tools:** select, copy, cut, paste, cursor keys, word selection and deletion, undo/redo (where the app supports it), date and time.
-- **Custom gestures:** swipe up on space for emoji, down for the clipboard. Assign your own swipes, holds and double-taps on Space, comma, full stop, Shift, Backspace or the top bar, including inserting your own text such as `@gmail.com`.
+- **Custom gestures:** swipe up on space for the clipboard, down for emoji; swipe the top bar left to undo, right to redo. Assign your own swipes, holds and double-taps on Space, comma, full stop, Shift, Backspace or the top bar, including inserting your own text such as `@gmail.com`.
 - **Toolbar:** choose and order 😊 📋 🎤 ✎ 🌐 ✓ in the app. Tap a toolbar icon to open its panel, and tap it again to go back to the keys.
 - **Swipe down to close:** Translate, Check, emoji and clipboard open above the top bar; swipe down on them to close (scroll a list to the top first).
 
@@ -432,9 +438,9 @@ Install Jolpai, turn it on in the app's two setup steps, then tap the 🌐 langu
 Yes. It has a built-in Avro phonetic engine using the open Avro rule table from OpenBangla, with
 dictionary candidates and learning of your choices. It works fully offline.
 
-**Does it have the National (জাতীয়) / Jatiya layout? What about Bijoy?**
-Yes, the Bangladesh National layout is built in, arranged like Ridmik Keyboard. The Bijoy layout is
-not included.
+**Does it have the National (জাতীয়) / Jatiya layout? What about Probhat or Bijoy?**
+Yes, the Bangladesh National layout is built in, arranged like Ridmik Keyboard. The Probhat (প্রভাত)
+layout is built in too (turn it on in Languages & layouts). The Bijoy layout is not included.
 
 **Is Jolpai Keyboard safe? Does it collect what I type?**
 No. It has no account, analytics, ads or crash-reporting SDK, and stores learned words and clipboard
@@ -497,6 +503,8 @@ Each folder holds the licence text and a NOTICE with the exact source and commit
 - **English word list**: `suggestion-engine/src/main/resources/en/`, from AOSP LatinIME (Apache-2.0).
 - **Bangla word list and Avro search patterns**: `suggestion-engine/src/main/resources/bn/`, from [OpenBangla/upodesh](https://github.com/OpenBangla/upodesh) (MIT).
 - **Bangla word frequencies**: same folder, `bangla-frequency.tsv`, from [hermitdave/FrequencyWords](https://github.com/hermitdave/FrequencyWords) (code MIT; counts from OpenSubtitles 2018, CC BY-SA 4.0; this file is shared under CC BY-SA 4.0).
+- **Bangla next-word lists**: `suggestion-engine/src/main/resources/bn/bangla-nextwords.tsv` (CC BY-SA 4.0) and `bangla-trigrams.tsv` (CC BY 4.0), counted by `tools/prepare-bangla-nextwords.pl` from [Bangla Wikipedia](https://bn.wikipedia.org) (pairs only, CC BY-SA 4.0), the [Leipzig Corpora Collection](https://wortschatz.uni-leipzig.de/en/download/ben) (ben-bd_web_2017_1M, ben_newscrawl_2017_1M; CC BY) and [Tatoeba](https://tatoeba.org) (CC BY 2.0 FR). Details in `bn/NOTICE.txt`.
+- **English next-word model**: `suggestion-engine/src/main/resources/lm/en.nwp.bin`, [youcoded/next-word-english](https://huggingface.co/youcoded/next-word-english), models trained and released by Destin Moss via youcoded.ai, 2026 (ODC-By 1.0 and CC BY 2.0 FR; built from FineWeb by Hugging Face and [Tatoeba](https://tatoeba.org) sentences). Notices in the same folder.
 - **Key fonts**: `keyboard-ui/src/main/res/font/` (Hind Siliguri, Tiro Bangla, Galada, Atma) from Google Fonts, SIL Open Font License 1.1; notice in `keyboard-ui/src/main/resources/fonts/`.
 - **Avro suffixes and Roman autocorrections**: same folder, from [OpenBangla/riti](https://github.com/OpenBangla/riti) (MPL-2.0, unmodified).
 - **Emoji data**: `emoji-engine/src/main/resources/emoji/`, Unicode Emoji 17.0 and CLDR 49 annotations (Unicode License V3).

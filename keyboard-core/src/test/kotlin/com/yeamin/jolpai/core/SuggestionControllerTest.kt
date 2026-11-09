@@ -39,7 +39,7 @@ class SuggestionControllerTest {
         suggester = Suggester({ english }, { bangla }, { avro }, history),
         avroEngine = phonetic,
     ).apply {
-        updateSettings(KeyboardSettings(autoCapitalize = false))
+        updateSettings(KeyboardSettings(autoCapitalize = false, autoCorrect = true))
         onStartInput(FieldInfo.DEFAULT, restarting = false)
     }
 
@@ -167,15 +167,18 @@ class SuggestionControllerTest {
 
 class WordContextTest {
     @Test fun english() {
-        assertEquals(WordContext("good", "mor"), WordContext.english("good mor"))
-        assertEquals(WordContext("good", ""), WordContext.english("good "))
+        assertEquals(WordContext("good", "mor", listOf("good")), WordContext.english("good mor"))
+        assertEquals(WordContext("good", "", listOf("good")), WordContext.english("good "))
         assertEquals(WordContext(null, "the"), WordContext.english("end. the"))
+        // The sentence: words since the last sentence end, punctuation inside skipped.
+        assertEquals(listOf("Well", "I", "think"), WordContext.english("Done. Well, I think so").sentence.take(3))
+        assertEquals(listOf("see", "you"), WordContext.english("Hi!\nsee you ").sentence)
         assertEquals(WordContext(null, "don't"), WordContext.english("don't"))
         assertEquals(WordContext.EMPTY, WordContext.english(""))
     }
 
     @Test fun bangla() {
-        assertEquals(WordContext("আমি", "বাং"), WordContext.bangla("আমি বাং"))
+        assertEquals(WordContext("আমি", "বাং", listOf("আমি")), WordContext.bangla("আমি বাং"))
         assertEquals(WordContext(null, ""), WordContext.bangla("আমি। "))
         assertNull(WordContext.bangla("hello আমি").previous)
         assertFalse(WordContext.bangla("২০২৬").current.isNotEmpty())
