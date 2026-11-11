@@ -3,75 +3,144 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Downloading Jolpai Keyboard…</title>
-<meta name="description" content="Downloads the newest Jolpai Keyboard APK for Android.">
+<title>Download Jolpai Keyboard</title>
+<meta name="description" content="Downloads Jolpai Keyboard for Android: the newest version, or pick a version and phone type.">
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#12170e">
 <link rel="icon" href="../images/icon-96.webp" type="image/webp">
 <style>
-  :root { --bg: #12170e; --card: #1b2214; --line: #2e3a22; --text: #eef0e4; --muted: #b9bfa6; --dim: #8f977b; --olive: #b5c94a; }
+  :root { --bg: #12170e; --card: #1b2214; --card-2: #222a19; --line: #2e3a22; --text: #eef0e4; --muted: #b9bfa6; --dim: #8f977b; --olive: #b5c94a; }
   * { box-sizing: border-box; }
   body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px 16px; background: radial-gradient(80% 60% at 50% 0%, rgba(143,168,58,.18), transparent 70%), var(--bg); color: var(--text); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-  main { width: min(420px, 100%); text-align: center; background: var(--card); border: 1px solid var(--line); border-radius: 24px; padding: 30px 22px 24px; }
+  main { width: min(440px, 100%); background: var(--card); border: 1px solid var(--line); border-radius: 24px; padding: 28px 20px 22px; }
+  .head { text-align: center; }
   img { width: 64px; height: 64px; border-radius: 16px; }
-  h1 { font-size: 22px; margin: 14px 0 6px; }
+  h1 { font-size: 22px; margin: 12px 0 6px; }
   p { margin: 0 0 14px; color: var(--muted); }
-  .spin { width: 28px; height: 28px; margin: 6px auto 16px; border-radius: 50%; border: 3px solid rgba(181,201,74,.22); border-top-color: var(--olive); animation: spin .9s linear infinite; }
+  .spin { width: 28px; height: 28px; margin: 4px auto 14px; border-radius: 50%; border: 3px solid rgba(181,201,74,.22); border-top-color: var(--olive); animation: spin .9s linear infinite; }
   .done .spin { display: none; }
   @keyframes spin { to { transform: rotate(360deg); } }
-  .btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 14px 18px; border-radius: 999px; font-weight: 700; text-decoration: none; background: var(--olive); color: #18200b; margin: 6px 0 10px; }
-  .btn.ghost { background: transparent; color: var(--text); border: 1px solid var(--line); font-weight: 600; }
-  small { display: block; color: var(--dim); font-size: 13.5px; margin-top: 14px; }
-  a.link { color: var(--olive); }
+  .btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 14px 18px; border-radius: 999px; font: inherit; font-weight: 700; text-decoration: none; background: var(--olive); color: #18200b; margin: 4px 0 0; border: 0; cursor: pointer; }
+  .btn svg { width: 20px; height: 20px; flex: none; }
+  .choose { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--line); }
+  .choose h2 { font-size: 15px; margin: 0 0 12px; color: var(--text); }
+  .lbl { display: block; font-size: 12px; letter-spacing: .07em; text-transform: uppercase; color: var(--dim); font-weight: 700; margin: 0 0 6px; }
+  select { width: 100%; appearance: none; -webkit-appearance: none; font: inherit; color: var(--text); background: var(--card-2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23b5c94a' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 14px center / 18px; border: 1px solid var(--line); border-radius: 14px; padding: 12px 40px 12px 14px; margin-bottom: 14px; }
+  .types { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+  .types button { font: inherit; text-align: left; color: var(--text); background: var(--card-2); border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; cursor: pointer; }
+  .types button b { display: block; font-size: 14.5px; }
+  .types button small { color: var(--dim); font-size: 12.5px; }
+  .types button[aria-checked="true"] { border-color: var(--olive); box-shadow: 0 0 0 1px var(--olive) inset; background: rgba(181,201,74,.08); }
+  .note { display: block; color: var(--dim); font-size: 13.5px; margin-top: 16px; text-align: center; }
+  .note a { color: var(--olive); }
+  [hidden] { display: none !important; }
   @media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
 </style>
 </head>
 <body>
 <main id="m">
-  <img src="../images/icon-96.webp" alt="" width="64" height="64">
-  <h1 id="title">Downloading Jolpai Keyboard…</h1>
-  <p id="sub">Your download is starting.</p>
-  <div class="spin" aria-hidden="true"></div>
-  <a class="btn" id="dl" href="https://github.com/Yeamin-Talukder/jolpai-keyboard/releases/latest">Download the APK</a>
-  <a class="btn ghost" id="dl32" href="https://github.com/Yeamin-Talukder/jolpai-keyboard/releases/latest">Older 32-bit phone? Get this one</a>
-  <small>When it has downloaded, open the file and tap Install. If Android asks, allow installs from your browser. Free, no ads, no tracking. <a class="link" href="../">About Jolpai</a></small>
+  <div class="head">
+    <img src="../images/icon-96.webp" alt="" width="64" height="64">
+    <h1 id="title">Downloading Jolpai Keyboard…</h1>
+    <p id="sub">Your download is starting.</p>
+    <div class="spin" aria-hidden="true"></div>
+  </div>
+  <a class="btn" id="dl" href="https://github.com/Yeamin-Talukder/jolpai-keyboard/releases/latest">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0-5-5m5 5 5-5M5 21h14"/></svg>
+    <span id="dl-text">Download the APK</span>
+  </a>
+  <section class="choose" id="choose" hidden aria-labelledby="choose-title">
+    <h2 id="choose-title">Need a different one?</h2>
+    <label class="lbl" for="ver">Version</label>
+    <select id="ver"></select>
+    <span class="lbl" id="type-label">Phone type</span>
+    <div class="types" id="types" role="radiogroup" aria-labelledby="type-label">
+      <button type="button" role="radio" data-abi="arm64-v8a"><b>Most phones</b><small>64-bit</small></button>
+      <button type="button" role="radio" data-abi="armeabi-v7a"><b>Older phones</b><small>32-bit</small></button>
+      <button type="button" role="radio" data-abi="x86_64"><b>Intel / emulator</b><small>x86_64</small></button>
+      <button type="button" role="radio" data-abi="x86"><b>Old Intel</b><small>x86</small></button>
+    </div>
+  </section>
+  <span class="note">When it has downloaded, open the file and tap Install. If Android asks, allow installs from your browser. Free, no ads, no tracking. <a href="../">About Jolpai</a></span>
 </main>
 <script>
 (() => {
-  // Scanning the QR code on the website brings phones here: start the newest APK at once.
-  // FALLBACK is used when GitHub can't be asked; bump it with each release (with KNOWN in ../index.html).
-  const FALLBACK = '0.11.0';
+  // The QR code on the website brings phones here and starts that APK at once (?v= version, ?abi=
+  // phone type; none means the newest version for most phones). The chooser below picks another.
+  // KNOWN is used when GitHub can't be asked: add each release at the top (with KNOWN in ../index.html).
+  // Only versions from 0.9.0, whose file names can be built.
+  const KNOWN = ['0.11.0', '0.10.1', '0.10.0', '0.9.0'];
+  const FALLBACK = KNOWN[0];
   const REPO = 'Yeamin-Talukder/jolpai-keyboard';
+  const ABIS = { 'arm64-v8a': 'most phones (64-bit)', 'armeabi-v7a': 'older phones (32-bit)', 'x86_64': 'Intel devices and emulators (64-bit)', 'x86': 'old Intel devices (32-bit)' };
+  const SHORT = { 'arm64-v8a': '64-bit', 'armeabi-v7a': '32-bit', 'x86_64': 'x86_64', 'x86': 'x86' };
   const asset = (v, abi) => `https://github.com/${REPO}/releases/download/v${v}/jolpai-keyboard-${v}-${abi}.apk`;
-  const abi = new URLSearchParams(location.search).get('abi') === 'armeabi-v7a' ? 'armeabi-v7a' : 'arm64-v8a';
+  const q = new URLSearchParams(location.search);
+  let abi = ABIS[q.get('abi')] ? q.get('abi') : 'arm64-v8a';
+  const wanted = /^\d+\.\d+\.\d+$/.test(q.get('v') || '') ? q.get('v') : null;
   const android = /Android/i.test(navigator.userAgent);
   const $ = id => document.getElementById(id);
+  // From 0.9.0 the files are named jolpai-keyboard-<version>-<type>.apk, so a link can be built without asking GitHub.
+  const named = v => { const [a, b] = v.split('.').map(Number); return a > 0 || b >= 9; };
+  let releases = []; // [{ v, apks: { abi: url } }], newest first
 
-  function ready(version, url, url32) {
-    $('dl').href = url;
-    $('dl').textContent = `Download Jolpai ${version}`;
-    $('dl32').href = url32;
+  function linkFor(v) {
+    const r = releases.find(x => x.v === v);
+    return (r && r.apks[abi]) || (named(v) ? asset(v, abi) : `https://github.com/${REPO}/releases/tag/v${v}`);
+  }
+  function show(v) {
+    $('dl').href = linkFor(v);
+    $('dl-text').textContent = `Download ${v} · ${SHORT[abi]}`;
+    document.querySelectorAll('#types button').forEach(b => {
+      const on = b.dataset.abi === abi;
+      b.setAttribute('aria-checked', String(on));
+      b.tabIndex = on ? 0 : -1;
+      // A version without this phone type can't be picked for it.
+      const r = releases.find(x => x.v === v);
+      b.disabled = !!(r && Object.keys(r.apks).length && !r.apks[b.dataset.abi]);
+    });
+  }
+  function start(v) {
+    show(v);
     if (android) {
-      $('sub').textContent = `Jolpai ${version} for ${abi === 'arm64-v8a' ? 'most phones (64-bit)' : 'older phones (32-bit)'} is downloading. If nothing happens, tap the button.`;
-      location.href = url;
+      $('sub').textContent = `Jolpai ${v} for ${ABIS[abi]} is downloading. If nothing happens, tap the button.`;
+      location.href = $('dl').href;
     } else {
       $('title').textContent = 'Jolpai Keyboard for Android';
-      $('sub').textContent = 'This page downloads the Android app. Open it on your phone, or download the APK here.';
+      $('sub').textContent = `This page downloads the Android app (${v}, ${ABIS[abi]}). Open it on your phone, or download it here.`;
     }
     setTimeout(() => $('m').classList.add('done'), android ? 2500 : 0);
   }
+  function chooser(current) {
+    const sel = $('ver');
+    sel.innerHTML = releases.map((r, i) => `<option value="${r.v}">${r.v}${i ? '' : ' (newest)'}</option>`).join('');
+    sel.value = current;
+    sel.addEventListener('change', () => show(sel.value));
+    document.querySelectorAll('#types button').forEach(b => b.addEventListener('click', () => { abi = b.dataset.abi; show(sel.value); }));
+    $('choose').hidden = false;
+  }
 
   const ctl = new AbortController();
-  const timer = setTimeout(() => ctl.abort(), 2500);
-  fetch(`https://api.github.com/repos/${REPO}/releases/latest`, { signal: ctl.signal, headers: { Accept: 'application/vnd.github+json' } })
+  const timer = setTimeout(() => ctl.abort(), 3000);
+  fetch(`https://api.github.com/repos/${REPO}/releases?per_page=30`, { signal: ctl.signal, headers: { Accept: 'application/vnd.github+json' } })
     .then(r => (r.ok ? r.json() : Promise.reject(r.status)))
-    .then(rel => {
-      const find = a => (rel.assets || []).find(x => x.name.endsWith(`-${a}.apk`));
-      const main = find(abi), old = find('armeabi-v7a');
-      if (!main) throw new Error('no apk');
-      ready(rel.tag_name.replace(/^v/, ''), main.browser_download_url, old ? old.browser_download_url + '' : asset(FALLBACK, 'armeabi-v7a'));
+    .then(list => {
+      releases = list.filter(r => !r.draft && !r.prerelease).map(r => {
+        const apks = {};
+        (r.assets || []).forEach(a => { const m = a.name.match(/-(arm64-v8a|armeabi-v7a|x86_64|x86)\.apk$/); if (m) apks[m[1]] = a.browser_download_url; });
+        return { v: r.tag_name.replace(/^v/, ''), apks };
+      });
+      if (!releases.length) throw new Error('no releases');
+      const v = wanted && releases.some(r => r.v === wanted) ? wanted : releases[0].v;
+      chooser(v);
+      start(v);
     })
-    .catch(() => ready(FALLBACK, asset(FALLBACK, abi), asset(FALLBACK, 'armeabi-v7a')))
+    .catch(() => {
+      const v = wanted || FALLBACK;
+      releases = KNOWN.map(k => ({ v: k, apks: {} }));
+      if (named(v)) { if (KNOWN.includes(v)) chooser(v); start(v); }
+      else { show(v); $('dl-text').textContent = `Open the ${v} release`; $('sub').textContent = `Pick the ${ABIS[abi]} file on the release page.`; $('m').classList.add('done'); }
+    })
     .finally(() => clearTimeout(timer));
 })();
 </script>
