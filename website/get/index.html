@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Downloading Jolpai Keyboard…</title>
+<meta name="description" content="Downloads the newest Jolpai Keyboard APK for Android.">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#12170e">
+<link rel="icon" href="../images/icon-96.webp" type="image/webp">
+<style>
+  :root { --bg: #12170e; --card: #1b2214; --line: #2e3a22; --text: #eef0e4; --muted: #b9bfa6; --dim: #8f977b; --olive: #b5c94a; }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px 16px; background: radial-gradient(80% 60% at 50% 0%, rgba(143,168,58,.18), transparent 70%), var(--bg); color: var(--text); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { width: min(420px, 100%); text-align: center; background: var(--card); border: 1px solid var(--line); border-radius: 24px; padding: 30px 22px 24px; }
+  img { width: 64px; height: 64px; border-radius: 16px; }
+  h1 { font-size: 22px; margin: 14px 0 6px; }
+  p { margin: 0 0 14px; color: var(--muted); }
+  .spin { width: 28px; height: 28px; margin: 6px auto 16px; border-radius: 50%; border: 3px solid rgba(181,201,74,.22); border-top-color: var(--olive); animation: spin .9s linear infinite; }
+  .done .spin { display: none; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 14px 18px; border-radius: 999px; font-weight: 700; text-decoration: none; background: var(--olive); color: #18200b; margin: 6px 0 10px; }
+  .btn.ghost { background: transparent; color: var(--text); border: 1px solid var(--line); font-weight: 600; }
+  small { display: block; color: var(--dim); font-size: 13.5px; margin-top: 14px; }
+  a.link { color: var(--olive); }
+  @media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
+</style>
+</head>
+<body>
+<main id="m">
+  <img src="../images/icon-96.webp" alt="" width="64" height="64">
+  <h1 id="title">Downloading Jolpai Keyboard…</h1>
+  <p id="sub">Your download is starting.</p>
+  <div class="spin" aria-hidden="true"></div>
+  <a class="btn" id="dl" href="https://github.com/Yeamin-Talukder/jolpai-keyboard/releases/latest">Download the APK</a>
+  <a class="btn ghost" id="dl32" href="https://github.com/Yeamin-Talukder/jolpai-keyboard/releases/latest">Older 32-bit phone? Get this one</a>
+  <small>When it has downloaded, open the file and tap Install. If Android asks, allow installs from your browser. Free, no ads, no tracking. <a class="link" href="../">About Jolpai</a></small>
+</main>
+<script>
+(() => {
+  // Scanning the QR code on the website brings phones here: start the newest APK at once.
+  // FALLBACK is used when GitHub can't be asked; bump it with each release (with KNOWN in ../index.html).
+  const FALLBACK = '0.11.0';
+  const REPO = 'Yeamin-Talukder/jolpai-keyboard';
+  const asset = (v, abi) => `https://github.com/${REPO}/releases/download/v${v}/jolpai-keyboard-${v}-${abi}.apk`;
+  const abi = new URLSearchParams(location.search).get('abi') === 'armeabi-v7a' ? 'armeabi-v7a' : 'arm64-v8a';
+  const android = /Android/i.test(navigator.userAgent);
+  const $ = id => document.getElementById(id);
+
+  function ready(version, url, url32) {
+    $('dl').href = url;
+    $('dl').textContent = `Download Jolpai ${version}`;
+    $('dl32').href = url32;
+    if (android) {
+      $('sub').textContent = `Jolpai ${version} for ${abi === 'arm64-v8a' ? 'most phones (64-bit)' : 'older phones (32-bit)'} is downloading. If nothing happens, tap the button.`;
+      location.href = url;
+    } else {
+      $('title').textContent = 'Jolpai Keyboard for Android';
+      $('sub').textContent = 'This page downloads the Android app. Open it on your phone, or download the APK here.';
+    }
+    setTimeout(() => $('m').classList.add('done'), android ? 2500 : 0);
+  }
+
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), 2500);
+  fetch(`https://api.github.com/repos/${REPO}/releases/latest`, { signal: ctl.signal, headers: { Accept: 'application/vnd.github+json' } })
+    .then(r => (r.ok ? r.json() : Promise.reject(r.status)))
+    .then(rel => {
+      const find = a => (rel.assets || []).find(x => x.name.endsWith(`-${a}.apk`));
+      const main = find(abi), old = find('armeabi-v7a');
+      if (!main) throw new Error('no apk');
+      ready(rel.tag_name.replace(/^v/, ''), main.browser_download_url, old ? old.browser_download_url + '' : asset(FALLBACK, 'armeabi-v7a'));
+    })
+    .catch(() => ready(FALLBACK, asset(FALLBACK, abi), asset(FALLBACK, 'armeabi-v7a')))
+    .finally(() => clearTimeout(timer));
+})();
+</script>
+</body>
+</html>

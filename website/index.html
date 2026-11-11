@@ -577,30 +577,71 @@
   .abi[aria-checked="true"] { border-color: var(--olive); background: rgba(181,201,74,.12); box-shadow: inset 0 0 0 1px var(--olive); }
   .abi .yours { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px; background: var(--olive); color: #18200b; font-size: 11px; font-weight: 700; vertical-align: 2px; }
   /* "Scan with your phone": the QR code opens the Install section on the phone */
-  .qr { display: block; background: #fff; border-radius: 12px; shape-rendering: crispEdges; }
+  .qr-frame {
+    position: relative; padding: 10px; border-radius: 24px;
+    background:
+      linear-gradient(var(--olive), var(--olive)) left top / 24px 3px no-repeat,
+      linear-gradient(var(--olive), var(--olive)) left top / 3px 24px no-repeat,
+      linear-gradient(var(--olive), var(--olive)) right top / 24px 3px no-repeat,
+      linear-gradient(var(--olive), var(--olive)) right top / 3px 24px no-repeat,
+      linear-gradient(var(--olive), var(--olive)) left bottom / 24px 3px no-repeat,
+      linear-gradient(var(--olive), var(--olive)) left bottom / 3px 24px no-repeat,
+      linear-gradient(var(--olive), var(--olive)) right bottom / 24px 3px no-repeat,
+      linear-gradient(var(--olive), var(--olive)) right bottom / 3px 24px no-repeat;
+  }
+  .qr-tile {
+    position: relative; overflow: hidden; background: #fff; border-radius: 16px; padding: 10px;
+    box-shadow: 0 0 0 1px rgba(181,201,74,.25), 0 0 36px -6px rgba(181,201,74,.35), 0 18px 40px -18px rgba(0,0,0,.7);
+  }
+  .qr { display: block; shape-rendering: crispEdges; }
+  .qr-logo { position: absolute; left: 50%; top: 50%; width: 34px; height: 34px; transform: translate(-50%, -50%); border-radius: 9px; background: #fff; box-shadow: 0 0 0 4px #fff; }
+  .qr-scan { position: absolute; left: 6px; right: 6px; top: 6px; height: 2px; border-radius: 2px; background: linear-gradient(90deg, transparent, rgba(143,168,58,.75), transparent); animation: qrScan 2.8s ease-in-out infinite; pointer-events: none; }
+  @keyframes qrScan { 0%, 100% { transform: translateY(0); opacity: 0; } 12%, 88% { opacity: 1; } 50% { transform: translateY(calc(var(--qr-px, 180px) + 4px)); } }
+  @media (prefers-reduced-motion: reduce) { .qr-scan { display: none; } }
+
+  /* Hero: a round icon button beside Download and GitHub; the code pops up above it */
   .qr-wrap { position: relative; }
-  .qr-btn svg { width: 20px; height: 20px; }
+  .qr-btn {
+    width: 50px; height: 50px; border-radius: 50%; display: grid; place-items: center; cursor: pointer;
+    color: var(--text); background: rgba(255,255,255,.02); border: 1px solid var(--line);
+    transition: border-color .2s ease, background .2s ease, transform .15s ease;
+  }
+  .qr-btn:hover { border-color: var(--olive-2); transform: translateY(-1px); }
+  .qr-btn[aria-expanded="true"] { border-color: var(--olive); background: rgba(181,201,74,.14); color: var(--olive); }
+  .qr-btn::after {
+    content: attr(data-tip); position: absolute; left: 50%; bottom: calc(100% + 10px); transform: translate(-50%, 4px);
+    white-space: nowrap; padding: 6px 11px; border-radius: 99px; background: #f4f1df; color: #18200b; font-size: 13px; font-weight: 600;
+    opacity: 0; pointer-events: none; transition: opacity .15s ease, transform .15s ease;
+  }
+  .qr-btn:hover::after, .qr-btn:focus-visible::after { opacity: 1; transform: translate(-50%, 0); }
+  .qr-btn[aria-expanded="true"]::after { display: none; }
   .qr-pop {
-    position: absolute; z-index: 30; bottom: calc(100% + 12px); left: 50%; width: 236px; padding: 16px 16px 14px;
-    background: var(--card); border: 1px solid var(--line); border-radius: 20px; text-align: center;
-    box-shadow: 0 24px 60px -18px rgba(0,0,0,.75), 0 0 0 1px rgba(181,201,74,.08);
+    --qr-px: 196px;
+    position: absolute; z-index: 30; bottom: calc(100% + 14px); left: 50%; width: 272px; padding: 18px 18px 16px;
+    background: var(--card); border: 1px solid var(--line); border-radius: 22px; text-align: center;
+    box-shadow: 0 30px 70px -20px rgba(0,0,0,.8);
     transform: translateX(-50%); transform-origin: bottom center; animation: qrIn .22s cubic-bezier(.3,.7,.3,1);
   }
   .qr-pop::before { content: ""; position: absolute; bottom: -7px; left: 50%; width: 12px; height: 12px; background: var(--card); border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); transform: translateX(-50%) rotate(45deg); }
-  .qr-pop .qr { width: 196px; height: 196px; margin: 0 auto 12px; }
-  .qr-pop b { display: block; font-size: 16px; }
-  .qr-pop span { display: block; color: var(--muted); font-size: 13.5px; margin-top: 2px; }
+  .qr-pop .qr-frame { display: inline-block; margin-bottom: 12px; }
+  .qr-pop b { display: block; font-size: 16.5px; }
+  .qr-pop span { display: block; color: var(--muted); font-size: 13.5px; margin-top: 3px; line-height: 1.45; }
   @keyframes qrIn { from { opacity: 0; transform: translateX(-50%) translateY(6px) scale(.96); } }
-  .install-row { display: flex; gap: 22px; align-items: stretch; justify-content: center; max-width: 1060px; margin: 28px auto 0; }
+
+  /* Install: a card beside "Choose your download" */
+  .install-row { display: flex; gap: 22px; align-items: stretch; justify-content: center; max-width: 1080px; margin: 28px auto 0; }
   .install-row .picker { margin: 0; flex: 1 1 auto; }
   .qr-card {
-    flex: none; width: 250px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
-    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px 20px;
+    --qr-px: 176px;
+    flex: none; width: 272px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+    background: radial-gradient(120% 70% at 50% 0%, rgba(181,201,74,.10), transparent 70%), var(--card);
+    border: 1px solid var(--line); border-radius: var(--radius); padding: 26px 22px 22px;
   }
-  .qr-card h3 { margin: 0 0 4px; font-size: 19px; }
-  .qr-card p { margin: 0 0 16px; color: var(--muted); font-size: 14.5px; }
-  .qr-card .qr { width: 190px; height: 190px; }
-  .qr-card small { margin-top: 12px; color: var(--dim); font-size: 13px; }
+  .qr-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px; border-radius: 99px; background: rgba(181,201,74,.12); color: var(--olive); font-size: 12.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; margin-bottom: 10px; }
+  .qr-card h3 { margin: 0 0 4px; font-size: 20px; }
+  .qr-card > p { margin: 0 0 18px; color: var(--muted); font-size: 14.5px; line-height: 1.45; }
+  .qr-how { display: flex; align-items: center; gap: 8px; margin: 16px 0 0; color: var(--dim); font-size: 13px; line-height: 1.4; text-align: left; }
+  .qr-how svg { flex: none; color: var(--olive); }
   /* On a phone you tap Download instead */
   @media (max-width: 860px) { .qr-card { display: none; } .install-row { display: block; } .install-row .picker { margin: 28px auto 0; } }
   @media (max-width: 720px) { .qr-wrap { display: none; } }
@@ -766,7 +807,7 @@
 </style>
 </head>
 <body>
-<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><symbol id="qr-dl" viewBox="-3 -3 39 39"><path fill="#14180f" d="M0 0h7v1h-7zM8 0h1v1h-1zM10 0h1v1h-1zM13 0h1v1h-1zM15 0h1v1h-1zM19 0h1v1h-1zM21 0h2v1h-2zM26 0h7v1h-7zM0 1h1v1h-1zM6 1h1v1h-1zM8 1h6v1h-6zM15 1h1v1h-1zM18 1h5v1h-5zM26 1h1v1h-1zM32 1h1v1h-1zM0 2h1v1h-1zM2 2h3v1h-3zM6 2h1v1h-1zM10 2h1v1h-1zM12 2h1v1h-1zM15 2h1v1h-1zM17 2h1v1h-1zM20 2h2v1h-2zM23 2h2v1h-2zM26 2h1v1h-1zM28 2h3v1h-3zM32 2h1v1h-1zM0 3h1v1h-1zM2 3h3v1h-3zM6 3h1v1h-1zM8 3h3v1h-3zM12 3h1v1h-1zM14 3h2v1h-2zM18 3h1v1h-1zM20 3h2v1h-2zM26 3h1v1h-1zM28 3h3v1h-3zM32 3h1v1h-1zM0 4h1v1h-1zM2 4h3v1h-3zM6 4h1v1h-1zM9 4h1v1h-1zM14 4h1v1h-1zM17 4h4v1h-4zM22 4h3v1h-3zM26 4h1v1h-1zM28 4h3v1h-3zM32 4h1v1h-1zM0 5h1v1h-1zM6 5h1v1h-1zM11 5h2v1h-2zM14 5h1v1h-1zM16 5h4v1h-4zM21 5h1v1h-1zM26 5h1v1h-1zM32 5h1v1h-1zM0 6h7v1h-7zM8 6h1v1h-1zM10 6h1v1h-1zM12 6h1v1h-1zM14 6h1v1h-1zM16 6h1v1h-1zM18 6h1v1h-1zM20 6h1v1h-1zM22 6h1v1h-1zM24 6h1v1h-1zM26 6h7v1h-7zM8 7h2v1h-2zM11 7h1v1h-1zM17 7h1v1h-1zM19 7h3v1h-3zM24 7h1v1h-1zM0 8h1v1h-1zM2 8h2v1h-2zM5 8h3v1h-3zM9 8h1v1h-1zM11 8h1v1h-1zM13 8h2v1h-2zM16 8h1v1h-1zM18 8h3v1h-3zM22 8h1v1h-1zM24 8h1v1h-1zM26 8h1v1h-1zM29 8h1v1h-1zM31 8h2v1h-2zM0 9h5v1h-5zM8 9h2v1h-2zM11 9h2v1h-2zM14 9h3v1h-3zM18 9h1v1h-1zM20 9h3v1h-3zM24 9h1v1h-1zM26 9h6v1h-6zM0 10h1v1h-1zM2 10h7v1h-7zM14 10h1v1h-1zM16 10h1v1h-1zM18 10h1v1h-1zM21 10h3v1h-3zM25 10h6v1h-6zM1 11h3v1h-3zM5 11h1v1h-1zM11 11h5v1h-5zM17 11h1v1h-1zM20 11h1v1h-1zM22 11h3v1h-3zM26 11h1v1h-1zM28 11h1v1h-1zM30 11h3v1h-3zM3 12h1v1h-1zM5 12h2v1h-2zM8 12h2v1h-2zM12 12h1v1h-1zM15 12h1v1h-1zM17 12h1v1h-1zM20 12h1v1h-1zM27 12h1v1h-1zM30 12h2v1h-2zM1 13h1v1h-1zM3 13h1v1h-1zM8 13h1v1h-1zM10 13h4v1h-4zM16 13h2v1h-2zM19 13h1v1h-1zM26 13h3v1h-3zM0 14h1v1h-1zM2 14h1v1h-1zM4 14h3v1h-3zM8 14h1v1h-1zM11 14h2v1h-2zM14 14h5v1h-5zM21 14h1v1h-1zM23 14h1v1h-1zM25 14h1v1h-1zM30 14h3v1h-3zM0 15h2v1h-2zM3 15h2v1h-2zM7 15h1v1h-1zM16 15h1v1h-1zM18 15h2v1h-2zM23 15h1v1h-1zM26 15h1v1h-1zM29 15h1v1h-1zM31 15h2v1h-2zM1 16h1v1h-1zM4 16h1v1h-1zM6 16h2v1h-2zM10 16h1v1h-1zM12 16h1v1h-1zM14 16h1v1h-1zM16 16h3v1h-3zM20 16h6v1h-6zM27 16h2v1h-2zM30 16h1v1h-1zM32 16h1v1h-1zM0 17h2v1h-2zM10 17h1v1h-1zM12 17h1v1h-1zM16 17h1v1h-1zM18 17h3v1h-3zM22 17h1v1h-1zM24 17h1v1h-1zM26 17h1v1h-1zM28 17h2v1h-2zM31 17h2v1h-2zM0 18h1v1h-1zM2 18h1v1h-1zM4 18h3v1h-3zM8 18h2v1h-2zM17 18h1v1h-1zM19 18h1v1h-1zM22 18h1v1h-1zM24 18h2v1h-2zM28 18h2v1h-2zM31 18h2v1h-2zM1 19h2v1h-2zM4 19h1v1h-1zM7 19h1v1h-1zM9 19h1v1h-1zM12 19h1v1h-1zM15 19h5v1h-5zM21 19h1v1h-1zM24 19h1v1h-1zM27 19h1v1h-1zM5 20h3v1h-3zM9 20h4v1h-4zM14 20h1v1h-1zM16 20h2v1h-2zM19 20h1v1h-1zM21 20h1v1h-1zM24 20h2v1h-2zM27 20h1v1h-1zM31 20h1v1h-1zM0 21h5v1h-5zM7 21h4v1h-4zM13 21h1v1h-1zM15 21h2v1h-2zM20 21h3v1h-3zM25 21h1v1h-1zM28 21h1v1h-1zM30 21h1v1h-1zM2 22h1v1h-1zM4 22h5v1h-5zM10 22h1v1h-1zM12 22h4v1h-4zM18 22h1v1h-1zM20 22h2v1h-2zM26 22h1v1h-1zM28 22h5v1h-5zM1 23h4v1h-4zM8 23h2v1h-2zM11 23h3v1h-3zM15 23h1v1h-1zM18 23h1v1h-1zM20 23h4v1h-4zM25 23h8v1h-8zM0 24h1v1h-1zM3 24h6v1h-6zM11 24h1v1h-1zM13 24h6v1h-6zM20 24h3v1h-3zM24 24h6v1h-6zM32 24h1v1h-1zM8 25h1v1h-1zM14 25h4v1h-4zM20 25h1v1h-1zM22 25h1v1h-1zM24 25h1v1h-1zM28 25h1v1h-1zM0 26h7v1h-7zM8 26h1v1h-1zM10 26h1v1h-1zM13 26h1v1h-1zM16 26h4v1h-4zM21 26h1v1h-1zM24 26h1v1h-1zM26 26h1v1h-1zM28 26h4v1h-4zM0 27h1v1h-1zM6 27h1v1h-1zM8 27h1v1h-1zM11 27h4v1h-4zM16 27h1v1h-1zM19 27h3v1h-3zM24 27h1v1h-1zM28 27h3v1h-3zM32 27h1v1h-1zM0 28h1v1h-1zM2 28h3v1h-3zM6 28h1v1h-1zM9 28h1v1h-1zM13 28h2v1h-2zM16 28h3v1h-3zM20 28h1v1h-1zM24 28h6v1h-6zM31 28h2v1h-2zM0 29h1v1h-1zM2 29h3v1h-3zM6 29h1v1h-1zM8 29h2v1h-2zM13 29h1v1h-1zM16 29h1v1h-1zM23 29h2v1h-2zM26 29h1v1h-1zM28 29h2v1h-2zM0 30h1v1h-1zM2 30h3v1h-3zM6 30h1v1h-1zM8 30h1v1h-1zM11 30h3v1h-3zM15 30h1v1h-1zM17 30h2v1h-2zM20 30h1v1h-1zM22 30h6v1h-6zM0 31h1v1h-1zM6 31h1v1h-1zM10 31h3v1h-3zM15 31h2v1h-2zM19 31h1v1h-1zM22 31h1v1h-1zM25 31h7v1h-7zM0 32h7v1h-7zM8 32h1v1h-1zM12 32h1v1h-1zM16 32h4v1h-4zM24 32h5v1h-5zM30 32h1v1h-1z"/></symbol></svg>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><symbol id="qr-dl" viewBox="-2 -2 45 45"><path fill="#14180f" d="M0 0h7v1h-7zM9 0h1v1h-1zM13 0h1v1h-1zM17 0h2v1h-2zM20 0h1v1h-1zM22 0h1v1h-1zM24 0h1v1h-1zM26 0h1v1h-1zM30 0h1v1h-1zM32 0h1v1h-1zM34 0h7v1h-7zM0 1h1v1h-1zM6 1h1v1h-1zM11 1h3v1h-3zM15 1h2v1h-2zM18 1h1v1h-1zM20 1h1v1h-1zM22 1h3v1h-3zM26 1h2v1h-2zM30 1h3v1h-3zM34 1h1v1h-1zM40 1h1v1h-1zM0 2h1v1h-1zM2 2h3v1h-3zM6 2h1v1h-1zM11 2h2v1h-2zM15 2h1v1h-1zM17 2h1v1h-1zM20 2h1v1h-1zM23 2h1v1h-1zM25 2h3v1h-3zM32 2h1v1h-1zM34 2h1v1h-1zM36 2h3v1h-3zM40 2h1v1h-1zM0 3h1v1h-1zM2 3h3v1h-3zM6 3h1v1h-1zM9 3h2v1h-2zM12 3h1v1h-1zM14 3h1v1h-1zM17 3h2v1h-2zM21 3h3v1h-3zM27 3h1v1h-1zM32 3h1v1h-1zM34 3h1v1h-1zM36 3h3v1h-3zM40 3h1v1h-1zM0 4h1v1h-1zM2 4h3v1h-3zM6 4h1v1h-1zM8 4h7v1h-7zM16 4h1v1h-1zM18 4h2v1h-2zM22 4h1v1h-1zM24 4h2v1h-2zM28 4h3v1h-3zM34 4h1v1h-1zM36 4h3v1h-3zM40 4h1v1h-1zM0 5h1v1h-1zM6 5h1v1h-1zM10 5h1v1h-1zM12 5h1v1h-1zM14 5h2v1h-2zM18 5h2v1h-2zM21 5h1v1h-1zM23 5h2v1h-2zM26 5h1v1h-1zM29 5h1v1h-1zM31 5h1v1h-1zM34 5h1v1h-1zM40 5h1v1h-1zM0 6h7v1h-7zM8 6h1v1h-1zM10 6h1v1h-1zM12 6h1v1h-1zM14 6h1v1h-1zM16 6h1v1h-1zM18 6h1v1h-1zM20 6h1v1h-1zM22 6h1v1h-1zM24 6h1v1h-1zM26 6h1v1h-1zM28 6h1v1h-1zM30 6h1v1h-1zM32 6h1v1h-1zM34 6h7v1h-7zM8 7h2v1h-2zM11 7h2v1h-2zM15 7h1v1h-1zM19 7h1v1h-1zM26 7h3v1h-3zM31 7h1v1h-1zM2 8h2v1h-2zM6 8h4v1h-4zM11 8h2v1h-2zM15 8h1v1h-1zM18 8h1v1h-1zM20 8h3v1h-3zM26 8h1v1h-1zM29 8h6v1h-6zM36 8h1v1h-1zM1 9h1v1h-1zM4 9h1v1h-1zM10 9h1v1h-1zM12 9h2v1h-2zM15 9h3v1h-3zM19 9h3v1h-3zM27 9h2v1h-2zM31 9h2v1h-2zM34 9h2v1h-2zM1 10h1v1h-1zM3 10h1v1h-1zM5 10h2v1h-2zM9 10h1v1h-1zM12 10h3v1h-3zM17 10h1v1h-1zM22 10h1v1h-1zM24 10h2v1h-2zM27 10h1v1h-1zM30 10h4v1h-4zM35 10h3v1h-3zM40 10h1v1h-1zM0 11h2v1h-2zM3 11h2v1h-2zM7 11h2v1h-2zM11 11h1v1h-1zM17 11h3v1h-3zM21 11h1v1h-1zM23 11h3v1h-3zM27 11h1v1h-1zM30 11h1v1h-1zM33 11h1v1h-1zM35 11h1v1h-1zM39 11h1v1h-1zM0 12h1v1h-1zM2 12h5v1h-5zM10 12h1v1h-1zM12 12h2v1h-2zM20 12h1v1h-1zM22 12h2v1h-2zM25 12h1v1h-1zM27 12h1v1h-1zM29 12h2v1h-2zM32 12h2v1h-2zM36 12h1v1h-1zM38 12h1v1h-1zM0 13h1v1h-1zM3 13h3v1h-3zM9 13h1v1h-1zM11 13h2v1h-2zM14 13h2v1h-2zM18 13h2v1h-2zM23 13h2v1h-2zM28 13h2v1h-2zM31 13h1v1h-1zM34 13h1v1h-1zM36 13h1v1h-1zM38 13h2v1h-2zM1 14h1v1h-1zM3 14h1v1h-1zM6 14h2v1h-2zM9 14h3v1h-3zM13 14h4v1h-4zM19 14h1v1h-1zM22 14h10v1h-10zM33 14h2v1h-2zM36 14h5v1h-5zM0 15h2v1h-2zM3 15h1v1h-1zM5 15h1v1h-1zM7 15h1v1h-1zM9 15h1v1h-1zM11 15h1v1h-1zM13 15h1v1h-1zM15 15h1v1h-1zM17 15h2v1h-2zM20 15h3v1h-3zM24 15h3v1h-3zM28 15h1v1h-1zM31 15h2v1h-2zM34 15h5v1h-5zM40 15h1v1h-1zM0 16h2v1h-2zM4 16h1v1h-1zM6 16h2v1h-2zM10 16h2v1h-2zM13 16h1v1h-1zM17 16h1v1h-1zM19 16h2v1h-2zM27 16h3v1h-3zM35 16h1v1h-1zM37 16h3v1h-3zM0 17h1v1h-1zM4 17h2v1h-2zM7 17h1v1h-1zM9 17h5v1h-5zM15 17h1v1h-1zM18 17h1v1h-1zM20 17h1v1h-1zM23 17h2v1h-2zM32 17h1v1h-1zM34 17h2v1h-2zM1 18h2v1h-2zM4 18h4v1h-4zM10 18h1v1h-1zM13 18h4v1h-4zM19 18h1v1h-1zM22 18h2v1h-2zM25 18h1v1h-1zM29 18h1v1h-1zM31 18h1v1h-1zM35 18h1v1h-1zM38 18h1v1h-1zM40 18h1v1h-1zM4 19h1v1h-1zM10 19h2v1h-2zM14 19h5v1h-5zM20 19h1v1h-1zM24 19h2v1h-2zM27 19h1v1h-1zM29 19h3v1h-3zM33 19h2v1h-2zM38 19h1v1h-1zM40 19h1v1h-1zM3 20h2v1h-2zM6 20h1v1h-1zM8 20h2v1h-2zM12 20h3v1h-3zM17 20h1v1h-1zM19 20h1v1h-1zM22 20h1v1h-1zM24 20h1v1h-1zM26 20h1v1h-1zM30 20h2v1h-2zM33 20h3v1h-3zM37 20h4v1h-4zM0 21h1v1h-1zM2 21h3v1h-3zM10 21h2v1h-2zM13 21h1v1h-1zM15 21h1v1h-1zM17 21h1v1h-1zM23 21h3v1h-3zM27 21h1v1h-1zM30 21h1v1h-1zM32 21h1v1h-1zM36 21h2v1h-2zM39 21h1v1h-1zM1 22h1v1h-1zM4 22h5v1h-5zM11 22h1v1h-1zM13 22h1v1h-1zM18 22h1v1h-1zM20 22h2v1h-2zM25 22h1v1h-1zM27 22h1v1h-1zM30 22h1v1h-1zM32 22h1v1h-1zM35 22h2v1h-2zM39 22h1v1h-1zM0 23h1v1h-1zM3 23h1v1h-1zM10 23h1v1h-1zM13 23h1v1h-1zM16 23h1v1h-1zM18 23h1v1h-1zM23 23h1v1h-1zM25 23h3v1h-3zM29 23h2v1h-2zM32 23h1v1h-1zM35 23h1v1h-1zM37 23h1v1h-1zM2 24h1v1h-1zM4 24h9v1h-9zM15 24h1v1h-1zM17 24h2v1h-2zM24 24h2v1h-2zM27 24h2v1h-2zM30 24h1v1h-1zM34 24h3v1h-3zM38 24h3v1h-3zM0 25h1v1h-1zM2 25h1v1h-1zM12 25h2v1h-2zM15 25h2v1h-2zM18 25h1v1h-1zM23 25h4v1h-4zM29 25h11v1h-11zM1 26h1v1h-1zM3 26h1v1h-1zM5 26h2v1h-2zM10 26h4v1h-4zM16 26h1v1h-1zM18 26h2v1h-2zM22 26h5v1h-5zM28 26h2v1h-2zM32 26h3v1h-3zM36 26h5v1h-5zM0 27h2v1h-2zM4 27h2v1h-2zM7 27h1v1h-1zM10 27h1v1h-1zM12 27h2v1h-2zM16 27h1v1h-1zM18 27h3v1h-3zM23 27h1v1h-1zM28 27h4v1h-4zM33 27h4v1h-4zM38 27h3v1h-3zM6 28h3v1h-3zM11 28h2v1h-2zM14 28h2v1h-2zM19 28h2v1h-2zM23 28h4v1h-4zM30 28h1v1h-1zM33 28h1v1h-1zM38 28h2v1h-2zM2 29h2v1h-2zM9 29h3v1h-3zM16 29h3v1h-3zM20 29h1v1h-1zM23 29h1v1h-1zM26 29h1v1h-1zM28 29h1v1h-1zM32 29h1v1h-1zM34 29h1v1h-1zM40 29h1v1h-1zM0 30h1v1h-1zM4 30h3v1h-3zM9 30h1v1h-1zM12 30h3v1h-3zM17 30h1v1h-1zM19 30h2v1h-2zM23 30h2v1h-2zM26 30h2v1h-2zM29 30h1v1h-1zM31 30h1v1h-1zM37 30h4v1h-4zM2 31h2v1h-2zM7 31h1v1h-1zM10 31h1v1h-1zM13 31h2v1h-2zM16 31h3v1h-3zM21 31h1v1h-1zM23 31h2v1h-2zM29 31h1v1h-1zM31 31h4v1h-4zM37 31h2v1h-2zM40 31h1v1h-1zM1 32h1v1h-1zM3 32h2v1h-2zM6 32h1v1h-1zM8 32h1v1h-1zM12 32h2v1h-2zM16 32h1v1h-1zM19 32h1v1h-1zM21 32h2v1h-2zM24 32h2v1h-2zM31 32h7v1h-7zM39 32h2v1h-2zM8 33h1v1h-1zM10 33h2v1h-2zM13 33h2v1h-2zM17 33h1v1h-1zM19 33h1v1h-1zM22 33h2v1h-2zM25 33h1v1h-1zM27 33h1v1h-1zM32 33h1v1h-1zM36 33h1v1h-1zM0 34h7v1h-7zM8 34h3v1h-3zM15 34h2v1h-2zM18 34h3v1h-3zM23 34h1v1h-1zM25 34h1v1h-1zM27 34h1v1h-1zM31 34h2v1h-2zM34 34h1v1h-1zM36 34h1v1h-1zM40 34h1v1h-1zM0 35h1v1h-1zM6 35h1v1h-1zM9 35h1v1h-1zM11 35h1v1h-1zM13 35h1v1h-1zM15 35h1v1h-1zM18 35h1v1h-1zM21 35h1v1h-1zM24 35h2v1h-2zM27 35h1v1h-1zM29 35h1v1h-1zM31 35h2v1h-2zM36 35h1v1h-1zM38 35h1v1h-1zM0 36h1v1h-1zM2 36h3v1h-3zM6 36h1v1h-1zM10 36h2v1h-2zM13 36h1v1h-1zM15 36h4v1h-4zM21 36h3v1h-3zM26 36h4v1h-4zM31 36h6v1h-6zM38 36h1v1h-1zM0 37h1v1h-1zM2 37h3v1h-3zM6 37h1v1h-1zM8 37h1v1h-1zM12 37h1v1h-1zM17 37h1v1h-1zM20 37h1v1h-1zM22 37h1v1h-1zM24 37h1v1h-1zM27 37h4v1h-4zM35 37h1v1h-1zM37 37h3v1h-3zM0 38h1v1h-1zM2 38h3v1h-3zM6 38h1v1h-1zM8 38h1v1h-1zM11 38h1v1h-1zM13 38h1v1h-1zM16 38h2v1h-2zM20 38h1v1h-1zM22 38h3v1h-3zM26 38h1v1h-1zM28 38h3v1h-3zM33 38h1v1h-1zM35 38h1v1h-1zM37 38h2v1h-2zM40 38h1v1h-1zM0 39h1v1h-1zM6 39h1v1h-1zM9 39h1v1h-1zM12 39h1v1h-1zM14 39h1v1h-1zM16 39h1v1h-1zM19 39h1v1h-1zM23 39h4v1h-4zM28 39h1v1h-1zM30 39h3v1h-3zM35 39h1v1h-1zM37 39h2v1h-2zM40 39h1v1h-1zM0 40h7v1h-7zM9 40h1v1h-1zM12 40h1v1h-1zM14 40h1v1h-1zM16 40h1v1h-1zM20 40h1v1h-1zM25 40h1v1h-1zM28 40h3v1h-3zM34 40h1v1h-1zM37 40h1v1h-1zM39 40h1v1h-1z"/></symbol></svg>
 
 <header class="top">
   <div class="wrap nav">
@@ -824,11 +865,11 @@
             <span>View on GitHub</span>
           </a>
           <div class="qr-wrap">
-            <button type="button" class="btn btn-ghost qr-btn" id="qr-btn" aria-expanded="false" aria-controls="qr-pop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 14h3v3M21 14v.01M14 21h3M20 18v3"/></svg><span>Scan with phone</span></button>
+            <button type="button" class="qr-btn" id="qr-btn" aria-expanded="false" aria-controls="qr-pop" aria-label="Scan with your phone to download" data-tip="Scan with your phone"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 14h3v3M21 14v.01M14 21h3M20 18v3"/></svg></button>
             <div class="qr-pop" id="qr-pop" role="dialog" aria-label="Scan with your phone to download" hidden>
-              <svg class="qr" viewBox="-3 -3 39 39" role="img" aria-label="QR code: opens the Jolpai download page"><use href="#qr-dl"/></svg>
+              <div class="qr-frame"><div class="qr-tile"><svg class="qr" width="196" height="196" viewBox="0 0 45 45" role="img" aria-label="QR code that downloads Jolpai Keyboard"><use href="#qr-dl" width="45" height="45"/></svg><img class="qr-logo" src="images/icon-96.webp" alt="" width="34" height="34"><i class="qr-scan" aria-hidden="true"></i></div></div>
               <b>Scan with your phone</b>
-              <span>Point the camera here: the download page opens on your phone.</span>
+              <span>Point your phone's camera here: the APK starts downloading right away.</span>
             </div>
           </div>
         </div>
@@ -1037,10 +1078,11 @@
         <p class="note pick-warn" id="pick-warn" hidden></p>
       </div>
       <aside class="qr-card reveal" aria-label="Scan with your phone to download">
+        <span class="qr-chip"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 14h3v3M21 14v.01M14 21h3M20 18v3"/></svg>Scan to install</span>
         <h3>On a computer?</h3>
-        <p>Scan with your phone to download it there.</p>
-        <svg class="qr" viewBox="-3 -3 39 39" role="img" aria-label="QR code: opens the Jolpai download page"><use href="#qr-dl"/></svg>
-        <small>Use the phone's camera or Google Lens.</small>
+        <p>Scan and the APK downloads straight to your phone.</p>
+        <div class="qr-frame"><div class="qr-tile"><svg class="qr" width="176" height="176" viewBox="0 0 45 45" role="img" aria-label="QR code that downloads Jolpai Keyboard"><use href="#qr-dl" width="45" height="45"/></svg><img class="qr-logo" src="images/icon-96.webp" alt="" width="34" height="34"><i class="qr-scan" aria-hidden="true"></i></div></div>
+        <p class="qr-how"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8a2 2 0 0 1 2-2h1.5l1.5-2h6l1.5 2H18a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"/><circle cx="12" cy="12.5" r="3.5"/></svg><span>Use the camera or Google Lens. When it has downloaded, open the file and tap Install.</span></p>
       </aside>
       </div>
     </div>
@@ -1173,6 +1215,7 @@
   // file names (jolpai-keyboard-<version>-<abi>.apk) are used instead.
   (() => {
     const REPO = 'https://github.com/Yeamin-Talukder/jolpai-keyboard';
+    // At a release, also bump FALLBACK in get/index.html (the page the QR code opens).
     const KNOWN = ['v0.11.0', 'v0.10.1', 'v0.10.0', 'v0.9.0', 'v0.8.0', 'v0.7.0'];
     const ABI_NAME = { 'arm64-v8a': '64-bit', 'armeabi-v7a': '32-bit', 'x86_64': 'x86_64', 'x86': 'x86' };
     const sel = document.getElementById('pick-version');
