@@ -576,6 +576,34 @@
   .abi:hover { border-color: var(--olive-2); transform: translateY(-1px); }
   .abi[aria-checked="true"] { border-color: var(--olive); background: rgba(181,201,74,.12); box-shadow: inset 0 0 0 1px var(--olive); }
   .abi .yours { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px; background: var(--olive); color: #18200b; font-size: 11px; font-weight: 700; vertical-align: 2px; }
+  /* "Scan with your phone": the QR code opens the Install section on the phone */
+  .qr { display: block; background: #fff; border-radius: 12px; shape-rendering: crispEdges; }
+  .qr-wrap { position: relative; }
+  .qr-btn svg { width: 20px; height: 20px; }
+  .qr-pop {
+    position: absolute; z-index: 30; bottom: calc(100% + 12px); left: 50%; width: 236px; padding: 16px 16px 14px;
+    background: var(--card); border: 1px solid var(--line); border-radius: 20px; text-align: center;
+    box-shadow: 0 24px 60px -18px rgba(0,0,0,.75), 0 0 0 1px rgba(181,201,74,.08);
+    transform: translateX(-50%); transform-origin: bottom center; animation: qrIn .22s cubic-bezier(.3,.7,.3,1);
+  }
+  .qr-pop::before { content: ""; position: absolute; bottom: -7px; left: 50%; width: 12px; height: 12px; background: var(--card); border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); transform: translateX(-50%) rotate(45deg); }
+  .qr-pop .qr { width: 196px; height: 196px; margin: 0 auto 12px; }
+  .qr-pop b { display: block; font-size: 16px; }
+  .qr-pop span { display: block; color: var(--muted); font-size: 13.5px; margin-top: 2px; }
+  @keyframes qrIn { from { opacity: 0; transform: translateX(-50%) translateY(6px) scale(.96); } }
+  .install-row { display: flex; gap: 22px; align-items: stretch; justify-content: center; max-width: 1060px; margin: 28px auto 0; }
+  .install-row .picker { margin: 0; flex: 1 1 auto; }
+  .qr-card {
+    flex: none; width: 250px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px 20px;
+  }
+  .qr-card h3 { margin: 0 0 4px; font-size: 19px; }
+  .qr-card p { margin: 0 0 16px; color: var(--muted); font-size: 14.5px; }
+  .qr-card .qr { width: 190px; height: 190px; }
+  .qr-card small { margin-top: 12px; color: var(--dim); font-size: 13px; }
+  /* On a phone you tap Download instead */
+  @media (max-width: 860px) { .qr-card { display: none; } .install-row { display: block; } .install-row .picker { margin: 28px auto 0; } }
+  @media (max-width: 720px) { .qr-wrap { display: none; } }
   .pick-go { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 4px; }
   .pick-go .btn-primary { flex: 1 1 260px; }
   .pick-meta { margin: 14px 0 0; color: var(--dim); font-size: 14px; display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; min-height: 1.4em; }
@@ -738,6 +766,7 @@
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><symbol id="qr-dl" viewBox="-3 -3 39 39"><path fill="#14180f" d="M0 0h7v1h-7zM8 0h1v1h-1zM10 0h1v1h-1zM13 0h1v1h-1zM15 0h1v1h-1zM19 0h1v1h-1zM21 0h2v1h-2zM26 0h7v1h-7zM0 1h1v1h-1zM6 1h1v1h-1zM8 1h6v1h-6zM15 1h1v1h-1zM18 1h5v1h-5zM26 1h1v1h-1zM32 1h1v1h-1zM0 2h1v1h-1zM2 2h3v1h-3zM6 2h1v1h-1zM10 2h1v1h-1zM12 2h1v1h-1zM15 2h1v1h-1zM17 2h1v1h-1zM20 2h2v1h-2zM23 2h2v1h-2zM26 2h1v1h-1zM28 2h3v1h-3zM32 2h1v1h-1zM0 3h1v1h-1zM2 3h3v1h-3zM6 3h1v1h-1zM8 3h3v1h-3zM12 3h1v1h-1zM14 3h2v1h-2zM18 3h1v1h-1zM20 3h2v1h-2zM26 3h1v1h-1zM28 3h3v1h-3zM32 3h1v1h-1zM0 4h1v1h-1zM2 4h3v1h-3zM6 4h1v1h-1zM9 4h1v1h-1zM14 4h1v1h-1zM17 4h4v1h-4zM22 4h3v1h-3zM26 4h1v1h-1zM28 4h3v1h-3zM32 4h1v1h-1zM0 5h1v1h-1zM6 5h1v1h-1zM11 5h2v1h-2zM14 5h1v1h-1zM16 5h4v1h-4zM21 5h1v1h-1zM26 5h1v1h-1zM32 5h1v1h-1zM0 6h7v1h-7zM8 6h1v1h-1zM10 6h1v1h-1zM12 6h1v1h-1zM14 6h1v1h-1zM16 6h1v1h-1zM18 6h1v1h-1zM20 6h1v1h-1zM22 6h1v1h-1zM24 6h1v1h-1zM26 6h7v1h-7zM8 7h2v1h-2zM11 7h1v1h-1zM17 7h1v1h-1zM19 7h3v1h-3zM24 7h1v1h-1zM0 8h1v1h-1zM2 8h2v1h-2zM5 8h3v1h-3zM9 8h1v1h-1zM11 8h1v1h-1zM13 8h2v1h-2zM16 8h1v1h-1zM18 8h3v1h-3zM22 8h1v1h-1zM24 8h1v1h-1zM26 8h1v1h-1zM29 8h1v1h-1zM31 8h2v1h-2zM0 9h5v1h-5zM8 9h2v1h-2zM11 9h2v1h-2zM14 9h3v1h-3zM18 9h1v1h-1zM20 9h3v1h-3zM24 9h1v1h-1zM26 9h6v1h-6zM0 10h1v1h-1zM2 10h7v1h-7zM14 10h1v1h-1zM16 10h1v1h-1zM18 10h1v1h-1zM21 10h3v1h-3zM25 10h6v1h-6zM1 11h3v1h-3zM5 11h1v1h-1zM11 11h5v1h-5zM17 11h1v1h-1zM20 11h1v1h-1zM22 11h3v1h-3zM26 11h1v1h-1zM28 11h1v1h-1zM30 11h3v1h-3zM3 12h1v1h-1zM5 12h2v1h-2zM8 12h2v1h-2zM12 12h1v1h-1zM15 12h1v1h-1zM17 12h1v1h-1zM20 12h1v1h-1zM27 12h1v1h-1zM30 12h2v1h-2zM1 13h1v1h-1zM3 13h1v1h-1zM8 13h1v1h-1zM10 13h4v1h-4zM16 13h2v1h-2zM19 13h1v1h-1zM26 13h3v1h-3zM0 14h1v1h-1zM2 14h1v1h-1zM4 14h3v1h-3zM8 14h1v1h-1zM11 14h2v1h-2zM14 14h5v1h-5zM21 14h1v1h-1zM23 14h1v1h-1zM25 14h1v1h-1zM30 14h3v1h-3zM0 15h2v1h-2zM3 15h2v1h-2zM7 15h1v1h-1zM16 15h1v1h-1zM18 15h2v1h-2zM23 15h1v1h-1zM26 15h1v1h-1zM29 15h1v1h-1zM31 15h2v1h-2zM1 16h1v1h-1zM4 16h1v1h-1zM6 16h2v1h-2zM10 16h1v1h-1zM12 16h1v1h-1zM14 16h1v1h-1zM16 16h3v1h-3zM20 16h6v1h-6zM27 16h2v1h-2zM30 16h1v1h-1zM32 16h1v1h-1zM0 17h2v1h-2zM10 17h1v1h-1zM12 17h1v1h-1zM16 17h1v1h-1zM18 17h3v1h-3zM22 17h1v1h-1zM24 17h1v1h-1zM26 17h1v1h-1zM28 17h2v1h-2zM31 17h2v1h-2zM0 18h1v1h-1zM2 18h1v1h-1zM4 18h3v1h-3zM8 18h2v1h-2zM17 18h1v1h-1zM19 18h1v1h-1zM22 18h1v1h-1zM24 18h2v1h-2zM28 18h2v1h-2zM31 18h2v1h-2zM1 19h2v1h-2zM4 19h1v1h-1zM7 19h1v1h-1zM9 19h1v1h-1zM12 19h1v1h-1zM15 19h5v1h-5zM21 19h1v1h-1zM24 19h1v1h-1zM27 19h1v1h-1zM5 20h3v1h-3zM9 20h4v1h-4zM14 20h1v1h-1zM16 20h2v1h-2zM19 20h1v1h-1zM21 20h1v1h-1zM24 20h2v1h-2zM27 20h1v1h-1zM31 20h1v1h-1zM0 21h5v1h-5zM7 21h4v1h-4zM13 21h1v1h-1zM15 21h2v1h-2zM20 21h3v1h-3zM25 21h1v1h-1zM28 21h1v1h-1zM30 21h1v1h-1zM2 22h1v1h-1zM4 22h5v1h-5zM10 22h1v1h-1zM12 22h4v1h-4zM18 22h1v1h-1zM20 22h2v1h-2zM26 22h1v1h-1zM28 22h5v1h-5zM1 23h4v1h-4zM8 23h2v1h-2zM11 23h3v1h-3zM15 23h1v1h-1zM18 23h1v1h-1zM20 23h4v1h-4zM25 23h8v1h-8zM0 24h1v1h-1zM3 24h6v1h-6zM11 24h1v1h-1zM13 24h6v1h-6zM20 24h3v1h-3zM24 24h6v1h-6zM32 24h1v1h-1zM8 25h1v1h-1zM14 25h4v1h-4zM20 25h1v1h-1zM22 25h1v1h-1zM24 25h1v1h-1zM28 25h1v1h-1zM0 26h7v1h-7zM8 26h1v1h-1zM10 26h1v1h-1zM13 26h1v1h-1zM16 26h4v1h-4zM21 26h1v1h-1zM24 26h1v1h-1zM26 26h1v1h-1zM28 26h4v1h-4zM0 27h1v1h-1zM6 27h1v1h-1zM8 27h1v1h-1zM11 27h4v1h-4zM16 27h1v1h-1zM19 27h3v1h-3zM24 27h1v1h-1zM28 27h3v1h-3zM32 27h1v1h-1zM0 28h1v1h-1zM2 28h3v1h-3zM6 28h1v1h-1zM9 28h1v1h-1zM13 28h2v1h-2zM16 28h3v1h-3zM20 28h1v1h-1zM24 28h6v1h-6zM31 28h2v1h-2zM0 29h1v1h-1zM2 29h3v1h-3zM6 29h1v1h-1zM8 29h2v1h-2zM13 29h1v1h-1zM16 29h1v1h-1zM23 29h2v1h-2zM26 29h1v1h-1zM28 29h2v1h-2zM0 30h1v1h-1zM2 30h3v1h-3zM6 30h1v1h-1zM8 30h1v1h-1zM11 30h3v1h-3zM15 30h1v1h-1zM17 30h2v1h-2zM20 30h1v1h-1zM22 30h6v1h-6zM0 31h1v1h-1zM6 31h1v1h-1zM10 31h3v1h-3zM15 31h2v1h-2zM19 31h1v1h-1zM22 31h1v1h-1zM25 31h7v1h-7zM0 32h7v1h-7zM8 32h1v1h-1zM12 32h1v1h-1zM16 32h4v1h-4zM24 32h5v1h-5zM30 32h1v1h-1z"/></symbol></svg>
 
 <header class="top">
   <div class="wrap nav">
@@ -794,6 +823,14 @@
             <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.2 1.77 1.2 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.79 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.42-2.7 5.39-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>
             <span>View on GitHub</span>
           </a>
+          <div class="qr-wrap">
+            <button type="button" class="btn btn-ghost qr-btn" id="qr-btn" aria-expanded="false" aria-controls="qr-pop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 14h3v3M21 14v.01M14 21h3M20 18v3"/></svg><span>Scan with phone</span></button>
+            <div class="qr-pop" id="qr-pop" role="dialog" aria-label="Scan with your phone to download" hidden>
+              <svg class="qr" viewBox="-3 -3 39 39" role="img" aria-label="QR code: opens the Jolpai download page"><use href="#qr-dl"/></svg>
+              <b>Scan with your phone</b>
+              <span>Point the camera here: the download page opens on your phone.</span>
+            </div>
+          </div>
         </div>
         <p class="release-note"><span class="js-version">Version 0.11.0</span><span class="js-dl" hidden></span> · Android 8.0+ · Free forever</p>
         <ul class="chips" aria-label="Highlights">
@@ -963,6 +1000,7 @@
       </ol>
       <p class="note reveal"><b>Coming from 0.7 or 0.8?</b> Version 0.9 has a new app ID, so it installs next to the old one. Save a backup in the old app (Backup &amp; restore), restore it in the new one, then uninstall the old app. Later versions update normally.</p>
       <!-- Download picker: any release, any processor type (filled from GitHub by the script below) -->
+      <div class="install-row">
       <div class="picker reveal" id="download-picker">
         <h3>Choose your download</h3>
         <p>The newest version for most phones is already picked. Need an older version or another phone type? Change it here.</p>
@@ -997,6 +1035,13 @@
         </div>
         <p class="pick-meta" id="pick-meta" aria-live="polite"></p>
         <p class="note pick-warn" id="pick-warn" hidden></p>
+      </div>
+      <aside class="qr-card reveal" aria-label="Scan with your phone to download">
+        <h3>On a computer?</h3>
+        <p>Scan with your phone to download it there.</p>
+        <svg class="qr" viewBox="-3 -3 39 39" role="img" aria-label="QR code: opens the Jolpai download page"><use href="#qr-dl"/></svg>
+        <small>Use the phone's camera or Google Lens.</small>
+      </aside>
       </div>
     </div>
   </section>
@@ -1404,6 +1449,16 @@
         renderHero();
       })
       .catch(() => {});
+  })();
+
+  // ---------------------------------------------------------------- scan with your phone
+  (() => {
+    const btn = document.getElementById('qr-btn'), pop = document.getElementById('qr-pop');
+    if (!btn || !pop) return;
+    const show = on => { pop.hidden = !on; btn.setAttribute('aria-expanded', String(on)); };
+    btn.addEventListener('click', e => { e.stopPropagation(); show(pop.hidden); });
+    document.addEventListener('click', e => { if (!pop.hidden && !pop.contains(e.target)) show(false); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && !pop.hidden) { show(false); btn.focus(); } });
   })();
 
   // ---------------------------------------------------------------- hero on one screen
