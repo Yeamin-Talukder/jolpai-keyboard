@@ -1,10 +1,10 @@
 <div align="center">
 
-<img src="docs/images/banner.png" alt="Jolpai Keyboard (জলপাই কিবোর্ড): open-source privacy-first Bangla and English keyboard for Android with Avro phonetic and National (Jatiya) layouts" width="100%">
+<img src="docs/images/banner.png" alt="Jolpai Keyboard (জলপাই কিবোর্ড): free AI-powered Bangla keyboard for Android with a clean design, Avro phonetic, National (Jatiya) and Probhat layouts" width="100%">
 
-# Jolpai Keyboard (জলপাই কিবোর্ড): Bangla & English Keyboard for Android
+# Jolpai Keyboard (জলপাই কিবোর্ড): AI-Powered Bangla Keyboard for Android
 
-**A free, open-source, privacy-first Bangla (Bengali) keyboard for Android with Avro phonetic typing,
+**A free, open-source, AI-powered Bangla (Bengali) keyboard for Android with a clean, modern design: Avro phonetic typing,
 the National (জাতীয়) and প্রভাত (Probhat) layouts, English QWERTY, on-device AI predictions, an offline spelling and grammar
 check, offline English↔Bangla translation, voice typing, a clipboard manager and 64 themes. No ads, no tracking,
 and nothing you type leaves your phone.**
@@ -31,8 +31,8 @@ and nothing you type leaves your phone.**
 
 ## What is Jolpai Keyboard?
 
-**Jolpai Keyboard** (Bangla: **জলপাই কিবোর্ড**, "olive keyboard") is an open-source Android keyboard
-(IME) built for people who write in **Bangla (Bengali) and English**. You can type Bangla **phonetically
+**Jolpai Keyboard** (Bangla: **জলপাই কিবোর্ড**, "olive keyboard") is an open-source, AI-powered Bangla keyboard
+app (IME) for Android, built for people who write in **Bangla (Bengali) and English**. You can type Bangla **phonetically
 with Avro** (`ami` → আমি), use the fixed **National (জাতীয়)** or **প্রভাত (Probhat)** layout, or switch to **English QWERTY**
 with on-device AI predictions,
 all in one keyboard that works in every app: WhatsApp, Messenger, Facebook, Gmail, Chrome and more.
@@ -432,6 +432,22 @@ signed APKs, and publishes them with the notes and checksums.
 
 ## ❓ FAQ
 
+**What is the best Bangla keyboard for Android?**
+It depends on what you need. Jolpai is a strong choice if you want everything in one free app: Avro
+phonetic typing, the National (জাতীয়) and প্রভাত layouts, on-device AI predictions, an offline Bangla and
+English spelling check, offline translation and 64 themes, with no ads and no tracking. It is open
+source, so anyone can check what it does with your typing.
+
+**Is there an AI-powered Bangla keyboard?**
+Yes. Jolpai runs a small neural model on your phone: it reads your sentence to suggest the next word,
+rank suggestions and fix typos, and picks emoji by meaning. Bangla next words come from a list counted
+from 91 million words of open Bangla text, plus what you type. Nothing is sent to a server.
+
+**Which Bangla keyboard has the best design?**
+Jolpai is built for a clean, modern look: centred Bangla vowel signs without dotted circles, Material You
+colours, 64 themes (light, dark, gradients and your own photo), rounded keys, key fonts and smooth
+animations. See the [screenshots](#-screenshots) and the [live demo](https://yeamin-talukder.github.io/jolpai-keyboard/).
+
 **How do I type Bangla on Android with Jolpai Keyboard?**
 Install Jolpai, turn it on in the app's two setup steps, then tap the 🌐 language button to choose
 বাংলা (অভ্র) for phonetic typing (`ami` → আমি) or বাংলা (জাতীয়) for the National layout, or বাংলা (প্রভাত) for Probhat (turn it on in Languages & layouts first).
@@ -475,7 +491,7 @@ full clipboard manager and 64 themes.
 
 ## 🇧🇩 বাংলায়: জলপাই কিবোর্ড
 
-**জলপাই কিবোর্ড** অ্যান্ড্রয়েডের জন্য একটি ফ্রি ও ওপেন-সোর্স **বাংলা কিবোর্ড**।
+**জলপাই কিবোর্ড** অ্যান্ড্রয়েডের জন্য একটি ফ্রি, ওপেন-সোর্স ও এআই-চালিত **বাংলা কিবোর্ড**।
 এতে আছে **অভ্র ফোনেটিক** (`ami` → আমি), **জাতীয় কিবোর্ড লেআউট**, ইংরেজি QWERTY, স্মার্ট সাজেশন,
 **অফলাইন বানান ও ব্যাকরণ চেক**, **অফলাইন ইংরেজি↔বাংলা অনুবাদ**, ভয়েস টাইপিং, ক্লিপবোর্ড ম্যানেজার এবং ৬৪টি থিম।
 
