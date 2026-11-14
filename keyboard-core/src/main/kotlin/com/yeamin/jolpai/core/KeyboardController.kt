@@ -22,6 +22,8 @@ import com.yeamin.jolpai.core.settings.KeyboardSettings
 import com.yeamin.jolpai.suggest.NextChars
 import com.yeamin.jolpai.core.gesture.BuiltIns
 import com.yeamin.jolpai.core.gesture.EmojiTab
+import com.yeamin.jolpai.core.gesture.EnterHold
+import com.yeamin.jolpai.core.gesture.SlideSelection
 import com.yeamin.jolpai.core.gesture.GestureDispatcher
 import com.yeamin.jolpai.suggest.TypingScript
 import com.yeamin.jolpai.core.suggest.WordContext
@@ -106,6 +108,8 @@ data class KeyboardUiState(
     val trackpadVertical: Boolean = true,
     /** How long a key is held before its long-press characters appear, in ms. */
     val longPressMs: Long = DEFAULT_LONG_PRESS_MS.toLong(),
+    /** Long-press Enter gestures (emoji, slide to select), or null when off, in password fields and while typing into a box. */
+    val enterHold: EnterHold? = null,
     /** Custom gesture shortcuts, or null when off (and in password fields). */
     val gestures: GestureDispatcher? = null,
     /** The emoji tab to open on (from a GIF/sticker shortcut), or null. */
@@ -124,6 +128,8 @@ data class KeyboardUiState(
     /** The last search for the panel being shown ("" for none). */
     val panelQuery: String = "",
     val toolbar: List<ToolbarItem> = ToolbarItem.DEFAULT,
+    /** Emoji and clipboard open above the keyboard (true) or in place of the keys. */
+    val panelsAbove: Boolean = true,
     /** BCP-47 tag voice typing should listen for, e.g. "bn-BD". */
     val voiceLanguageTag: String = "en-US",
     val emojiSkinTone: Int = 0,
@@ -376,6 +382,7 @@ class KeyboardController(
             shiftIsAutomatic = false
             panel = Panel.NONE
             selecting = false
+            endSelectSlide()
         }
         undoableCorrection = null
         rejectedWord = null
@@ -543,6 +550,8 @@ class KeyboardController(
             }
             is KeyAction.SelectBack -> selectBack(action.words)
             is KeyAction.EndSelectBack -> endSelectBack(action.delete)
+            is KeyAction.SelectSlide -> selectSlide(action.chars, action.lines)
+            KeyAction.EndSelectSlide -> endSelectSlide()
             is KeyAction.MoveCursor -> {
                 endComposing()
                 val command = if (action.steps < 0) EditorCommand.LEFT else EditorCommand.RIGHT
@@ -928,6 +937,44 @@ class KeyboardController(
         if (delete && editor.hasSelection()) editor.deleteBackward() else editor.setSelection(backAnchor, backAnchor)
         backAnchor = -1
         backText = ""
+    }
+
+    // Enter hold-and-slide: the fixed end of the selection, the known text around it (positions
+    // in [slideText] are absolute positions minus [slideBase]) and where the moving end started.
+    private var slideAnchor = -1
+    private var slideBase = 0
+    private var slideText = ""
+    private var slideFrom = 0
+
+    /**
+     * Selects from where the Enter slide started to [lines] lines and [chars] characters away,
+     * through the same [TextEditor.setSelection] the backspace swipe uses. An existing selection
+     * is kept and its end moves; otherwise the selection grows from the cursor.
+     */
+    private fun selectSlide(chars: Int, lines: Int) {
+        if (slideAnchor < 0) {
+            endComposing()
+            val start = editor.selectionStart()
+            if (start < 0) return
+            val end = editor.selectionEnd().coerceAtLeast(start)
+            val before = editor.textBeforeCursor(SLIDE_CHARS).toString()
+            val selected = if (end > start) editor.selectedText(SLIDE_CHARS).toString() else ""
+            // A selection too long to read whole: keep only the text before it (the slide can shrink it from the start).
+            val whole = selected.length == end - start
+            val after = if (whole) editor.textAfterCursor(SLIDE_CHARS).toString() else ""
+            slideAnchor = start
+            slideBase = start - before.length
+            slideText = before + (if (whole) selected + after else "")
+            slideFrom = before.length + (if (whole) selected.length else 0)
+        }
+        val focus = slideBase + SlideSelection.focus(slideText, slideFrom, chars, lines)
+        editor.setSelection(minOf(slideAnchor, focus), maxOf(slideAnchor, focus))
+    }
+
+    /** The slide ended: the selection stays where it is. */
+    private fun endSelectSlide() {
+        slideAnchor = -1
+        slideText = ""
     }
 
     /** Called for gesture actions the keyboard service carries out (open settings, mode toggles). */
@@ -1530,6 +1577,7 @@ class KeyboardController(
         trackpadVertical = settings.trackpadVertical,
         longPressMs = settings.longPressMs.toLong(),
         gestures = GestureDispatcher(settings.gestures, BuiltIns(settings.cursorSwipe, settings.doubleSpacePeriod)).takeIf { settings.gestures.enabled && !editorField.isPassword },
+        enterHold = EnterHold.of(settings.enterHoldEmoji, settings.enterHoldSelect).takeIf { !editorField.isPassword && !typingInBox },
         emojiTab = emojiTab.takeIf { panel == Panel.EMOJI },
         nextChars = nextChars,
         touchCalibration = settings.touchCalibration && !editorField.isSensitive,
@@ -1544,6 +1592,7 @@ class KeyboardController(
         },
         panelQuery = panelQueries[panel].orEmpty(),
         toolbar = settings.toolbar,
+        panelsAbove = settings.panelPlacement == com.yeamin.jolpai.core.settings.PanelPlacement.ABOVE,
         voiceLanguageTag = when (settings.voiceLanguage) {
             VoiceLanguage.AUTO -> if (activeLayout == LayoutId.ENGLISH) "en-US" else "bn-BD"
             else -> settings.voiceLanguage.storageKey
@@ -1555,6 +1604,9 @@ class KeyboardController(
     private companion object {
         const val DOUBLE_TAP_MS = 350L
         const val CONTEXT_CHARS = 128
+
+        /** Text read on each side of the cursor for the Enter slide (enough for several lines). */
+        const val SLIDE_CHARS = 4000
         const val SEARCH_RESULTS = 16
 
         /** Characters read on each side of the cursor for the Check card. */

@@ -25,6 +25,16 @@ sealed interface KeyAction {
 
     /** Backspace swipe ended: delete the selected range, or restore the cursor if [delete] is false. */
     data class EndSelectBack(val delete: Boolean) : KeyAction
+
+    /**
+     * Enter hold-and-slide in progress: select from where the slide started to [lines] lines and
+     * [chars] characters away (negative = up/left). Moving back shrinks the selection again.
+     */
+    data class SelectSlide(val chars: Int, val lines: Int = 0) : KeyAction
+
+    /** Enter slide ended: the selection stays, ready to copy or cut. */
+    data object EndSelectSlide : KeyAction
+
     data class SelectLayout(val id: LayoutId) : KeyAction
 
     /**

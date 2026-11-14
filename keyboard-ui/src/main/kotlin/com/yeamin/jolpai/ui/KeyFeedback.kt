@@ -40,8 +40,15 @@ class KeyFeedback(context: Context, private val settings: () -> KeyboardSettings
         sound(style)
     }
 
-    /** One step of a space-bar or backspace swipe. */
-    fun tick(view: View) = haptic(view, HapticFeedbackConstants.CLOCK_TICK, -4)
+    /**
+     * One cursor or selection step: trackpad, space-bar and backspace swipes, Enter slide.
+     * Uses Android's text-cursor haptic, a crisp light tick (CLOCK_TICK is barely felt on Pixels).
+     */
+    fun tick(view: View) = haptic(
+        view,
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) HapticFeedbackConstants.TEXT_HANDLE_MOVE else HapticFeedbackConstants.CLOCK_TICK,
+        -2,
+    )
 
     fun longPress(view: View) = haptic(view, HapticFeedbackConstants.LONG_PRESS, 10)
 

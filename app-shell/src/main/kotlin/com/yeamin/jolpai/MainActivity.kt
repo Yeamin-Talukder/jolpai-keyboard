@@ -204,7 +204,7 @@ class MainActivity : ComponentActivity() {
                             onAddPack = viewModel::addSnippetPack,
                             onBack = back,
                         )
-                        Destination.TOOLBAR -> ToolbarScreen(settings.toolbar, viewModel::setToolbar, back)
+                        Destination.TOOLBAR -> ToolbarScreen(settings.toolbar, viewModel::setToolbar, back, settings.panelPlacement, viewModel::setPanelPlacement)
                         Destination.VOICE -> VoiceScreen(viewModel, settings, voiceAvailability, back)
                         Destination.MEDIA -> MediaScreen(viewModel, settings, stickers, back)
                         Destination.THEMES -> ThemesScreen(viewModel, settings, customThemes, systemDark, onEdit = { editingTheme = it; open(Destination.THEME_EDITOR) }, onBack = back)

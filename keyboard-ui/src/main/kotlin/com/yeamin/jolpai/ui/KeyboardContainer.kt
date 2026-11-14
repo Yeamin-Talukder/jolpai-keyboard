@@ -176,7 +176,9 @@ class KeyboardContainer(
         setContent {
             val s = uiState.value ?: return@setContent
             when (s.panel) {
-                Panel.NONE, Panel.EMOJI, Panel.CLIPBOARD -> Unit // emoji and clipboard open above the toolbar
+                Panel.NONE -> Unit
+                // Emoji and clipboard open above the toolbar, unless the user put them in place of the keys.
+                Panel.EMOJI, Panel.CLIPBOARD -> if (!s.panelsAbove) servicePanel(s.panel, panelColors, s)
                 Panel.EDITING -> EditingPanel(s.selecting, s.textStyle, panelColors, onAction)
                 else -> servicePanel(s.panel, panelColors, s)
             }
@@ -259,7 +261,7 @@ class KeyboardContainer(
     }
 
     private val upperOpen: Boolean
-        get() = uiState.value?.panel.let { it == Panel.EMOJI || it == Panel.CLIPBOARD }
+        get() = uiState.value?.let { it.panelsAbove && (it.panel == Panel.EMOJI || it.panel == Panel.CLIPBOARD) } == true
 
     /**
      * A key pressed on the keyboard while emoji or clipboard is open above it: the section
@@ -755,6 +757,7 @@ class KeyboardContainer(
         keyboardView.trackpadVertical = state.trackpadVertical
         keyboardView.longPressMs = state.longPressMs
         keyboardView.gestures = state.gestures
+        keyboardView.enterHold = state.enterHold
         toolbarGestures = state.gestures
         keyboardView.nextChars = state.nextChars
         keyboardView.learnTouches = state.touchCalibration
@@ -767,8 +770,9 @@ class KeyboardContainer(
 
         if (uiState.value?.panel != state.panel && state.panel != Panel.NONE) keyboardView.cancelTouches()
         uiState.value = state
-        // Emoji and clipboard open above the toolbar (the keys stay); editing and voice cover the keys.
-        val upper = state.panel == Panel.EMOJI || state.panel == Panel.CLIPBOARD
+        // Emoji and clipboard open above the toolbar (the keys stay), or in place of the keys if the
+        // user chose that (Toolbar settings); editing and voice always cover the keys.
+        val upper = state.panelsAbove && (state.panel == Panel.EMOJI || state.panel == Panel.CLIPBOARD)
         val showPanel = state.panel != Panel.NONE && !upper
         panelView.visibility = if (showPanel) View.VISIBLE else View.GONE
         keyboardView.visibility = if (showPanel) View.INVISIBLE else View.VISIBLE

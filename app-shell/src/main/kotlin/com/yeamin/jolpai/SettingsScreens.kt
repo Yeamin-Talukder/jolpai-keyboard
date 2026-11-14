@@ -194,6 +194,24 @@ fun TypingScreen(vm: MainViewModel, settings: KeyboardSettings, onBack: () -> Un
                 vm::setTrackpadVertical,
                 UiR.drawable.ms_drag_pan,
             )
+            SettingsSwitch(
+                "Hold Enter for emoji",
+                if (settings.enterHoldSelect) {
+                    "Hold Enter and let go without sliding to open the emoji panel (sliding selects text). A tap still sends or starts a new line."
+                } else {
+                    "Hold Enter to open the emoji panel. A tap still sends, searches or starts a new line."
+                },
+                settings.enterHoldEmoji,
+                vm::setEnterHoldEmoji,
+                UiR.drawable.ms_mood,
+            )
+            SettingsSwitch(
+                "Hold Enter and slide to select",
+                "Hold Enter, then slide left or right to select text from the cursor a letter at a time, up or down for whole lines. Let go and the text stays selected, ready to copy or cut. Not in password fields.",
+                settings.enterHoldSelect,
+                vm::setEnterHoldSelect,
+                UiR.drawable.ms_keyboard_return,
+            )
         }
         SettingsGroup("Typing accuracy") {
             SettingsSwitch(
@@ -365,8 +383,19 @@ private fun toolbarIcon(item: ToolbarItem): Int = when (item) {
 
 /** Which tools appear above the keys, and in what order. */
 @Composable
-fun ToolbarScreen(items: List<ToolbarItem>, onChange: (List<ToolbarItem>) -> Unit, onBack: () -> Unit) {
-    SettingsScaffold("Toolbar", onBack) {
+fun ToolbarScreen(
+    items: List<ToolbarItem>,
+    onChange: (List<ToolbarItem>) -> Unit,
+    onBack: () -> Unit,
+    placement: com.yeamin.jolpai.core.settings.PanelPlacement,
+    onPlacement: (com.yeamin.jolpai.core.settings.PanelPlacement) -> Unit,
+) {
+    SettingsScaffold("Toolbar & panels", onBack) {
+        SettingsGroup("Emoji and clipboard open") {
+            com.yeamin.jolpai.core.settings.PanelPlacement.entries.forEach { p ->
+                SettingsRadio(p.label, p.summary, selected = placement == p) { onPlacement(p) }
+            }
+        }
         SettingsNote("Tools shown above the keys when you're not typing a word. While suggestions show, the grid button brings them back.")
         SettingsGroup {
             val ordered = items + ToolbarItem.entries.filter { it !in items }

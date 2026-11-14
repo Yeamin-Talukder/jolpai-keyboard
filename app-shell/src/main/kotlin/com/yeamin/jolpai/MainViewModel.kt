@@ -96,6 +96,14 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch { repository.setTrackpadVertical(v) }
     }
 
+    fun setEnterHoldEmoji(v: Boolean) {
+        viewModelScope.launch { repository.setEnterHoldEmoji(v) }
+    }
+
+    fun setEnterHoldSelect(v: Boolean) {
+        viewModelScope.launch { repository.setEnterHoldSelect(v) }
+    }
+
     fun setPredictiveTouch(v: Boolean) {
         viewModelScope.launch { repository.setPredictiveTouch(v) }
     }
@@ -116,6 +124,10 @@ class MainViewModel @Inject constructor(
 
     fun setToolbar(items: List<ToolbarItem>) {
         viewModelScope.launch { repository.setToolbar(items) }
+    }
+
+    fun setPanelPlacement(value: com.yeamin.jolpai.core.settings.PanelPlacement) {
+        viewModelScope.launch { repository.setPanelPlacement(value) }
     }
 
     fun setEmojiSkinTone(tone: Int) {

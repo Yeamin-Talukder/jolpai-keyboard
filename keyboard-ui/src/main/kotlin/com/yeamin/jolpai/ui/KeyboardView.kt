@@ -29,6 +29,8 @@ import com.yeamin.jolpai.core.model.KeyStyle
 import com.yeamin.jolpai.core.model.KeyboardLayout
 import com.yeamin.jolpai.core.model.ShiftState
 import com.yeamin.jolpai.core.touch.TouchCalibration
+import com.yeamin.jolpai.core.gesture.EnterHold
+import com.yeamin.jolpai.core.gesture.EnterHoldGesture
 import com.yeamin.jolpai.core.gesture.GestureDispatcher
 import com.yeamin.jolpai.core.gesture.GestureType
 import com.yeamin.jolpai.core.gesture.GestureZone
@@ -182,6 +184,32 @@ class KeyboardView(context: Context, private val palette: KeyboardPalette) : Vie
 
         /** A long-press gesture shortcut on this key (instead of its menu). */
         val gestureHold = Runnable { onGestureHold(this) }
+
+        /** Long-press Enter (emoji / slide to select), when this touch started on Enter and it is on. */
+        var enterGesture: EnterHoldGesture? = null
+        val enterHoldStart = Runnable { onEnterHold(this) }
+    }
+
+    /** Long-press Enter options; null when off (and in password fields). */
+    var enterHold: EnterHold? = null
+
+    /** Enter held this long counts as a hold: at least [ENTER_HOLD_MIN_MS], so a slow tap still sends. */
+    private val enterHoldMs: Long get() = maxOf(longPressMs, ENTER_HOLD_MIN_MS)
+
+    private fun onEnterHold(p: Pointer) {
+        val g = p.enterGesture ?: return
+        if (!pointers.containsValue(p) || p.consumed) return
+        feedback?.longPress(this) ?: performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+        g.onHold(p.lastX, p.lastY).forEach(::emit)
+        invalidate()
+    }
+
+    /** Moves while Enter is held: selection steps, with a tick for each. */
+    private fun moveEnterHold(p: Pointer, g: EnterHoldGesture, x: Float, y: Float) {
+        val actions = g.onMove(x, y)
+        if (actions.isEmpty()) return
+        actions.forEach(::emit)
+        stepTick()
     }
 
     /** Custom gesture shortcuts; null when off. */
@@ -333,8 +361,11 @@ class KeyboardView(context: Context, private val palette: KeyboardPalette) : Vie
             handler.removeCallbacks(it.repeat)
             handler.removeCallbacks(it.trackpadStart)
             handler.removeCallbacks(it.gestureHold)
+            handler.removeCallbacks(it.enterHoldStart)
         }
+        val ended = pointers.values.flatMap { it.enterGesture?.onCancel().orEmpty() }
         pointers.clear()
+        ended.forEach(::emit)
         trackpadActive = false
         flushPendingTap()
         popup?.hideAll()
@@ -628,6 +659,11 @@ class KeyboardView(context: Context, private val palette: KeyboardPalette) : Vie
         feedback?.keyDown(this, cell.key.style) ?: performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
         startPress(p, cell)
         if (cell.key.style == KeyStyle.SPACE) handler.postDelayed(p.trackpadStart, TRACKPAD_MS)
+        val hold = enterHold
+        if (cell.key.action == KeyAction.Enter && hold != null) {
+            p.enterGesture = EnterHoldGesture(hold, charStep = cursorStep, lineStep = trackStepY, slop = swipeStart)
+            handler.postDelayed(p.enterHoldStart, enterHoldMs)
+        }
         if (cell.key.action == KeyAction.Delete) {
             noteDelete()
             if (!cursorSwipe) emit(KeyAction.Delete)
@@ -651,7 +687,7 @@ class KeyboardView(context: Context, private val palette: KeyboardPalette) : Vie
                 val steps = (dx / cursorStep).toInt()
                 if (steps != p.swipeSteps) {
                     emit(KeyAction.MoveCursor(steps - p.swipeSteps))
-                    feedback?.tick(this) ?: performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                    stepTick()
                     p.swipeSteps = steps
                 }
                 return true
@@ -668,7 +704,7 @@ class KeyboardView(context: Context, private val palette: KeyboardPalette) : Vie
                 val words = if (dx < swipeStart / 2) 0 else (dx / wordStep).toInt() + 1
                 if (words != p.swipeSteps) {
                     emit(KeyAction.SelectBack(words))
-                    feedback?.tick(this) ?: performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                    stepTick()
                     p.swipeSteps = words
                 }
                 return true
@@ -691,19 +727,29 @@ class KeyboardView(context: Context, private val palette: KeyboardPalette) : Vie
 
     /** One character per [trackStepX] sideways; one line per [trackStepY] up or down. */
     private fun moveTrackpad(p: Pointer, x: Float, y: Float) {
+        var moved = false
         val stepsX = ((x - p.trackX) / trackStepX).toInt()
         if (stepsX != 0) {
             emit(KeyAction.MoveCursor(stepsX))
             p.trackX += stepsX * trackStepX
+            moved = true
         }
-        if (!trackpadVertical) return
-        val stepsY = ((y - p.trackY) / trackStepY).toInt()
-        if (stepsY != 0) {
-            val command = if (stepsY > 0) EditCommand.DOWN else EditCommand.UP
-            repeat(kotlin.math.abs(stepsY)) { emit(KeyAction.Edit(command)) }
-            p.trackY += stepsY * trackStepY
-            feedback?.tick(this) ?: performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+        if (trackpadVertical) {
+            val stepsY = ((y - p.trackY) / trackStepY).toInt()
+            if (stepsY != 0) {
+                val command = if (stepsY > 0) EditCommand.DOWN else EditCommand.UP
+                repeat(kotlin.math.abs(stepsY)) { emit(KeyAction.Edit(command)) }
+                p.trackY += stepsY * trackStepY
+                moved = true
+            }
         }
+        // One tick per cursor step (at most one per touch event, so a fast slide doesn't buzz).
+        if (moved) stepTick()
+    }
+
+    /** The light tick for one cursor or selection step (trackpad, space and backspace swipes, Enter slide). */
+    private fun stepTick() {
+        feedback?.tick(this) ?: performHapticFeedback(STEP_HAPTIC)
     }
 
     private fun startPress(p: Pointer, cell: Cell) {
@@ -724,6 +770,11 @@ class KeyboardView(context: Context, private val palette: KeyboardPalette) : Vie
         p.lastY = y
         if (p.trackpad) {
             moveTrackpad(p, x, y)
+            return
+        }
+        val enter = p.enterGesture
+        if (enter != null && enter.heldPastTap) {
+            moveEnterHold(p, enter, x, y)
             return
         }
         if (checkSwipeGesture(p, x, y)) return
@@ -749,9 +800,18 @@ class KeyboardView(context: Context, private val palette: KeyboardPalette) : Vie
         handler.removeCallbacks(p.repeat)
         handler.removeCallbacks(p.trackpadStart)
         handler.removeCallbacks(p.gestureHold)
+        handler.removeCallbacks(p.enterHoldStart)
         if (p.trackpad) {
             trackpadActive = pointers.values.any { it.trackpad }
             invalidate()
+            return
+        }
+        val enter = p.enterGesture
+        if (enter != null && enter.heldPastTap) {
+            // Held Enter: emoji on release, or the end of a slide (the selection stays). No new line.
+            popup?.hidePreview()
+            invalidate()
+            enter.onRelease().forEach(::emit)
             return
         }
         val cell = p.cell
@@ -848,6 +908,10 @@ class KeyboardView(context: Context, private val palette: KeyboardPalette) : Vie
         const val REPEAT_START_MS = 400L
         const val REPEAT_INTERVAL_MS = 50L
         const val TRACKPAD_MS = 400L
+        const val ENTER_HOLD_MIN_MS = 400L
+
+        /** Android's haptic for a moving text cursor: a crisp light tick (CLOCK_TICK is barely felt on Pixels). */
+        val STEP_HAPTIC = if (android.os.Build.VERSION.SDK_INT >= 27) HapticFeedbackConstants.TEXT_HANDLE_MOVE else HapticFeedbackConstants.CLOCK_TICK
         const val CORRECTION_MS = 3000L
         const val PRESSED_TINT = 0x33000000
         const val FRAME_MS = 16f

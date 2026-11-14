@@ -52,6 +52,10 @@ data class KeyboardSettings(
     val cursorSwipe: Boolean = true,
     /** In space-bar trackpad mode (hold space), moving up or down moves the cursor between lines. */
     val trackpadVertical: Boolean = true,
+    /** Hold Enter to open the emoji panel (a tap still sends, searches or starts a new line). Off by default. */
+    val enterHoldEmoji: Boolean = false,
+    /** Hold Enter, then slide, to select text from the cursor (by character sideways, by line up and down). Off by default. */
+    val enterHoldSelect: Boolean = false,
     /** How long a key is held (ms) before its hidden characters (corner hint, long-press menu) appear. */
     val longPressMs: Int = DEFAULT_LONG_PRESS_MS,
     /** Predictive touch targets: likely next letters get slightly larger invisible touch areas. */
@@ -64,6 +68,8 @@ data class KeyboardSettings(
     val gestures: com.yeamin.jolpai.core.gesture.GestureConfig = com.yeamin.jolpai.core.gesture.GestureConfig(),
     /** Toolbar buttons, in order. Items not listed are hidden. */
     val toolbar: List<ToolbarItem> = ToolbarItem.DEFAULT,
+    /** Where emoji and clipboard open: above the keyboard (the keys stay) or in place of the keys. */
+    val panelPlacement: PanelPlacement = PanelPlacement.ABOVE,
     /** Default emoji skin tone: 0 = yellow, 1–5 = light to dark. */
     val emojiSkinTone: Int = 0,
     /** Suggest emoji for the word being typed (English and Bangla keywords). */
@@ -104,6 +110,21 @@ data class KeyboardSettings(
 }
 
 enum class OneHanded(val storageKey: String) { OFF("off"), LEFT("left"), RIGHT("right") }
+
+/**
+ * Where the emoji and clipboard panels open. [ABOVE] (default since 2026-11-07): a section above the
+ * top bar, over the app, with the keys still in place. [KEYS]: the panel takes the keys' place,
+ * as it did before; the keyboard doesn't grow over the app.
+ */
+enum class PanelPlacement(val storageKey: String, val label: String, val summary: String) {
+    ABOVE("above", "Above the keyboard", "Opens over the app; the keys stay, and any key closes it and types"),
+    KEYS("keys", "In place of the keys", "Takes the keys' space; tap the toolbar button again for the keys"),
+    ;
+
+    companion object {
+        fun fromStorageKey(key: String?): PanelPlacement = entries.firstOrNull { it.storageKey == key } ?: ABOVE
+    }
+}
 
 /** The typeface on the keys (bundled Bangla fonts, SIL Open Font License). */
 enum class KeyFont(val storageKey: String, val label: String) {
@@ -183,6 +204,8 @@ class KeyboardSettingsRepository @Inject constructor(
                 clipboardRetention = ClipRetention.fromStorageKey(p[CLIPBOARD_RETENTION]),
                 cursorSwipe = p[CURSOR_SWIPE] ?: true,
                 trackpadVertical = p[TRACKPAD_VERTICAL] ?: true,
+                enterHoldEmoji = p[ENTER_HOLD_EMOJI] ?: false,
+                enterHoldSelect = p[ENTER_HOLD_SELECT] ?: false,
                 longPressMs = (p[LONG_PRESS] ?: DEFAULT_LONG_PRESS_MS).coerceIn(LONG_PRESS_RANGE),
                 predictiveTouch = p[PREDICTIVE_TOUCH] ?: true,
                 touchCalibration = p[TOUCH_CALIBRATION] ?: true,
@@ -196,6 +219,7 @@ class KeyboardSettingsRepository @Inject constructor(
                     saved + ToolbarItem.DEFAULT.filter { it.storageKey !in seen && it !in saved }
                 }
                     ?: ToolbarItem.DEFAULT,
+                panelPlacement = PanelPlacement.fromStorageKey(p[PANEL_PLACEMENT]),
                 emojiSkinTone = (p[EMOJI_TONE] ?: 0).coerceIn(0, 5),
                 emojiSuggestions = p[EMOJI_SUGGESTIONS] ?: true,
                 smartPredictions = p[SMART_PREDICTIONS] ?: true,
@@ -244,6 +268,8 @@ class KeyboardSettingsRepository @Inject constructor(
     suspend fun setClipboardRetention(value: ClipRetention) = dataStore.edit { it[CLIPBOARD_RETENTION] = value.storageKey }
     suspend fun setCursorSwipe(value: Boolean) = dataStore.edit { it[CURSOR_SWIPE] = value }
     suspend fun setTrackpadVertical(value: Boolean) = dataStore.edit { it[TRACKPAD_VERTICAL] = value }
+    suspend fun setEnterHoldEmoji(value: Boolean) = dataStore.edit { it[ENTER_HOLD_EMOJI] = value }
+    suspend fun setEnterHoldSelect(value: Boolean) = dataStore.edit { it[ENTER_HOLD_SELECT] = value }
     suspend fun setLongPressMs(value: Int) = dataStore.edit { it[LONG_PRESS] = value.coerceIn(LONG_PRESS_RANGE) }
     suspend fun setPredictiveTouch(value: Boolean) = dataStore.edit { it[PREDICTIVE_TOUCH] = value }
     suspend fun setTouchCalibration(value: Boolean) = dataStore.edit { it[TOUCH_CALIBRATION] = value }
@@ -254,6 +280,7 @@ class KeyboardSettingsRepository @Inject constructor(
         it[TOOLBAR] = items.joinToString(",") { i -> i.storageKey }
         it[TOOLBAR_SEEN] = ToolbarItem.entries.map { i -> i.storageKey }.toSet()
     }
+    suspend fun setPanelPlacement(value: PanelPlacement) = dataStore.edit { it[PANEL_PLACEMENT] = value.storageKey }
     suspend fun setEmojiSkinTone(value: Int) = dataStore.edit { it[EMOJI_TONE] = value.coerceIn(0, 5) }
     suspend fun setEmojiSuggestions(value: Boolean) = dataStore.edit { it[EMOJI_SUGGESTIONS] = value }
     suspend fun setSmartPredictions(value: Boolean) = dataStore.edit { it[SMART_PREDICTIONS] = value }
@@ -321,12 +348,15 @@ class KeyboardSettingsRepository @Inject constructor(
         val CLIPBOARD_RETENTION = stringPreferencesKey("clipboard_retention")
         val CURSOR_SWIPE = booleanPreferencesKey("cursor_swipe")
         val TRACKPAD_VERTICAL = booleanPreferencesKey("trackpad_vertical")
+        val ENTER_HOLD_EMOJI = booleanPreferencesKey("enter_hold_emoji")
+        val ENTER_HOLD_SELECT = booleanPreferencesKey("enter_hold_select")
         val LONG_PRESS = intPreferencesKey("long_press_ms")
         val PREDICTIVE_TOUCH = booleanPreferencesKey("predictive_touch")
         val TOUCH_CALIBRATION = booleanPreferencesKey("touch_calibration")
         val TOUCH_CALIBRATION_RESET = longPreferencesKey("touch_calibration_reset")
         val GESTURES = stringPreferencesKey("gesture_config")
         val TOOLBAR = stringPreferencesKey("toolbar")
+        val PANEL_PLACEMENT = stringPreferencesKey("panel_placement")
 
         /** Every tool the user's saved toolbar order already knew about (newer ones get appended). */
         val TOOLBAR_SEEN = stringSetPreferencesKey("toolbar_seen")
@@ -357,7 +387,7 @@ class KeyboardSettingsRepository @Inject constructor(
         val BACKUP_KEYS: Set<String> = listOf(
             AUTO_CAPITALIZE, DOUBLE_SPACE_PERIOD, REMEMBER_LAST_LAYOUT, DEFAULT_LAYOUT, LAST_LAYOUT, ENABLED_LAYOUTS,
             SHOW_SUGGESTIONS, AUTO_CORRECT, NEXT_WORD, LEARNING, BLOCK_OFFENSIVE, CLIPBOARD_HISTORY, CLIPBOARD_IMAGES,
-            CLIPBOARD_RETENTION, CURSOR_SWIPE, TRACKPAD_VERTICAL, LONG_PRESS, PREDICTIVE_TOUCH, TOUCH_CALIBRATION, GESTURES, TOOLBAR, TOOLBAR_SEEN, EMOJI_TONE, EMOJI_SUGGESTIONS, SMART_PREDICTIONS, VOICE_LANGUAGE, THEME_ID,
+            CLIPBOARD_RETENTION, CURSOR_SWIPE, TRACKPAD_VERTICAL, ENTER_HOLD_EMOJI, ENTER_HOLD_SELECT, LONG_PRESS, PREDICTIVE_TOUCH, TOUCH_CALIBRATION, GESTURES, TOOLBAR, TOOLBAR_SEEN, PANEL_PLACEMENT, EMOJI_TONE, EMOJI_SUGGESTIONS, SMART_PREDICTIONS, VOICE_LANGUAGE, THEME_ID,
             HEIGHT_PORTRAIT, HEIGHT_LANDSCAPE, NUMBER_ROW, ONE_HANDED, FLOATING, FLOAT_X, FLOAT_Y, HAPTICS, KEY_SOUND, SOUND_VOLUME,
             KEY_FONT, SOUND_PACK, SPLIT_KEYS, FESTIVAL_THEMES,
         ).map { it.name }.toSet()

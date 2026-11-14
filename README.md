@@ -100,7 +100,7 @@ Earlier, in 0.10.x: update right inside the app (About → **Update**, checked b
 - **Snippets / text expansion**: type `@addr` + space to insert your address. Snippets can hold `{date}`, `{bangla_date}`, `{day}`, `{time}`, `{clipboard}` and `{cursor}`; ready-made packs of everyday messages and Islamic greetings (`@salam` → আসসালামু আলাইকুম).
 - **Editing panel**: select, cut/copy/paste, arrow keys, word delete, undo/redo, date & time, and **বাংলা তারিখ** (today's Bangla calendar date, e.g. ২৩ কার্তিক ১৪৩৩).
 - **Text styles**: 𝐁𝐨𝐥𝐝, 𝐼𝑡𝑎𝑙𝑖𝑐, 𝓢𝓬𝓻𝓲𝓹𝓽, 𝔊𝔬𝔱𝔥𝔦𝔠, 𝕆𝕦𝕥𝕝𝕚𝕟𝕖, 𝙼𝚘𝚗𝚘, Ⓒⓘⓡⓒⓛⓔ, Sᴍᴀʟʟ ᴄᴀᴘs, S̶t̶r̶i̶k̶e̶ and more for Facebook, WhatsApp and bios: restyle a selection, or type in a style.
-- **Space-bar trackpad** (iPhone-style) to move the cursor, plus **Backspace swipe** to delete whole words.
+- **Space-bar trackpad** (iPhone-style) to move the cursor, plus **Backspace swipe** to delete whole words, and optional **hold-Enter gestures** (emoji, or slide to select text).
 - **Custom gestures**: assign swipes, holds and double-taps to actions, or to insert your own text.
 - **Smart field handling**: calculator number pad, phone dial pad, and Send/Search/Go Enter keys.
 
@@ -388,10 +388,11 @@ signed APKs, and publishes them with the notes and checksums.
 
 - **Space bar:** slide along it to move the cursor. Hold it still and it becomes a trackpad: move to place the cursor exactly, up and down to change line.
 - **Backspace swipe:** slide left from ⌫ to select words, back right to select fewer, and let go to delete (slide all the way back to cancel). Hold ⌫ to keep deleting.
+- **Hold Enter (optional, off by default):** turn on *Hold Enter for emoji* and/or *Hold Enter and slide to select* in Typing & gestures. Hold Enter to open emoji; hold and slide sideways to select text a letter at a time, up or down for whole lines, and let go to keep the selection for copy or cut. With both on, hold still and let go for emoji, hold and slide to select. A tap on Enter still sends or starts a new line, and neither gesture works in password fields.
 - **Cut, copy, paste:** hold x, c or v (English and Avro).
 - **✎ Editing tools:** select, copy, cut, paste, cursor keys, word selection and deletion, undo/redo (where the app supports it), date and time.
 - **Custom gestures:** swipe up on space for the clipboard, down for emoji; swipe the top bar left to undo, right to redo. Assign your own swipes, holds and double-taps on Space, comma, full stop, Shift, Backspace or the top bar, including inserting your own text such as `@gmail.com`.
-- **Toolbar:** choose and order 😊 📋 🎤 ✎ 🌐 ✓ in the app. Tap a toolbar icon to open its panel, and tap it again to go back to the keys.
+- **Toolbar:** choose and order 😊 📋 🎤 ✎ 🌐 ✓ in the app. Tap a toolbar icon to open its panel, and tap it again to go back to the keys. Emoji and clipboard open above the keyboard (the keys stay) or, if you prefer, in place of the keys: choose in Toolbar & panels.
 - **Swipe down to close:** Translate, Check, emoji and clipboard open above the top bar; swipe down on them to close (scroll a list to the top first).
 
 </details>

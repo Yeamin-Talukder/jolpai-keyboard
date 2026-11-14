@@ -132,7 +132,7 @@ fun HomeScreen(
                 UiR.drawable.ms_content_paste,
             ) { onOpen(Destination.CLIPBOARD_SETTINGS) }
             SettingsItem(
-                "Toolbar",
+                "Toolbar & panels",
                 settings.toolbar.joinToString(" · ") { toolbarName(it) }.ifEmpty { "Empty" },
                 UiR.drawable.ms_toolbar,
             ) { onOpen(Destination.TOOLBAR) }
