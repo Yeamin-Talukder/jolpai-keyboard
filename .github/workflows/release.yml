@@ -1,4 +1,9 @@
-# Publishes a GitHub Release with store-signed APKs when a version tag (v1.2.3) is pushed.
+# Releases Jolpai automatically: on every push to main it reads versionName from
+# app-shell/build.gradle.kts, and if there is no release for that version yet it runs the tests,
+# builds store-signed APKs, creates the tag v<version> and publishes the GitHub Release.
+# To release: bump versionName (and versionCode), add docs/release-notes/v<version>.md, push.
+# Pushes that don't change the version stop after the quick check. Pushing a v* tag by hand,
+# or "Run workflow" in the Actions tab, still works too.
 #
 # The signing key never goes into the repository. Add these repository secrets first
 # (Settings → Secrets and variables → Actions):
@@ -11,15 +16,59 @@ name: Release
 
 on:
   push:
+    branches: [main]
     tags: ["v*"]
+  workflow_dispatch:
+
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 permissions:
   contents: write
 
 jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      release: ${{ steps.v.outputs.release }}
+      version: ${{ steps.v.outputs.version }}
+      tag: ${{ steps.v.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Is this a new version?
+        id: v
+        run: |
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            tag="$GITHUB_REF_NAME"
+          else
+            version=$(sed -nE 's/^\s*versionName\s*=\s*"([^"]+)".*/\1/p' app-shell/build.gradle.kts | head -1)
+            if [ -z "$version" ]; then echo "::error::versionName not found in app-shell/build.gradle.kts"; exit 1; fi
+            tag="v$version"
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "Release $tag already exists: nothing to do."
+            echo "release=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "New version $tag: releasing."
+            echo "release=true" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+
   release:
+    needs: check
+    if: needs.check.outputs.release == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      TAG: ${{ needs.check.outputs.tag }}
+      VERSION: ${{ needs.check.outputs.version }}
     steps:
       - uses: actions/checkout@v5
 
@@ -67,27 +116,28 @@ jobs:
       - name: Name the APKs after the version
         run: |
           mkdir -p dist
-          version="${GITHUB_REF_NAME#v}"
           for f in app-shell/build/outputs/apk/release/*.apk; do
             abi=$(basename "$f" | sed -E 's/app-shell-(.*)-release\.apk/\1/')
-            cp "$f" "dist/jolpai-keyboard-${version}-${abi}.apk"
+            cp "$f" "dist/jolpai-keyboard-${VERSION}-${abi}.apk"
           done
           (cd dist && sha256sum *.apk > SHA256SUMS.txt)
 
       # docs/release-notes/<tag>.md if there is one, then the checksums.
       - name: Write the release notes
-        id: notes
         run: |
-          echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
-          notes="docs/release-notes/${GITHUB_REF_NAME}.md"
-          if [ -f "$notes" ]; then cat "$notes"; else echo "Jolpai Keyboard ${GITHUB_REF_NAME#v}"; fi > dist/NOTES.md
+          notes="docs/release-notes/${TAG}.md"
+          if [ -f "$notes" ]; then cat "$notes"; else echo "Jolpai Keyboard ${VERSION}"; fi > dist/NOTES.md
           { echo; echo '**SHA-256 checksums**'; echo '```'; cat dist/SHA256SUMS.txt; echo '```'; } >> dist/NOTES.md
 
+      # Creates the tag on this commit if it doesn't exist yet.
       - name: Publish the release
         uses: softprops/action-gh-release@v2
         with:
-          name: Jolpai Keyboard ${{ steps.notes.outputs.version }} (beta)
+          tag_name: ${{ env.TAG }}
+          target_commitish: ${{ github.sha }}
+          name: Jolpai Keyboard ${{ env.VERSION }} (beta)
           body_path: dist/NOTES.md
+          make_latest: true
           files: |
             dist/*.apk
             dist/SHA256SUMS.txt
