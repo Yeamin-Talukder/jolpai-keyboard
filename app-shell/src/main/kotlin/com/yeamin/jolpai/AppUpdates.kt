@@ -36,6 +36,15 @@ object Changelog {
     /** Newest first. */
     val RELEASES: List<ChangelogRelease> = listOf(
         ChangelogRelease(
+            "0.12.0", "14 Nov 2026",
+            listOf(
+                "Hold Enter for emoji (optional, Typing & gestures): a tap still sends or starts a new line",
+                "Hold Enter and slide to select text, a letter at a time sideways or whole lines up and down; let go and it stays selected for copy or cut (optional, off in password fields)",
+                "The space-bar trackpad now ticks with every cursor step, with a clearer haptic for all cursor slides",
+                "Choose where emoji and clipboard open: above the keyboard, or in place of the keys (Toolbar & panels)",
+            ),
+        ),
+        ChangelogRelease(
             "0.11.0", "9 Nov 2026",
             listOf(
                 "On-device AI for English: the next word from your whole sentence, smarter suggestions and autocorrect (\"i want to takl\" → talk), emoji by meaning (good night → 😴), and Check catches their/there and its/it's. Runs only on your phone",
