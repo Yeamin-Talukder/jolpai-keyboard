@@ -36,6 +36,14 @@ object Changelog {
     /** Newest first. */
     val RELEASES: List<ChangelogRelease> = listOf(
         ChangelogRelease(
+            "0.13.0", "16 Nov 2026",
+            listOf(
+                "A new logo: a keyboard with an olive as the lit key and a leaf, on an olive tile (shared with Jolpai Type), with a themed-icon version",
+                "A launch animation on Android 12+: the mark pops in, the leaf grows and waves, the keys tap and the olive key is pressed",
+                "The logo on the About page is alive: keys tap, the leaf sways (still when animations are off)",
+            ),
+        ),
+        ChangelogRelease(
             "0.12.0", "14 Nov 2026",
             listOf(
                 "Hold Enter for emoji (optional, Typing & gestures): a tap still sends or starts a new line",

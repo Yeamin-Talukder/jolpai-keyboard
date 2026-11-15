@@ -12,7 +12,7 @@ and nothing you type leaves your phone.**
 [![Downloads](https://img.shields.io/github/downloads/Yeamin-Talukder/jolpai-keyboard/total?label=downloads&color=6E8A2C&logo=android&logoColor=white)](https://github.com/Yeamin-Talukder/jolpai-keyboard/releases)
 [![Views](https://hits.sh/github.com/Yeamin-Talukder/jolpai-keyboard.svg?label=views&color=6E8A2C)](https://hits.sh/github.com/Yeamin-Talukder/jolpai-keyboard/)
 [![Stars](https://img.shields.io/github/stars/Yeamin-Talukder/jolpai-keyboard?style=flat&color=B5C94A&logo=github)](https://github.com/Yeamin-Talukder/jolpai-keyboard/stargazers)
-[![Version](https://img.shields.io/badge/version-0.12.0--beta-B5C94A)](docs/ROADMAP.md)
+[![Version](https://img.shields.io/badge/version-0.13.0--beta-B5C94A)](docs/ROADMAP.md)
 [![License: Apache-2.0](https://img.shields.io/github/license/Yeamin-Talukder/jolpai-keyboard?color=4E6120)](LICENSE)
 <br>
 [![Android 8.0+](https://img.shields.io/badge/Android-8.0%2B%20(API%2026)-3DDC84?logo=android&logoColor=white)](#requirements)
@@ -44,15 +44,15 @@ English↔Bangla translation run **offline**.
 > **Also known as:** Jolpai Bangla Keyboard · Jalpai Keyboard · জলপাই বাংলা কিবোর্ড · Jolpai Avro Keyboard
 > (package `com.yeamin.jolpai`; the project was first called *Lipi Keyboard*, package `com.yeamin.lipi` up to v0.8.0).
 
-## 🆕 What's new in 0.12.0
+## 🆕 What's new in 0.13.0
 
-- ⏎ **Hold Enter for emoji**, and **hold Enter and slide to select** text (sideways by letter, up and down by line; the selection stays for copy or cut). Both optional, in Typing & gestures; a tap on Enter still sends.
-- 📳 **The space-bar trackpad ticks with every cursor step**, with a clearer haptic for all cursor slides.
-- 😊 **Choose where emoji and clipboard open**: above the keyboard (keys stay) or in place of the keys, in Toolbar & panels.
+- 🫒 **A new logo**: a keyboard with an olive as the lit key and a leaf, on an olive tile (shared with Jolpai Type), with a themed-icon version.
+- ✨ **A launch animation** (Android 12+): the mark pops in, the leaf grows and waves, the keys tap and the olive key is pressed.
+- 🌱 **A living logo on the About page.**
 
-Earlier, in 0.11.0: **on-device AI for English** (next word from your sentence, smarter autocorrect, emoji by meaning), **Bangla next words** from the first word, learned phrases, the **প্রভাত** layout and clean vowel-sign keys. In 0.10.x: update right inside the app (About → **Update**, checked before it installs). In 0.9.0: the new app ID **`com.yeamin.jolpai`** (coming from 0.7.0 or 0.8.0, [move your data once](#-download--install)).
+Earlier, in 0.12.0: **hold Enter for emoji**, **hold Enter and slide to select**, trackpad ticks on every cursor step, and emoji/clipboard above the keyboard or in place of the keys. In 0.11.0: **on-device AI for English** (next word from your sentence, smarter autocorrect, emoji by meaning), **Bangla next words** from the first word, learned phrases, the **প্রভাত** layout and clean vowel-sign keys. In 0.10.x: update right inside the app (About → **Update**, checked before it installs). In 0.9.0: the new app ID **`com.yeamin.jolpai`** (coming from 0.7.0 or 0.8.0, [move your data once](#-download--install)).
 
-[Full release notes](docs/release-notes/v0.12.0.md) · [All releases](https://github.com/Yeamin-Talukder/jolpai-keyboard/releases)
+[Full release notes](docs/release-notes/v0.13.0.md) · [All releases](https://github.com/Yeamin-Talukder/jolpai-keyboard/releases)
 
 ## ✨ Features
 
@@ -182,7 +182,7 @@ Earlier, in 0.11.0: **on-device AI for English** (next word from your sentence, 
 
 ## 📥 Download & install
 
-> **Status: beta (v0.12.0).** All seven development phases are built and 350+ unit tests pass. The app runs
+> **Status: beta (v0.13.0).** All seven development phases are built and 350+ unit tests pass. The app runs
 > daily on a Pixel 7 Pro (Android 17); testing on more phones is ongoing. See the [roadmap](docs/ROADMAP.md)
 > for exactly what works and what is pending.
 
