@@ -728,6 +728,66 @@
   .reveal { opacity: 0; transform: translateY(18px); transition: opacity .6s ease, transform .6s ease; }
   .reveal.in { opacity: 1; transform: none; }
 
+  /* The header link to the section in view */
+  section[id] { scroll-margin-top: 64px; }
+  .nav-links a:not(.btn):not(.gh-pill) { position: relative; }
+  .nav-links a.active { color: var(--text); }
+  .nav-links a.active::after { content: ""; position: absolute; left: 0; right: 0; bottom: -6px; height: 2px; border-radius: 2px; background: var(--olive); }
+
+  /* GitHub: live star and fork counts, star buttons */
+  .gh-pill { display: inline-flex; align-items: stretch; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; font-size: 14.5px; font-weight: 600; line-height: 1; background: rgba(255,255,255,.03); transition: border-color .2s, background .2s; }
+  .nav-links a.gh-pill, .gh-pill { color: var(--text); }
+  .gh-pill:hover { text-decoration: none; border-color: var(--olive-2); background: rgba(181,201,74,.06); }
+  .gh-pill > span { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; }
+  .gh-pill .gh-count { border-left: 1px solid var(--line); color: var(--olive); padding: 8px 11px; gap: 4px; font-variant-numeric: tabular-nums; }
+  .gh-pill svg { width: 16px; height: 16px; flex: none; }
+  .gh-pill .star-ic { width: 14px; height: 14px; }
+  .btn-count { display: inline-flex; align-items: center; gap: 4px; margin-left: 2px; padding: 3px 9px; border-radius: 999px; background: rgba(181,201,74,.14); color: var(--olive); font-size: 14px; font-weight: 700; line-height: 1.2; font-variant-numeric: tabular-nums; }
+  .btn-count svg { width: 13px; height: 13px; }
+  .btn-primary .btn-count { background: rgba(24,32,11,.14); color: #18200b; }
+  .bump { animation: bump .6s cubic-bezier(.2,.9,.3,1.4); }
+  @keyframes bump { 0% { transform: scale(1); } 40% { transform: scale(1.35); } 100% { transform: scale(1); } }
+
+  /* Community block in the last section */
+  .gh-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; max-width: 760px; margin: 0 auto 28px; }
+  .gh-stat { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 18px 10px 16px; border: 1px solid var(--line); border-radius: 16px; background: var(--bg-2); color: var(--muted); font-size: 14.5px; transition: border-color .2s, transform .2s; }
+  a.gh-stat:hover { text-decoration: none; border-color: var(--olive-2); transform: translateY(-2px); }
+  .gh-stat svg { width: 20px; height: 20px; color: var(--olive); margin-bottom: 4px; }
+  .gh-stat b { color: var(--text); font-size: 26px; line-height: 1.15; font-variant-numeric: tabular-nums; }
+  .star-hint { position: fixed; left: 50%; bottom: 22px; z-index: 40; transform: translateX(-50%); width: max-content; max-width: min(92vw, 540px); display: flex; align-items: center; gap: 12px; padding: 12px 12px 12px 18px; border: 1px solid var(--olive-2); border-radius: 16px; color: var(--text); font-size: 15.5px; line-height: 1.45; background: color-mix(in srgb, var(--bg-2) 94%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); box-shadow: 0 18px 50px -12px rgba(0,0,0,.6); animation: toast-in .35s cubic-bezier(.2,.8,.2,1); }
+  .star-hint[hidden] { display: none; }
+  .star-hint button { flex: none; width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--line); background: none; color: var(--muted); cursor: pointer; font-size: 14px; }
+  .star-hint button:hover { color: var(--text); border-color: var(--olive-2); }
+  @keyframes toast-in { from { opacity: 0; transform: translate(-50%, 14px); } to { opacity: 1; transform: translate(-50%, 0); } }
+  body.m-bar-on .star-hint { bottom: 84px; }
+
+  /* Back to top, and the download bar on phones */
+  .to-top { position: fixed; right: 18px; bottom: 18px; z-index: 30; width: 46px; height: 46px; border-radius: 50%; border: 1px solid var(--line); background: color-mix(in srgb, var(--bg-2) 88%, transparent); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: var(--text); display: grid; place-items: center; cursor: pointer; opacity: 0; transform: translateY(12px); pointer-events: none; transition: opacity .25s, transform .25s, border-color .2s, bottom .25s; }
+  .to-top.on { opacity: 1; transform: none; pointer-events: auto; }
+  .to-top:hover { border-color: var(--olive-2); }
+  .to-top svg { width: 22px; height: 22px; }
+  .m-bar { display: none; }
+  .nav-links a, .brand { white-space: nowrap; }
+  @media (min-width: 721px) and (max-width: 940px) {
+    .nav-links { gap: 14px; }
+    .nav-links a { font-size: 14.5px; }
+    .brand small { display: none; }
+    .nav-links .gh-pill > span:first-child { padding: 8px 9px; font-size: 0; gap: 0; }
+    .nav-links .gh-pill > span:first-child svg { font-size: 14px; }
+  }
+  @media (max-width: 720px) {
+    .m-bar { display: flex; gap: 10px; align-items: center; position: fixed; left: 0; right: 0; bottom: 0; z-index: 25; padding: 10px 14px calc(10px + env(safe-area-inset-bottom)); background: color-mix(in srgb, var(--bg-2) 92%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-top: 1px solid var(--line); transform: translateY(110%); transition: transform .3s ease; }
+    .m-bar.on { transform: none; }
+    .m-bar .btn { width: auto; flex: 1 1 auto; padding: 12px 16px; }
+    .m-bar .gh-pill { flex: none; }
+    .m-bar .gh-pill > span { padding: 12px 12px; }
+    body.m-bar-on .to-top { bottom: 84px; }
+    .gh-stats { grid-template-columns: repeat(2, 1fr); }
+    .nav-links a.gh-pill { width: auto; padding: 0; margin: 6px 0; }
+    .nav-links a.active::after { display: none; }
+    .nav-links a.active { color: var(--olive); }
+  }
+
   @media (max-width: 980px) {
     .hero-grid, .split { grid-template-columns: 1fr; }
     .hero { padding-top: 44px; }
@@ -755,6 +815,8 @@
     .reveal { opacity: 1; transform: none; transition: none; }
     .caret { animation: none; }
     .card, .btn { transition: none; }
+    .bump { animation: none; }
+    .to-top, .m-bar, .gh-stat { transition: none; }
   }
 
   /* ---------------------------------------------------------------- phones */
@@ -818,6 +880,7 @@
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><symbol id="qr-dl" viewBox="-2 -2 45 45"><path fill="#14180f" d="M0 0h7v1h-7zM9 0h1v1h-1zM13 0h1v1h-1zM17 0h2v1h-2zM20 0h1v1h-1zM22 0h1v1h-1zM24 0h1v1h-1zM26 0h1v1h-1zM30 0h1v1h-1zM32 0h1v1h-1zM34 0h7v1h-7zM0 1h1v1h-1zM6 1h1v1h-1zM11 1h3v1h-3zM15 1h2v1h-2zM18 1h1v1h-1zM20 1h1v1h-1zM22 1h3v1h-3zM26 1h2v1h-2zM30 1h3v1h-3zM34 1h1v1h-1zM40 1h1v1h-1zM0 2h1v1h-1zM2 2h3v1h-3zM6 2h1v1h-1zM11 2h2v1h-2zM15 2h1v1h-1zM17 2h1v1h-1zM20 2h1v1h-1zM23 2h1v1h-1zM25 2h3v1h-3zM32 2h1v1h-1zM34 2h1v1h-1zM36 2h3v1h-3zM40 2h1v1h-1zM0 3h1v1h-1zM2 3h3v1h-3zM6 3h1v1h-1zM9 3h2v1h-2zM12 3h1v1h-1zM14 3h1v1h-1zM17 3h2v1h-2zM21 3h3v1h-3zM27 3h1v1h-1zM32 3h1v1h-1zM34 3h1v1h-1zM36 3h3v1h-3zM40 3h1v1h-1zM0 4h1v1h-1zM2 4h3v1h-3zM6 4h1v1h-1zM8 4h7v1h-7zM16 4h1v1h-1zM18 4h2v1h-2zM22 4h1v1h-1zM24 4h2v1h-2zM28 4h3v1h-3zM34 4h1v1h-1zM36 4h3v1h-3zM40 4h1v1h-1zM0 5h1v1h-1zM6 5h1v1h-1zM10 5h1v1h-1zM12 5h1v1h-1zM14 5h2v1h-2zM18 5h2v1h-2zM21 5h1v1h-1zM23 5h2v1h-2zM26 5h1v1h-1zM29 5h1v1h-1zM31 5h1v1h-1zM34 5h1v1h-1zM40 5h1v1h-1zM0 6h7v1h-7zM8 6h1v1h-1zM10 6h1v1h-1zM12 6h1v1h-1zM14 6h1v1h-1zM16 6h1v1h-1zM18 6h1v1h-1zM20 6h1v1h-1zM22 6h1v1h-1zM24 6h1v1h-1zM26 6h1v1h-1zM28 6h1v1h-1zM30 6h1v1h-1zM32 6h1v1h-1zM34 6h7v1h-7zM8 7h2v1h-2zM11 7h2v1h-2zM15 7h1v1h-1zM19 7h1v1h-1zM26 7h3v1h-3zM31 7h1v1h-1zM2 8h2v1h-2zM6 8h4v1h-4zM11 8h2v1h-2zM15 8h1v1h-1zM18 8h1v1h-1zM20 8h3v1h-3zM26 8h1v1h-1zM29 8h6v1h-6zM36 8h1v1h-1zM1 9h1v1h-1zM4 9h1v1h-1zM10 9h1v1h-1zM12 9h2v1h-2zM15 9h3v1h-3zM19 9h3v1h-3zM27 9h2v1h-2zM31 9h2v1h-2zM34 9h2v1h-2zM1 10h1v1h-1zM3 10h1v1h-1zM5 10h2v1h-2zM9 10h1v1h-1zM12 10h3v1h-3zM17 10h1v1h-1zM22 10h1v1h-1zM24 10h2v1h-2zM27 10h1v1h-1zM30 10h4v1h-4zM35 10h3v1h-3zM40 10h1v1h-1zM0 11h2v1h-2zM3 11h2v1h-2zM7 11h2v1h-2zM11 11h1v1h-1zM17 11h3v1h-3zM21 11h1v1h-1zM23 11h3v1h-3zM27 11h1v1h-1zM30 11h1v1h-1zM33 11h1v1h-1zM35 11h1v1h-1zM39 11h1v1h-1zM0 12h1v1h-1zM2 12h5v1h-5zM10 12h1v1h-1zM12 12h2v1h-2zM20 12h1v1h-1zM22 12h2v1h-2zM25 12h1v1h-1zM27 12h1v1h-1zM29 12h2v1h-2zM32 12h2v1h-2zM36 12h1v1h-1zM38 12h1v1h-1zM0 13h1v1h-1zM3 13h3v1h-3zM9 13h1v1h-1zM11 13h2v1h-2zM14 13h2v1h-2zM18 13h2v1h-2zM23 13h2v1h-2zM28 13h2v1h-2zM31 13h1v1h-1zM34 13h1v1h-1zM36 13h1v1h-1zM38 13h2v1h-2zM1 14h1v1h-1zM3 14h1v1h-1zM6 14h2v1h-2zM9 14h3v1h-3zM13 14h4v1h-4zM19 14h1v1h-1zM22 14h10v1h-10zM33 14h2v1h-2zM36 14h5v1h-5zM0 15h2v1h-2zM3 15h1v1h-1zM5 15h1v1h-1zM7 15h1v1h-1zM9 15h1v1h-1zM11 15h1v1h-1zM13 15h1v1h-1zM15 15h1v1h-1zM17 15h2v1h-2zM20 15h3v1h-3zM24 15h3v1h-3zM28 15h1v1h-1zM31 15h2v1h-2zM34 15h5v1h-5zM40 15h1v1h-1zM0 16h2v1h-2zM4 16h1v1h-1zM6 16h2v1h-2zM10 16h2v1h-2zM13 16h1v1h-1zM17 16h1v1h-1zM19 16h2v1h-2zM27 16h3v1h-3zM35 16h1v1h-1zM37 16h3v1h-3zM0 17h1v1h-1zM4 17h2v1h-2zM7 17h1v1h-1zM9 17h5v1h-5zM15 17h1v1h-1zM18 17h1v1h-1zM20 17h1v1h-1zM23 17h2v1h-2zM32 17h1v1h-1zM34 17h2v1h-2zM1 18h2v1h-2zM4 18h4v1h-4zM10 18h1v1h-1zM13 18h4v1h-4zM19 18h1v1h-1zM22 18h2v1h-2zM25 18h1v1h-1zM29 18h1v1h-1zM31 18h1v1h-1zM35 18h1v1h-1zM38 18h1v1h-1zM40 18h1v1h-1zM4 19h1v1h-1zM10 19h2v1h-2zM14 19h5v1h-5zM20 19h1v1h-1zM24 19h2v1h-2zM27 19h1v1h-1zM29 19h3v1h-3zM33 19h2v1h-2zM38 19h1v1h-1zM40 19h1v1h-1zM3 20h2v1h-2zM6 20h1v1h-1zM8 20h2v1h-2zM12 20h3v1h-3zM17 20h1v1h-1zM19 20h1v1h-1zM22 20h1v1h-1zM24 20h1v1h-1zM26 20h1v1h-1zM30 20h2v1h-2zM33 20h3v1h-3zM37 20h4v1h-4zM0 21h1v1h-1zM2 21h3v1h-3zM10 21h2v1h-2zM13 21h1v1h-1zM15 21h1v1h-1zM17 21h1v1h-1zM23 21h3v1h-3zM27 21h1v1h-1zM30 21h1v1h-1zM32 21h1v1h-1zM36 21h2v1h-2zM39 21h1v1h-1zM1 22h1v1h-1zM4 22h5v1h-5zM11 22h1v1h-1zM13 22h1v1h-1zM18 22h1v1h-1zM20 22h2v1h-2zM25 22h1v1h-1zM27 22h1v1h-1zM30 22h1v1h-1zM32 22h1v1h-1zM35 22h2v1h-2zM39 22h1v1h-1zM0 23h1v1h-1zM3 23h1v1h-1zM10 23h1v1h-1zM13 23h1v1h-1zM16 23h1v1h-1zM18 23h1v1h-1zM23 23h1v1h-1zM25 23h3v1h-3zM29 23h2v1h-2zM32 23h1v1h-1zM35 23h1v1h-1zM37 23h1v1h-1zM2 24h1v1h-1zM4 24h9v1h-9zM15 24h1v1h-1zM17 24h2v1h-2zM24 24h2v1h-2zM27 24h2v1h-2zM30 24h1v1h-1zM34 24h3v1h-3zM38 24h3v1h-3zM0 25h1v1h-1zM2 25h1v1h-1zM12 25h2v1h-2zM15 25h2v1h-2zM18 25h1v1h-1zM23 25h4v1h-4zM29 25h11v1h-11zM1 26h1v1h-1zM3 26h1v1h-1zM5 26h2v1h-2zM10 26h4v1h-4zM16 26h1v1h-1zM18 26h2v1h-2zM22 26h5v1h-5zM28 26h2v1h-2zM32 26h3v1h-3zM36 26h5v1h-5zM0 27h2v1h-2zM4 27h2v1h-2zM7 27h1v1h-1zM10 27h1v1h-1zM12 27h2v1h-2zM16 27h1v1h-1zM18 27h3v1h-3zM23 27h1v1h-1zM28 27h4v1h-4zM33 27h4v1h-4zM38 27h3v1h-3zM6 28h3v1h-3zM11 28h2v1h-2zM14 28h2v1h-2zM19 28h2v1h-2zM23 28h4v1h-4zM30 28h1v1h-1zM33 28h1v1h-1zM38 28h2v1h-2zM2 29h2v1h-2zM9 29h3v1h-3zM16 29h3v1h-3zM20 29h1v1h-1zM23 29h1v1h-1zM26 29h1v1h-1zM28 29h1v1h-1zM32 29h1v1h-1zM34 29h1v1h-1zM40 29h1v1h-1zM0 30h1v1h-1zM4 30h3v1h-3zM9 30h1v1h-1zM12 30h3v1h-3zM17 30h1v1h-1zM19 30h2v1h-2zM23 30h2v1h-2zM26 30h2v1h-2zM29 30h1v1h-1zM31 30h1v1h-1zM37 30h4v1h-4zM2 31h2v1h-2zM7 31h1v1h-1zM10 31h1v1h-1zM13 31h2v1h-2zM16 31h3v1h-3zM21 31h1v1h-1zM23 31h2v1h-2zM29 31h1v1h-1zM31 31h4v1h-4zM37 31h2v1h-2zM40 31h1v1h-1zM1 32h1v1h-1zM3 32h2v1h-2zM6 32h1v1h-1zM8 32h1v1h-1zM12 32h2v1h-2zM16 32h1v1h-1zM19 32h1v1h-1zM21 32h2v1h-2zM24 32h2v1h-2zM31 32h7v1h-7zM39 32h2v1h-2zM8 33h1v1h-1zM10 33h2v1h-2zM13 33h2v1h-2zM17 33h1v1h-1zM19 33h1v1h-1zM22 33h2v1h-2zM25 33h1v1h-1zM27 33h1v1h-1zM32 33h1v1h-1zM36 33h1v1h-1zM0 34h7v1h-7zM8 34h3v1h-3zM15 34h2v1h-2zM18 34h3v1h-3zM23 34h1v1h-1zM25 34h1v1h-1zM27 34h1v1h-1zM31 34h2v1h-2zM34 34h1v1h-1zM36 34h1v1h-1zM40 34h1v1h-1zM0 35h1v1h-1zM6 35h1v1h-1zM9 35h1v1h-1zM11 35h1v1h-1zM13 35h1v1h-1zM15 35h1v1h-1zM18 35h1v1h-1zM21 35h1v1h-1zM24 35h2v1h-2zM27 35h1v1h-1zM29 35h1v1h-1zM31 35h2v1h-2zM36 35h1v1h-1zM38 35h1v1h-1zM0 36h1v1h-1zM2 36h3v1h-3zM6 36h1v1h-1zM10 36h2v1h-2zM13 36h1v1h-1zM15 36h4v1h-4zM21 36h3v1h-3zM26 36h4v1h-4zM31 36h6v1h-6zM38 36h1v1h-1zM0 37h1v1h-1zM2 37h3v1h-3zM6 37h1v1h-1zM8 37h1v1h-1zM12 37h1v1h-1zM17 37h1v1h-1zM20 37h1v1h-1zM22 37h1v1h-1zM24 37h1v1h-1zM27 37h4v1h-4zM35 37h1v1h-1zM37 37h3v1h-3zM0 38h1v1h-1zM2 38h3v1h-3zM6 38h1v1h-1zM8 38h1v1h-1zM11 38h1v1h-1zM13 38h1v1h-1zM16 38h2v1h-2zM20 38h1v1h-1zM22 38h3v1h-3zM26 38h1v1h-1zM28 38h3v1h-3zM33 38h1v1h-1zM35 38h1v1h-1zM37 38h2v1h-2zM40 38h1v1h-1zM0 39h1v1h-1zM6 39h1v1h-1zM9 39h1v1h-1zM12 39h1v1h-1zM14 39h1v1h-1zM16 39h1v1h-1zM19 39h1v1h-1zM23 39h4v1h-4zM28 39h1v1h-1zM30 39h3v1h-3zM35 39h1v1h-1zM37 39h2v1h-2zM40 39h1v1h-1zM0 40h7v1h-7zM9 40h1v1h-1zM12 40h1v1h-1zM14 40h1v1h-1zM16 40h1v1h-1zM20 40h1v1h-1zM25 40h1v1h-1zM28 40h3v1h-3zM34 40h1v1h-1zM37 40h1v1h-1zM39 40h1v1h-1z"/></symbol></svg>
 
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><symbol id="gh-mark" viewBox="0 0 24 24"><path fill="currentColor" d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.2 1.77 1.2 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.79 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.42-2.7 5.39-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></symbol><symbol id="star" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.4l-5.8 3.1 1.1-6.5L2.6 9.4l6.5-.9L12 2.6z"/></symbol><symbol id="fork" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M6 3.5v4.2a3 3 0 0 0 3 3h6a3 3 0 0 0 3-3V3.5M12 10.7v6.8"/><circle cx="6" cy="3.5" r="2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="18" cy="3.5" r="2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="19.5" r="2" fill="none" stroke="currentColor" stroke-width="2"/></symbol><symbol id="dl" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m-5-5 5 5 5-5M4 20h16"/></symbol><symbol id="tag" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9-9-9z"/><circle cx="7.5" cy="7.5" r="1.5" fill="currentColor"/></symbol></svg>
 <header class="top">
   <div class="wrap nav">
     <a class="brand" href="./" title="Jolpai Keyboard home">
@@ -832,7 +895,7 @@
       <a href="#install">Install</a>
       <a href="#faq">FAQ</a>
       <a href="#bangla" lang="bn">বাংলা</a>
-      <a href="https://github.com/Yeamin-Talukder/jolpai-keyboard">GitHub</a>
+      <a class="gh-pill js-star" href="https://github.com/Yeamin-Talukder/jolpai-keyboard" target="_blank" rel="noopener" title="Star Jolpai on GitHub"><span><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><use href="#gh-mark"/></svg>Star<span class="sr-only"> on GitHub</span></span><span class="gh-count js-stars" hidden></span></a>
       <a class="btn btn-primary btn-sm js-download" href="https://github.com/Yeamin-Talukder/jolpai-keyboard/releases/latest">Download</a>
     </nav>
   </div>
@@ -869,9 +932,9 @@
               <a role="menuitem" class="dl-more" href="#install">Older versions &amp; checksums →</a>
             </div>
           </div>
-          <a class="btn btn-ghost" href="https://github.com/Yeamin-Talukder/jolpai-keyboard">
-            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.2 1.77 1.2 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.79 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.42-2.7 5.39-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>
-            <span>View on GitHub</span>
+          <a class="btn btn-ghost js-star" href="https://github.com/Yeamin-Talukder/jolpai-keyboard" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><use href="#gh-mark"/></svg>
+            <span>Star on GitHub</span><span class="btn-count js-stars" hidden></span>
           </a>
           <div class="qr-wrap">
             <button type="button" class="qr-btn" id="qr-btn" aria-expanded="false" aria-controls="qr-pop" aria-label="Scan with your phone to download" data-tip="Scan with your phone"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 14h3v3M21 14v.01M14 21h3M20 18v3"/></svg></button>
@@ -1142,14 +1205,21 @@
   </section>
 
   <!-- Final CTA -->
-  <section class="final alt" aria-labelledby="final-title">
+  <section class="final alt" id="community" aria-labelledby="final-title">
     <div class="wrap reveal">
       <img src="images/icon-192.webp" alt="Jolpai Keyboard icon: a green olive" width="84" height="84" style="margin:0 auto 18px;border-radius:20px" loading="lazy">
       <h2 id="final-title">Write in Bangla, freely.</h2>
-      <p>Free and open source. If Jolpai helps you, a ⭐ on GitHub helps other Bangla writers find it.</p>
+      <p>Free and open source, built in the open on GitHub. If Jolpai helps you, a ⭐ star helps other Bangla writers find it.</p>
+      <div class="gh-stats" role="list" aria-label="Jolpai on GitHub">
+        <a role="listitem" class="gh-stat" href="https://github.com/Yeamin-Talukder/jolpai-keyboard/stargazers" target="_blank" rel="noopener"><svg aria-hidden="true"><use href="#star"/></svg><b class="js-stars-n">–</b><span>GitHub stars</span></a>
+        <a role="listitem" class="gh-stat" href="https://github.com/Yeamin-Talukder/jolpai-keyboard/forks" target="_blank" rel="noopener"><svg aria-hidden="true"><use href="#fork"/></svg><b class="js-forks-n">–</b><span>forks</span></a>
+        <a role="listitem" class="gh-stat" href="https://github.com/Yeamin-Talukder/jolpai-keyboard/releases" target="_blank" rel="noopener"><svg aria-hidden="true"><use href="#dl"/></svg><b class="js-dl-n">–</b><span>downloads</span></a>
+        <a role="listitem" class="gh-stat" href="https://github.com/Yeamin-Talukder/jolpai-keyboard/releases/latest" target="_blank" rel="noopener"><svg aria-hidden="true"><use href="#tag"/></svg><b class="js-ver-n">0.12.0</b><span>latest version</span></a>
+      </div>
       <div class="cta" style="justify-content:center">
-        <a class="btn btn-primary js-download" href="https://github.com/Yeamin-Talukder/jolpai-keyboard/releases/latest"><span>Download APK</span></a>
-        <a class="btn btn-ghost" href="https://github.com/Yeamin-Talukder/jolpai-keyboard"><span>⭐ Star on GitHub</span></a>
+        <a class="btn btn-primary js-download" href="https://github.com/Yeamin-Talukder/jolpai-keyboard/releases/latest"><svg aria-hidden="true"><use href="#dl"/></svg><span>Download APK</span></a>
+        <a class="btn btn-ghost js-star" href="https://github.com/Yeamin-Talukder/jolpai-keyboard" target="_blank" rel="noopener"><svg aria-hidden="true" style="color:var(--olive)"><use href="#star"/></svg><span>Star on GitHub</span><span class="btn-count js-stars" hidden></span></a>
+        <a class="btn btn-ghost" href="https://github.com/Yeamin-Talukder/jolpai-keyboard/fork" target="_blank" rel="noopener"><svg aria-hidden="true"><use href="#fork"/></svg><span>Fork</span></a>
       </div>
     </div>
   </section>
@@ -1166,20 +1236,130 @@
       <a href="https://github.com/Yeamin-Talukder/jolpai-keyboard/releases">Releases</a>
       <a href="privacy.html">Privacy policy</a>
       <a href="https://github.com/Yeamin-Talukder/jolpai-keyboard/issues">Report a problem</a>
+      <a href="https://github.com/Yeamin-Talukder/jolpai-keyboard/issues/new?title=Feature%20idea%3A%20">Suggest a feature</a>
       <a href="https://github.com/Yeamin-Talukder/jolpai-keyboard/blob/main/docs/ROADMAP.md">Roadmap</a>
     </nav>
   </div>
 </footer>
 
+<div class="star-hint" id="star-hint" role="status" aria-live="polite" hidden><span id="star-hint-text"></span><button type="button" id="star-hint-x" aria-label="Close">✕</button></div>
+<button type="button" class="to-top" id="to-top" aria-label="Back to top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+<div class="m-bar" id="m-bar" aria-hidden="true">
+  <a class="btn btn-primary js-download" href="https://github.com/Yeamin-Talukder/jolpai-keyboard/releases/latest" tabindex="-1"><svg aria-hidden="true"><use href="#dl"/></svg><span>Download APK</span></a>
+  <a class="gh-pill js-star" href="https://github.com/Yeamin-Talukder/jolpai-keyboard" target="_blank" rel="noopener" tabindex="-1" title="Star Jolpai on GitHub"><span><svg class="star-ic" aria-hidden="true" style="color:var(--olive)"><use href="#star"/></svg><span class="sr-only">Star on GitHub</span><span class="js-stars-n">Star</span></span></a>
+</div>
+
 <script>
 (() => {
-  // Mobile menu
+  // Mobile menu: ☰ opens, ✕ / Escape / a tap outside or on a link closes.
   const btn = document.querySelector('.menu-btn'), links = document.getElementById('links');
-  btn.addEventListener('click', () => {
-    const open = links.classList.toggle('open');
+  const setMenu = open => {
+    links.classList.toggle('open', open);
     btn.setAttribute('aria-expanded', open);
-  });
-  links.addEventListener('click', e => { if (e.target.tagName === 'A') { links.classList.remove('open'); btn.setAttribute('aria-expanded', false); } });
+    btn.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+    btn.textContent = open ? '✕' : '☰';
+  };
+  btn.addEventListener('click', () => setMenu(!links.classList.contains('open')));
+  links.addEventListener('click', e => { if (e.target.closest('a')) setMenu(false); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && links.classList.contains('open')) { setMenu(false); btn.focus(); } });
+  document.addEventListener('click', e => { if (links.classList.contains('open') && !e.target.closest('.nav')) setMenu(false); });
+
+  // The header link of the section in view is marked.
+  const navLinks = [...links.querySelectorAll('a[href^="#"]')];
+  const spied = navLinks.map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  if ('IntersectionObserver' in window && spied.length) {
+    const visible = new Map();
+    const mark = () => {
+      let best = null;
+      spied.forEach(s => { if (visible.get(s) && !best) best = s; });
+      navLinks.forEach(a => {
+        const on = best && a.getAttribute('href') === '#' + best.id;
+        a.classList.toggle('active', !!on);
+        if (on) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current');
+      });
+    };
+    const spy = new IntersectionObserver(es => { es.forEach(e => visible.set(e.target, e.isIntersecting)); mark(); },
+      { rootMargin: '-35% 0px -55% 0px' });
+    spied.forEach(s => spy.observe(s));
+  }
+
+  // Back to top (after one screen), and on phones a download bar once the hero buttons are gone.
+  const toTop = document.getElementById('to-top'), mBar = document.getElementById('m-bar');
+  const heroCta = document.getElementById('hero-dl');
+  const endZones = [document.getElementById('install'), document.getElementById('community')].filter(Boolean);
+  let heroGone = false, inEnd = new Set();
+  const syncBars = () => {
+    toTop.classList.toggle('on', scrollY > innerHeight);
+    const show = heroGone && inEnd.size === 0;
+    mBar.classList.toggle('on', show);
+    mBar.setAttribute('aria-hidden', String(!show));
+    mBar.querySelectorAll('a').forEach(a => a.tabIndex = show ? 0 : -1);
+    document.body.classList.toggle('m-bar-on', show && matchMedia('(max-width: 720px)').matches);
+  };
+  toTop.addEventListener('click', () => scrollTo({ top: 0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }));
+  addEventListener('scroll', syncBars, { passive: true });
+  if ('IntersectionObserver' in window) {
+    if (heroCta) new IntersectionObserver(([e]) => { heroGone = !e.isIntersecting && e.boundingClientRect.top < 0; syncBars(); }).observe(heroCta);
+    const endIo = new IntersectionObserver(es => { es.forEach(e => e.isIntersecting ? inEnd.add(e.target) : inEnd.delete(e.target)); syncBars(); });
+    endZones.forEach(z => endIo.observe(z));
+  }
+  syncBars();
+
+  // ---------------------------------------------------------------- GitHub stars and forks
+  // Live counts from GitHub's API (60 requests an hour per connection without a key), kept for
+  // 10 minutes in this browser. A website can't press Star for the visitor: the Star buttons open
+  // the project on GitHub, where one tap on ☆ Star does it. When the visitor comes back, the count
+  // is checked again and a new star is thanked.
+  (() => {
+    const API = 'https://api.github.com/repos/Yeamin-Talukder/jolpai-keyboard';
+    const KEY = 'jolpai-gh', TTL = 10 * 60 * 1000;
+    const short = n => n >= 1e6 ? (n / 1e6).toFixed(1).replace(/\.0$/, '') + 'M' : n >= 1e4 ? Math.round(n / 1e3) + 'k' : n >= 1e3 ? (n / 1e3).toFixed(1).replace(/\.0$/, '') + 'k' : String(n);
+    const hint = document.getElementById('star-hint'), hintText = document.getElementById('star-hint-text');
+    let stars = null, waiting = false, hideTimer = 0;
+    const toast = (html, ms) => {
+      hintText.innerHTML = html;
+      hint.hidden = false;
+      clearTimeout(hideTimer);
+      hideTimer = setTimeout(() => { hint.hidden = true; }, ms);
+    };
+    document.getElementById('star-hint-x').addEventListener('click', () => { hint.hidden = true; });
+    const read = () => { try { const c = JSON.parse(localStorage.getItem(KEY)); return c && Date.now() - c.t < TTL ? c : null; } catch (e) { return null; } };
+    const save = c => { try { localStorage.setItem(KEY, JSON.stringify(c)); } catch (e) {} };
+    function show(c, bump) {
+      stars = c.stars;
+      document.querySelectorAll('.js-stars').forEach(e => {
+        e.innerHTML = `<svg aria-hidden="true"><use href="#star"/></svg>${short(c.stars)}`;
+        e.hidden = false;
+        e.setAttribute('aria-label', `${c.stars} ${c.stars === 1 ? 'star' : 'stars'}`);
+      });
+      document.querySelectorAll('.js-stars-n').forEach(e => { e.textContent = short(c.stars); });
+      document.querySelectorAll('.js-forks-n').forEach(e => { e.textContent = short(c.forks); });
+      document.querySelectorAll('.js-star').forEach(a => a.title = `Star Jolpai on GitHub (${c.stars} ${c.stars === 1 ? 'star' : 'stars'} so far)`);
+      if (bump) document.querySelectorAll('.js-stars, .js-stars-n').forEach(e => { e.classList.remove('bump'); void e.offsetWidth; e.classList.add('bump'); });
+    }
+    function load(fresh) {
+      const c = !fresh && read();
+      if (c) { show(c); return Promise.resolve(c); }
+      return fetch(API, { cache: fresh ? 'no-store' : 'default' })
+        .then(r => r.ok ? r.json() : Promise.reject())
+        .then(j => { const n = { t: Date.now(), stars: j.stargazers_count, forks: j.forks_count }; save(n); return n; });
+    }
+    load(false).then(c => { if (stars === null) show(c); }).catch(() => {});
+
+    document.querySelectorAll('.js-star').forEach(a => a.addEventListener('click', () => {
+      waiting = true;
+      toast('⭐ On the GitHub page, tap <b>☆ Star</b> at the top right (you need to be signed in). Thank you!', 12000);
+    }));
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState !== 'visible' || !waiting) return;
+      const before = stars;
+      load(true).then(c => {
+        const more = before !== null && c.stars > before;
+        show(c, more);
+        if (more) { waiting = false; toast(`Thank you for the star! Jolpai now has <b>${c.stars}</b> stars. 💚`, 8000); }
+      }).catch(() => {});
+    });
+  })();
 
   // Fade sections in as they scroll into view
   const items = document.querySelectorAll('.reveal');
@@ -1400,6 +1580,7 @@
       // The other Download buttons and the version line: the newest APK for the visitor's phone type.
       document.querySelectorAll('.js-download').forEach(a => { a.href = link(heroAbi); });
       const top = r.apks && r.apks[heroAbi];
+      document.querySelectorAll('.js-ver-n').forEach(s => { s.textContent = v; });
       document.querySelectorAll('.js-version').forEach(s => {
         s.textContent = `Version ${v}${top && top.size ? ` · ${(top.size / 1048576).toFixed(1)} MB` : ''}`;
       });
@@ -1465,6 +1646,7 @@
       const fmt = n => n.toLocaleString('en-US');
       const word = total === 1 ? 'download' : 'downloads';
       document.querySelectorAll('.js-dl').forEach(e => { e.innerHTML = ` · <b>${fmt(total)}</b> ${word}`; e.hidden = false; });
+      document.querySelectorAll('.js-dl-n').forEach(e => { e.textContent = fmt(total); });
       const cell = document.querySelector('.js-dl-stat');
       if (!cell) return;
       const b = cell.querySelector('b');
