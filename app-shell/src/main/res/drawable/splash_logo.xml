@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 12+ launch animation (1 s, see windowSplashScreenAnimatedIcon): the mark pops in, the
+     leaf grows and waves, the keys tap like typing and the olive key is pressed last.
+     Made by scripts/gen-logo.js. -->
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt">
+    <aapt:attr name="android:drawable">
+        <vector xmlns:android="http://schemas.android.com/apk/res/android"
+            android:width="108dp"
+            android:height="108dp"
+            android:viewportWidth="108"
+            android:viewportHeight="108">
+            <group android:name="mark" android:pivotX="54" android:pivotY="54" android:scaleX="0" android:scaleY="0">
+                <group
+                    android:translateX="26.8"
+                    android:translateY="27.735"
+                    android:scaleX="1.7"
+                    android:scaleY="1.7">
+                    <path android:fillColor="#1E2118" android:fillType="evenOdd" android:pathData="M7.2 9H24.8A5.2 5.2 0 0 1 30 14.2V23.8A5.2 5.2 0 0 1 24.8 29H7.2A5.2 5.2 0 0 1 2 23.8V14.2A5.2 5.2 0 0 1 7.2 9ZM6.2 12.6H7.4A1 1 0 0 1 8.4 13.6V14.8A1 1 0 0 1 7.4 15.8H6.2A1 1 0 0 1 5.2 14.8V13.6A1 1 0 0 1 6.2 12.6ZM10.8 12.6H12A1 1 0 0 1 13 13.6V14.8A1 1 0 0 1 12 15.8H10.8A1 1 0 0 1 9.8 14.8V13.6A1 1 0 0 1 10.8 12.6ZM15.4 12.6H16.6A1 1 0 0 1 17.6 13.6V14.8A1 1 0 0 1 16.6 15.8H15.4A1 1 0 0 1 14.4 14.8V13.6A1 1 0 0 1 15.4 12.6ZM20 12.6H21.2A1 1 0 0 1 22.2 13.6V14.8A1 1 0 0 1 21.2 15.8H20A1 1 0 0 1 19 14.8V13.6A1 1 0 0 1 20 12.6ZM24.6 12.6H25.8A1 1 0 0 1 26.8 13.6V14.8A1 1 0 0 1 25.8 15.8H24.6A1 1 0 0 1 23.6 14.8V13.6A1 1 0 0 1 24.6 12.6ZM6.2 17.4H7.4A1 1 0 0 1 8.4 18.4V19.6A1 1 0 0 1 7.4 20.6H6.2A1 1 0 0 1 5.2 19.6V18.4A1 1 0 0 1 6.2 17.4ZM10.8 17.4H12A1 1 0 0 1 13 18.4V19.6A1 1 0 0 1 12 20.6H10.8A1 1 0 0 1 9.8 19.6V18.4A1 1 0 0 1 10.8 17.4ZM20 17.4H21.2A1 1 0 0 1 22.2 18.4V19.6A1 1 0 0 1 21.2 20.6H20A1 1 0 0 1 19 19.6V18.4A1 1 0 0 1 20 17.4ZM24.6 17.4H25.8A1 1 0 0 1 26.8 18.4V19.6A1 1 0 0 1 25.8 20.6H24.6A1 1 0 0 1 23.6 19.6V18.4A1 1 0 0 1 24.6 17.4ZM10.6 22.2H21.4A1 1 0 0 1 22.4 23.2V24.2A1 1 0 0 1 21.4 25.2H10.6A1 1 0 0 1 9.6 24.2V23.2A1 1 0 0 1 10.6 22.2ZM13.6 19A2.4 2.4 0 1 0 18.4 19A2.4 2.4 0 1 0 13.6 19Z" />
+                    <group>
+                        <path android:name="tap7" android:fillColor="#1E2118" android:fillAlpha="0" android:pathData="M6.3,13.1H7.3A0.6,0.6 0 0 1 7.9,13.7V14.7A0.6,0.6 0 0 1 7.3,15.3H6.3A0.6,0.6 0 0 1 5.7,14.7V13.7A0.6,0.6 0 0 1 6.3,13.1Z" />
+                        <path android:name="tap0" android:fillColor="#1E2118" android:fillAlpha="0" android:pathData="M10.9,13.1H11.9A0.6,0.6 0 0 1 12.5,13.7V14.7A0.6,0.6 0 0 1 11.9,15.3H10.9A0.6,0.6 0 0 1 10.3,14.7V13.7A0.6,0.6 0 0 1 10.9,13.1Z" />
+                        <path android:name="tap9" android:fillColor="#1E2118" android:fillAlpha="0" android:pathData="M15.5,13.1H16.5A0.6,0.6 0 0 1 17.1,13.7V14.7A0.6,0.6 0 0 1 16.5,15.3H15.5A0.6,0.6 0 0 1 14.9,14.7V13.7A0.6,0.6 0 0 1 15.5,13.1Z" />
+                        <path android:name="tap2" android:fillColor="#1E2118" android:fillAlpha="0" android:pathData="M20.1,13.1H21.1A0.6,0.6 0 0 1 21.7,13.7V14.7A0.6,0.6 0 0 1 21.1,15.3H20.1A0.6,0.6 0 0 1 19.5,14.7V13.7A0.6,0.6 0 0 1 20.1,13.1Z" />
+                        <path android:name="tap5" android:fillColor="#1E2118" android:fillAlpha="0" android:pathData="M24.7,13.1H25.7A0.6,0.6 0 0 1 26.3,13.7V14.7A0.6,0.6 0 0 1 25.7,15.3H24.7A0.6,0.6 0 0 1 24.1,14.7V13.7A0.6,0.6 0 0 1 24.7,13.1Z" />
+                        <path android:name="tap4" android:fillColor="#1E2118" android:fillAlpha="0" android:pathData="M6.3,17.9H7.3A0.6,0.6 0 0 1 7.9,18.5V19.5A0.6,0.6 0 0 1 7.3,20.1H6.3A0.6,0.6 0 0 1 5.7,19.5V18.5A0.6,0.6 0 0 1 6.3,17.9Z" />
+                        <path android:name="tap6" android:fillColor="#1E2118" android:fillAlpha="0" android:pathData="M10.9,17.9H11.9A0.6,0.6 0 0 1 12.5,18.5V19.5A0.6,0.6 0 0 1 11.9,20.1H10.9A0.6,0.6 0 0 1 10.3,19.5V18.5A0.6,0.6 0 0 1 10.9,17.9Z" />
+                        <path android:name="tap1" android:fillColor="#1E2118" android:fillAlpha="0" android:pathData="M20.1,17.9H21.1A0.6,0.6 0 0 1 21.7,18.5V19.5A0.6,0.6 0 0 1 21.1,20.1H20.1A0.6,0.6 0 0 1 19.5,19.5V18.5A0.6,0.6 0 0 1 20.1,17.9Z" />
+                        <path android:name="tap8" android:fillColor="#1E2118" android:fillAlpha="0" android:pathData="M24.7,17.9H25.7A0.6,0.6 0 0 1 26.3,18.5V19.5A0.6,0.6 0 0 1 25.7,20.1H24.7A0.6,0.6 0 0 1 24.1,19.5V18.5A0.6,0.6 0 0 1 24.7,17.9Z" />
+                        <path android:name="tap3" android:fillColor="#1E2118" android:fillAlpha="0" android:pathData="M10.7,22.7H21.3A0.6,0.6 0 0 1 21.9,23.3V24.1A0.6,0.6 0 0 1 21.3,24.7H10.7A0.6,0.6 0 0 1 10.1,24.1V23.3A0.6,0.6 0 0 1 10.7,22.7Z" />
+                    </group>
+                    <group android:name="olive" android:pivotX="16" android:pivotY="19">
+                        <path android:fillColor="#1E2118" android:pathData="M14.7 19A1.3 1.6 0 1 0 17.3 19A1.3 1.6 0 1 0 14.7 19Z" />
+                    </group>
+                    <group android:name="leaf" android:pivotX="21.4" android:pivotY="9.8" android:scaleX="0" android:scaleY="0" android:rotation="-40">
+                        <path android:fillColor="#1E2118" android:pathData="M21.4 9.8C21.2 5 24.6 2 29.6 1.9C29.7 6.7 26.4 9.8 21.4 9.8Z" />
+                    </group>
+                </group>
+            </group>
+        </vector>
+    </aapt:attr>
+    <target android:name="mark">
+        <aapt:attr name="android:animation">
+            <set>
+            <objectAnimator android:propertyName="scaleX" android:valueFrom="0" android:valueTo="1" android:startOffset="0" android:duration="420" android:valueType="floatType" android:interpolator="@android:anim/overshoot_interpolator" />
+            <objectAnimator android:propertyName="scaleY" android:valueFrom="0" android:valueTo="1" android:startOffset="0" android:duration="420" android:valueType="floatType" android:interpolator="@android:anim/overshoot_interpolator" />
+            </set>
+        </aapt:attr>
+    </target>
+    <target android:name="leaf">
+        <aapt:attr name="android:animation">
+            <set>
+            <objectAnimator android:propertyName="scaleX" android:valueFrom="0" android:valueTo="1" android:startOffset="220" android:duration="360" android:valueType="floatType" android:interpolator="@android:anim/overshoot_interpolator" />
+            <objectAnimator android:propertyName="scaleY" android:valueFrom="0" android:valueTo="1" android:startOffset="220" android:duration="360" android:valueType="floatType" android:interpolator="@android:anim/overshoot_interpolator" />
+            <objectAnimator android:propertyName="rotation" android:valueFrom="-40" android:valueTo="12" android:startOffset="220" android:duration="360" android:valueType="floatType" android:interpolator="@android:interpolator/fast_out_slow_in" />
+            <objectAnimator android:propertyName="rotation" android:valueFrom="12" android:valueTo="-6" android:startOffset="580" android:duration="200" android:valueType="floatType" android:interpolator="@android:interpolator/fast_out_slow_in" />
+            <objectAnimator android:propertyName="rotation" android:valueFrom="-6" android:valueTo="0" android:startOffset="780" android:duration="200" android:valueType="floatType" android:interpolator="@android:interpolator/fast_out_slow_in" />
+            </set>
+        </aapt:attr>
+    </target>
+    <target android:name="tap7">
+        <aapt:attr name="android:animation">
+            <set>
+            <objectAnimator android:propertyName="fillAlpha" android:valueFrom="0" android:valueTo="0.9" android:startOffset="650" android:duration="50" android:valueType="floatType" />
+            <objectAnimator android:propertyName="fillAlpha" android:valueFrom="0.9" android:valueTo="0" android:startOffset="700" android:duration="130" android:valueType="floatType" />
+            </set>
+        </aapt:attr>
+    </target>
+    <target android:name="tap0">
+        <aapt:attr name="android:animation">
+            <set>
+            <objectAnimator android:propertyName="fillAlpha" android:valueFrom="0" android:valueTo="0.9" android:startOffset="300" android:duration="50" android:valueType="floatType" />
+            <objectAnimator android:propertyName="fillAlpha" android:valueFrom="0.9" android:valueTo="0" android:startOffset="350" android:duration="130" android:valueType="floatType" />
+            </set>
+        </aapt:attr>
+    </target>
+    <target android:name="tap9">
+        <aapt:attr name="android:animation">
+            <set>
+            <objectAnimator android:propertyName="fillAlpha" android:valueFrom="0" android:valueTo="0.9" android:startOffset="750" android:duration="50" android:valueType="floatType" />
+            <objectAnimator android:propertyName="fillAlpha" android:valueFrom="0.9" android:valueTo="0" android:startOffset="800" android:duration="130" android:valueType="floatType" />
+            </set>
+        </aapt:attr>
+    </target>
+    <target android:name="tap2">
+        <aapt:attr name="android:animation">
+            <set>
+            <objectAnimator android:propertyName="fillAlpha" android:valueFrom="0" android:valueTo="0.9" android:startOffset="400" android:duration="50" android:valueType="floatType" />
+            <objectAnimator android:propertyName="fillAlpha" android:valueFrom="0.9" android:valueTo="0" android:startOffset="450" android:duration="130" android:valueType="floatType" />
+            </set>
+        </aapt:attr>
+    </target>
+    <target android:name="tap5">
+        <aapt:attr name="android:animation">
+            <set>
+            <objectAnimator android:propertyName="fillAlpha" android:valueFrom="0" android:valueTo="0.9" android:startOffset="550" android:duration="50" android:valueType="floatType" />
+            <objectAnimator android:propertyName="fillAlpha" android:valueFrom="0.9" android:valueTo="0" android:startOffset="600" android:duration="130" android:valueType="floatType" />
+            </set>
+        </aapt:attr>
+    </target>
+    <target android:name="tap4">
+        <aapt:attr name="android:animation">
+            <set>
+            <objectAnimator android:propertyName="fillAlpha" android:valueFrom="0" android:valueTo="0.9" android:startOffset="500" android:duration="50" android:valueType="floatType" />
+            <objectAnimator android:propertyName="fillAlpha" android:valueFrom="0.9" android:valueTo="0" android:startOffset="550" android:duration="130" android:valueType="floatType" />
+            </set>
+        </aapt:attr>
+    </target>
+    <target android:name="tap6">
+        <aapt:attr name="android:animation">
+            <set>
+            <objectAnimator android:propertyName="fillAlpha" android:valueFrom="0" android:valueTo="0.9" android:startOffset="600" android:duration="50" android:valueType="floatType" />
+            <objectAnimator android:propertyName="fillAlpha" android:valueFrom="0.9" android:valueTo="0" android:startOffset="650" android:duration="130" android:valueType="floatType" />
+            </set>
+        </aapt:attr>
+    </target>
+    <target android:name="tap1">
+        <aapt:attr name="android:animation">
+            <set>
+            <objectAnimator android:propertyName="fillAlpha" android:valueFrom="0" android:valueTo="0.9" android:startOffset="350" android:duration="50" android:valueType="floatType" />
+            <objectAnimator android:propertyName="fillAlpha" android:valueFrom="0.9" android:valueTo="0" android:startOffset="400" android:duration="130" android:valueType="floatType" />
+            </set>
+        </aapt:attr>
+    </target>
+    <target android:name="tap8">
+        <aapt:attr name="android:animation">
+            <set>
+            <objectAnimator android:propertyName="fillAlpha" android:valueFrom="0" android:valueTo="0.9" android:startOffset="700" android:duration="50" android:valueType="floatType" />
+            <objectAnimator android:propertyName="fillAlpha" android:valueFrom="0.9" android:valueTo="0" android:startOffset="750" android:duration="130" android:valueType="floatType" />
+            </set>
+        </aapt:attr>
+    </target>
+    <target android:name="tap3">
+        <aapt:attr name="android:animation">
+            <set>
+            <objectAnimator android:propertyName="fillAlpha" android:valueFrom="0" android:valueTo="0.9" android:startOffset="450" android:duration="50" android:valueType="floatType" />
+            <objectAnimator android:propertyName="fillAlpha" android:valueFrom="0.9" android:valueTo="0" android:startOffset="500" android:duration="130" android:valueType="floatType" />
+            </set>
+        </aapt:attr>
+    </target>
+    <target android:name="olive">
+        <aapt:attr name="android:animation">
+            <set>
+            <objectAnimator android:propertyName="scaleX" android:valueFrom="1" android:valueTo="0.55" android:startOffset="760" android:duration="110" android:valueType="floatType" android:interpolator="@android:interpolator/fast_out_slow_in" />
+            <objectAnimator android:propertyName="scaleY" android:valueFrom="1" android:valueTo="0.55" android:startOffset="760" android:duration="110" android:valueType="floatType" android:interpolator="@android:interpolator/fast_out_slow_in" />
+            <objectAnimator android:propertyName="scaleX" android:valueFrom="0.55" android:valueTo="1" android:startOffset="870" android:duration="130" android:valueType="floatType" android:interpolator="@android:anim/overshoot_interpolator" />
+            <objectAnimator android:propertyName="scaleY" android:valueFrom="0.55" android:valueTo="1" android:startOffset="870" android:duration="130" android:valueType="floatType" android:interpolator="@android:anim/overshoot_interpolator" />
+            </set>
+        </aapt:attr>
+    </target>
+</animated-vector>

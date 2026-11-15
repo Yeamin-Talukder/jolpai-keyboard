@@ -4,7 +4,6 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -15,7 +14,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -39,7 +37,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -211,13 +208,12 @@ private fun AboutHeader(version: String) {
             Modifier.background(gradient).padding(20.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            // The launcher icon's foreground on its cream background: the 108dp canvas, of which
-            // a launcher shows the middle 72dp, clipped to a rounded tile.
+            // The app icon, alive: the animated mark on its olive tile.
             Box(
-                Modifier.size(76.dp).clip(RoundedCornerShape(22.dp)).background(Color(0xFFF3EFD9)),
+                Modifier.size(76.dp).clip(RoundedCornerShape(22.dp)).background(LogoTile),
                 contentAlignment = Alignment.Center,
             ) {
-                Image(painterResource(R.drawable.ic_launcher_foreground), contentDescription = null, modifier = Modifier.requiredSize(114.dp))
+                JolpaiLogo(Modifier.size(52.dp))
             }
             Spacer(Modifier.width(18.dp))
             Column {

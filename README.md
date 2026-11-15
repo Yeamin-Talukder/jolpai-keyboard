@@ -537,7 +537,7 @@ files listed above keep their own licences (MPL-2.0, MIT, Apache-2.0, Unicode Li
 in the NOTICE file in each folder.
 
 <div align="center">
-<img src="docs/images/icon-512.png" alt="Jolpai Keyboard app icon: a green olive" width="72">
+<img src="docs/images/icon-512.png" alt="Jolpai Keyboard app icon: a keyboard with an olive key and a leaf" width="72">
 <br>
 <sub><b>Jolpai Keyboard</b> · জলপাই কিবোর্ড · open-source Bangla keyboard for Android · Made in Bangladesh 🇧🇩</sub>
 </div>

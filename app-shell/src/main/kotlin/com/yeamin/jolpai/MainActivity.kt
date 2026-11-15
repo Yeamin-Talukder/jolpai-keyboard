@@ -1,6 +1,11 @@
 package com.yeamin.jolpai
 
 import android.content.Intent
+import android.os.Build
+import android.os.SystemClock
+import android.view.View
+import android.view.ViewTreeObserver
+import android.view.animation.AnticipateInterpolator
 import android.os.Bundle
 import android.provider.Settings
 import android.view.inputmethod.InputMethodManager
@@ -63,6 +68,7 @@ class MainActivity : ComponentActivity() {
             navigationBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
         )
         super.onCreate(savedInstanceState)
+        if (savedInstanceState == null) playLaunchAnimation()
         if (savedInstanceState == null) handleScreenExtra(intent)
         setContent {
             JolpaiTheme {
@@ -228,6 +234,33 @@ class MainActivity : ComponentActivity() {
         handleScreenExtra(intent)
     }
 
+    /**
+     * Android 12+: keeps the launch screen up until its logo animation (splash_logo, 1 s) has
+     * played, then lifts the mark and fades the screen into the app.
+     */
+    private fun playLaunchAnimation() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
+        val start = SystemClock.uptimeMillis()
+        val content = findViewById<View>(android.R.id.content)
+        content.viewTreeObserver.addOnPreDrawListener(object : ViewTreeObserver.OnPreDrawListener {
+            override fun onPreDraw(): Boolean {
+                if (SystemClock.uptimeMillis() - start < LAUNCH_HOLD_MS) return false
+                content.viewTreeObserver.removeOnPreDrawListener(this)
+                return true
+            }
+        })
+        splashScreen.setOnExitAnimationListener { splash ->
+            splash.iconView?.animate()
+                ?.scaleX(1.25f)?.scaleY(1.25f)?.alpha(0f)
+                ?.setInterpolator(AnticipateInterpolator(1.2f))
+                ?.setDuration(320)
+                ?.start()
+            splash.animate().alpha(0f).setStartDelay(120).setDuration(260)
+                .withEndAction { splash.remove() }
+                .start()
+        }
+    }
+
     private fun handleScreenExtra(intent: Intent?) {
         when (intent?.getStringExtra(JolpaiImeService.EXTRA_SCREEN)) {
             "clipboard" -> requestedScreen.value = Destination.CLIPBOARD
@@ -248,6 +281,9 @@ class MainActivity : ComponentActivity() {
         if (hasFocus) viewModel.refreshSetup()
     }
 }
+
+/** How long the launch screen stays up after onCreate, so its 1 s logo animation can finish. */
+private const val LAUNCH_HOLD_MS = 850L
 
 /** Page push timing: long enough to see, short enough not to wait for. */
 private const val PAGE_MS = 380
