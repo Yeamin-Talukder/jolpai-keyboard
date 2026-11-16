@@ -384,6 +384,8 @@ class KeyboardContainer(
     private var pillX: Int? = null
     private var pillY: Int? = null
     private var navBottom = 0
+    private var navLeft = 0
+    private var navRight = 0
 
     private companion object {
         /** Bottom padding last worked out from the system's insets (-1 until known). */
@@ -463,8 +465,8 @@ class KeyboardContainer(
         val (x, _) = pillPosition()
         val w = voicePill.width
         val edge = (28 * density).toInt()
-        val leftGap = x
-        val rightGap = width - (x + w)
+        val leftGap = x - navLeft
+        val rightGap = width - navRight - (x + w)
         when {
             voiceSize == VoiceSize.PILL_H && (leftGap <= edge || rightGap <= edge) -> {
                 pillDock = if (leftGap <= edge) -1 else 1
@@ -490,10 +492,11 @@ class KeyboardContainer(
         if (!pillMode || width == 0) return
         if (dx != 0f || dy != 0f) pillDock = null // dragging undocks; a plain re-check keeps it
         val m = (8 * density).toInt()
-        val maxX = (width - voicePill.width - m).coerceAtLeast(m)
+        val minX = navLeft + m
+        val maxX = (width - voicePill.width - navRight - m).coerceAtLeast(minX)
         val maxY = (height - voicePill.height - navBottom - m).coerceAtLeast(m)
         val (x, y) = pillPosition()
-        pillX = (x + dx).toInt().coerceIn(m, maxX)
+        pillX = (x + dx).toInt().coerceIn(minX, maxX)
         pillY = (y + dy).toInt().coerceIn(m, maxY)
         requestLayout()
     }
@@ -501,10 +504,13 @@ class KeyboardContainer(
     /** The pill's spot: where it was dragged, or bottom right above the navigation bar. */
     private fun pillPosition(): Pair<Int, Int> {
         val m = (12 * density).toInt()
+        // Clear of a side navigation bar or camera cutout in landscape.
+        val minX = navLeft + m
+        val maxX = (width - voicePill.measuredWidth - navRight - m).coerceAtLeast(minX)
         val x = when (pillDock) {
-            -1 -> m
-            1 -> (width - voicePill.measuredWidth - m).coerceAtLeast(m)
-            else -> pillX ?: (width - voicePill.measuredWidth - m).coerceAtLeast(m)
+            -1 -> minX
+            1 -> maxX
+            else -> pillX ?: maxX
         }
         val y = pillY ?: (height - voicePill.measuredHeight - navBottom - m).coerceAtLeast(m)
         return x to y
@@ -512,9 +518,30 @@ class KeyboardContainer(
 
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         super.onLayout(changed, left, top, right, bottom)
+        if (options.floating) fitFloatingCard() else recheckGapBelow()
         if (pillMode && voicePill.isVisible) {
             val (x, y) = pillPosition()
             voicePill.layout(x, y, x + voicePill.measuredWidth, y + voicePill.measuredHeight)
+        }
+    }
+
+    /** How far the floating card can move sideways: inside the side bars / cutout padding. */
+    private fun floatRoom(): Int = (width - paddingLeft - paddingRight - column.width).coerceAtLeast(0)
+
+    /**
+     * The floating card is sized from the screen width before the side insets are known; once
+     * laid out, shrink and move it so it stays clear of a side navigation bar or camera cutout.
+     */
+    private fun fitFloatingCard() {
+        if (width == 0) return
+        val lp = column.layoutParams as? LayoutParams ?: return
+        val room = width - paddingLeft - paddingRight
+        val cardWidth = minOf(lp.width, room)
+        val left = lp.leftMargin.coerceIn(0, (room - cardWidth).coerceAtLeast(0))
+        if (cardWidth != lp.width || left != lp.leftMargin) post {
+            lp.width = cardWidth
+            lp.leftMargin = left
+            column.layoutParams = lp
         }
     }
 
@@ -621,17 +648,35 @@ class KeyboardContainer(
             // The system draws its own hide (⌄) and keyboard-switch (🌐) buttons in a taller bar
             // under a keyboard than under apps. On Android 17 the inset reported to the keyboard
             // is the short app bar (63 px vs 108 px on a Pixel 7 Pro), so the bottom row sat on
-            // those buttons. Always keep clear of the full keyboard bar (it is shown under every
-            // keyboard), except when the navigation bar sits at the side in landscape.
+            // those buttons: keep clear of most of the keyboard bar whenever the bar overlaps the
+            // window. When it doesn't (Android 14 lays the keyboard out above an opaque bar and
+            // reports 0, e.g. Xiaomi HyperOS), add nothing, or an empty band shows above the bar.
             val sideBar = reported.left > 0 || reported.right > 0
-            // The buttons sit in the middle of that bar with empty space above them, so the keys
-            // may reach a little way into its top (about a fifth) and still stay clear of them.
-            val navHeight = if (sideBar) reported.bottom else maxOf(reported.bottom, (imeNavBarHeight() * 0.8f).toInt())
-            val nav = androidx.core.graphics.Insets.of(reported.left, reported.top, reported.right, navHeight)
+            lastGapBelow = gapBelowWindow()
+            val navHeight = com.yeamin.jolpai.core.layout.NavBarInset.bottomPadding(
+                reportedBottom = reported.bottom,
+                sideBar = sideBar,
+                imeBarHeight = imeNavBarHeight(),
+                gapBelowWindow = lastGapBelow,
+            )
+            // At the sides, keep clear of a side navigation bar and of a camera cutout (landscape,
+            // drawn edge to edge from Android 15); both are 0 where the system already keeps the
+            // window away from them.
+            val cutout = insets.getInsets(WindowInsetsCompat.Type.displayCutout())
+            val nav = androidx.core.graphics.Insets.of(
+                com.yeamin.jolpai.core.layout.NavBarInset.sidePadding(reported.left, cutout.left),
+                reported.top,
+                com.yeamin.jolpai.core.layout.NavBarInset.sidePadding(reported.right, cutout.right),
+                navHeight,
+            )
             navBottom = nav.bottom
+            navLeft = nav.left
+            navRight = nav.right
             val gap = if (nav.bottom > 0) 0 else bottomGap
             if (options.floating) {
-                setPadding(0, 0, 0, nav.bottom)
+                if (paddingLeft != nav.left || paddingRight != nav.right || paddingBottom != nav.bottom) {
+                    setPadding(nav.left, 0, nav.right, nav.bottom)
+                }
             } else {
                 val bottom = nav.bottom + gap
                 lastBottomPadding = bottom
@@ -648,6 +693,39 @@ class KeyboardContainer(
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
         ViewCompat.requestApplyInsets(this)
+    }
+
+    /** Gap below the window used for the last bottom padding (-1 until insets arrive). */
+    private var lastGapBelow = -1
+
+    /**
+     * How far the keyboard window's bottom edge sits above the bottom of the screen: room the
+     * system keeps for its own bar under the window. 0 when it reaches the bottom or isn't laid
+     * out yet.
+     */
+    private fun gapBelowWindow(): Int {
+        val root = rootView ?: return 0
+        if (!root.isLaidOut || root.height == 0) return 0
+        val loc = IntArray(2)
+        root.getLocationOnScreen(loc)
+        return (screenHeight() - (loc[1] + root.height)).coerceAtLeast(0)
+    }
+
+    /** Full height of the display, system bars included. */
+    private fun screenHeight(): Int {
+        val wm = context.getSystemService(android.view.WindowManager::class.java)
+        return if (android.os.Build.VERSION.SDK_INT >= 30) {
+            wm.maximumWindowMetrics.bounds.height()
+        } else {
+            val size = android.graphics.Point()
+            @Suppress("DEPRECATION") wm.defaultDisplay.getRealSize(size)
+            size.y
+        }
+    }
+
+    /** Once the window has its final place, check the bar overlap again if it moved. */
+    private fun recheckGapBelow() {
+        if (lastGapBelow >= 0 && gapBelowWindow() != lastGapBelow) ViewCompat.requestApplyInsets(this)
     }
 
     /**
@@ -719,7 +797,7 @@ class KeyboardContainer(
             when (e.actionMasked) {
                 android.view.MotionEvent.ACTION_DOWN -> { lastX = e.rawX; lastY = e.rawY }
                 android.view.MotionEvent.ACTION_MOVE -> {
-                    val maxLeft = (this@KeyboardContainer.width - column.width).coerceAtLeast(0)
+                    val maxLeft = floatRoom()
                     lp.leftMargin = (lp.leftMargin + (e.rawX - lastX)).toInt().coerceIn(0, maxLeft)
                     lp.topMargin = (lp.topMargin + (e.rawY - lastY)).toInt().coerceIn(0, floatTravel())
                     lastX = e.rawX
@@ -727,7 +805,7 @@ class KeyboardContainer(
                     column.layoutParams = lp
                 }
                 android.view.MotionEvent.ACTION_UP -> {
-                    val maxLeft = (this@KeyboardContainer.width - column.width).coerceAtLeast(1)
+                    val maxLeft = floatRoom().coerceAtLeast(1)
                     onModeChange(ModeChange.MoveFloating(lp.leftMargin / maxLeft.toFloat(), 1 - lp.topMargin / floatTravel().toFloat()))
                 }
             }

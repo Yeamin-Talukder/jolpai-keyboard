@@ -300,11 +300,13 @@ class JolpaiImeService : InputMethodService(), LifecycleOwner, SavedStateRegistr
             decor.setViewTreeSavedStateRegistryOwner(this)
             decor.setViewTreeViewModelStoreOwner(this)
         }
+        val palette = KeyboardPalette.from(this, currentTheme())
+        tintNavigationBar(palette)
         val view = KeyboardContainer(
             context = this,
             onAction = ::handleAction,
             servicePanel = { panel, colors, state -> ServicePanel(panel, colors, state) },
-            palette = KeyboardPalette.from(this, currentTheme()),
+            palette = palette,
             options = layoutOptions(),
             feedback = feedback,
             onModeChange = ::onModeChange,
@@ -490,6 +492,28 @@ class JolpaiImeService : InputMethodService(), LifecycleOwner, SavedStateRegistr
                 is KeyboardContainer.ModeChange.SetFloating -> settingsRepository.setFloating(change.floating)
                 is KeyboardContainer.ModeChange.MoveFloating -> settingsRepository.setFloatPosition(change.x, change.y)
             }
+        }
+    }
+
+    /**
+     * Paint the system's bar under the keyboard in the keyboard's bottom colour, with matching
+     * icons. Where the system lays the keyboard out above an opaque bar (Android 14 and older,
+     * e.g. Xiaomi HyperOS) the bar was plain black; from Android 15 the keyboard draws edge to
+     * edge behind a see-through bar and this has no effect.
+     */
+    private fun tintNavigationBar(palette: KeyboardPalette) {
+        val w = window.window ?: return
+        // A floating card leaves the bottom of the screen to the app: keep the bar see-through.
+        val floating = layoutOptions().floating
+        val color = if (floating) android.graphics.Color.TRANSPARENT
+        else (palette.backgroundEnd ?: palette.background) or 0xFF000000.toInt()
+        w.addFlags(android.view.WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
+        @Suppress("DEPRECATION")
+        w.navigationBarColor = color
+        if (android.os.Build.VERSION.SDK_INT >= 29) w.isNavigationBarContrastEnforced = false
+        if (!floating) {
+            androidx.core.view.WindowCompat.getInsetsController(w, w.decorView).isAppearanceLightNavigationBars =
+                androidx.core.graphics.ColorUtils.calculateLuminance(color) > 0.5
         }
     }
 
