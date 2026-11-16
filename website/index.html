@@ -34,8 +34,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- The font loads in the background: text shows at once in a fallback font, then switches (display=swap). -->
-<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
-<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap"></noscript>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Hind+Siliguri:wght@400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Hind+Siliguri:wght@400;500;600;700&display=swap"></noscript>
 
 <script type="application/ld+json">
 {
@@ -906,6 +906,106 @@
     .upper.open, .up-in { height: 186px; }
     h1 { font-size: 34px; }
   }
+  /* ===== Style layer: dark product page, editorial serif headings, ambient glow, hairline cards ===== */
+  :root {
+    --bg: #0b0c09; --bg-2: #0f110c; --card: #131510; --card-2: #181b14;
+    --line: rgba(238, 242, 226, .09); --line-2: rgba(238, 242, 226, .16);
+    --text: #f1f2ea; --muted: #a9ad9c; --dim: #7d8272;
+    --serif: 'Fraunces', 'Hind Siliguri', Georgia, 'Times New Roman', serif;
+    --radius: 18px;
+  }
+  body {
+    background:
+      radial-gradient(900px 520px at 50% -140px, rgba(163, 184, 74, .20), transparent 70%),
+      radial-gradient(700px 500px at 100% 30%, rgba(163, 184, 74, .05), transparent 70%),
+      var(--bg);
+    background-repeat: no-repeat;
+  }
+  h1, h2, .section-head h2, .split h2, .final h2 {
+    font-family: var(--serif); font-weight: 600; letter-spacing: -.015em;
+    font-optical-sizing: auto; font-variation-settings: "SOFT" 30;
+  }
+  h1 { line-height: 1.04; }
+  .h1-bn, [lang="bn"] h2, h2:lang(bn) { font-family: var(--font); letter-spacing: 0; }
+  .section-head h2 { font-size: clamp(32px, 4.2vw, 48px); line-height: 1.1; }
+  .section-head p, .lead { color: var(--muted); }
+  h3 { letter-spacing: -.005em; }
+
+  /* Eyebrows: small olive pills above headings */
+  .eyebrow, .kicker {
+    display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: .14em;
+    padding: 5px 12px; border-radius: 999px; color: var(--olive);
+    background: rgba(181, 201, 74, .08); border: 1px solid rgba(181, 201, 74, .22);
+  }
+  .section-head .kicker { margin: 0 0 16px; text-transform: uppercase; }
+
+  /* Sections: no coloured bands, a hairline between them */
+  section { padding: 96px 0; }
+  .alt { background: transparent; border: 0; }
+  main > section + section { border-top: 1px solid var(--line); }
+  .hero { padding-top: 80px; }
+  .hero::before {
+    inset: -30% auto auto 50%; width: 1100px; height: 700px; transform: translateX(-50%);
+    background: radial-gradient(closest-side, rgba(163, 184, 74, .16), transparent 72%);
+  }
+
+  /* Header: glassy, hairline */
+  header.top { background: color-mix(in srgb, var(--bg) 70%, transparent); border-bottom-color: var(--line); }
+  .nav-links a { font-size: 15px; }
+
+  /* Cards: dark glass with a top highlight */
+  .card, .faq details, .stats, .shot, .gh-stat {
+    border-color: var(--line);
+  }
+  .card {
+    background: linear-gradient(180deg, rgba(255, 255, 255, .035), rgba(255, 255, 255, .008)) , var(--card);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05), 0 20px 50px -30px rgba(0, 0, 0, .9);
+  }
+  .card:hover { border-color: rgba(181, 201, 74, .35); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06), 0 24px 60px -28px rgba(0, 0, 0, .9), 0 0 0 1px rgba(181, 201, 74, .08); }
+  .card .ic { border: 1px solid rgba(181, 201, 74, .2); background: rgba(181, 201, 74, .07); border-radius: 12px; }
+  .card h3 { font-size: 19px; }
+  .stats { background: var(--line); }
+  .stats div { background: var(--card); }
+  .stats b { font-family: var(--serif); font-weight: 600; font-size: 28px; }
+  .faq details { background: linear-gradient(180deg, rgba(255, 255, 255, .03), transparent), var(--card); }
+  .faq details[open] { border-color: rgba(181, 201, 74, .35); }
+
+  /* Chips and buttons */
+  .chips li { background: rgba(255, 255, 255, .025); border-color: var(--line); }
+  .btn-ghost { border-color: var(--line-2); background: rgba(255, 255, 255, .03); }
+  .btn-ghost:hover { border-color: rgba(181, 201, 74, .5); background: rgba(255, 255, 255, .05); }
+  .btn-primary { box-shadow: 0 10px 34px -12px rgba(181, 201, 74, .6), inset 0 1px 0 rgba(255, 255, 255, .35); }
+
+  /* Closing section: a soft spotlight */
+  .final { position: relative; overflow: hidden; }
+  .final::before {
+    content: ""; position: absolute; left: 50%; top: -120px; width: 900px; height: 520px; transform: translateX(-50%);
+    background: radial-gradient(closest-side, rgba(163, 184, 74, .14), transparent 72%); pointer-events: none;
+  }
+  .final > .wrap { position: relative; }
+  footer { border-top: 1px solid var(--line); }
+  /* Soft depth (neumorphic) controls: a sunken track, the chosen option raised out of it */
+  :root {
+    --track: #0c0d0a;
+    --raised: #1a1d16;
+    --sunk: inset 2px 2px 5px rgba(0, 0, 0, .82), inset -2px -2px 5px rgba(255, 255, 255, .035);
+    --lift: 4px 4px 10px rgba(0, 0, 0, .72), -3px -3px 8px rgba(255, 255, 255, .035);
+  }
+  .demo-tabs, .demo-side, .abis {
+    background: var(--track); box-shadow: var(--sunk); border: 1px solid rgba(255, 255, 255, .04); padding: 6px;
+  }
+  .demo-tabs { border-radius: 999px; gap: 4px; }
+  .demo-side { border-radius: 20px; gap: 4px; }
+  .abis { border-radius: 20px; gap: 6px; }
+  .demo-tabs button, .demo-side button, .abi { background: transparent; border-color: transparent; box-shadow: none; }
+  .demo-tabs button:hover, .demo-side button:hover, .abi:hover { background: rgba(255, 255, 255, .025); border-color: transparent; color: var(--text); }
+  .demo-tabs button[aria-pressed="true"], .demo-side button[aria-pressed="true"], .abi[aria-checked="true"] {
+    background: linear-gradient(180deg, rgba(255, 255, 255, .045), rgba(255, 255, 255, 0)), var(--raised);
+    border-color: rgba(255, 255, 255, .05); box-shadow: var(--lift); color: var(--text);
+  }
+  .demo-side button[aria-pressed="true"] { color: var(--olive); }
+  .abi[aria-checked="true"] b { color: var(--olive); }
+  @media (max-width: 720px) { .demo-tabs { border-radius: 18px; } }
 </style>
 </head>
 <body>
@@ -1036,6 +1136,7 @@
   <section id="features" aria-labelledby="f-title">
     <div class="wrap">
       <div class="section-head reveal">
+        <p class="kicker">Features</p>
         <h2 id="f-title">Everything you want in a Bangla keyboard</h2>
         <p>One keyboard for every app: WhatsApp, Messenger, Facebook, Gmail, Chrome and more.</p>
       </div>
@@ -1060,6 +1161,7 @@
   <section class="alt" aria-labelledby="s-title">
     <div class="wrap">
       <div class="section-head reveal">
+        <p class="kicker">Layouts</p>
         <h2 id="s-title">Four layouts, one tap apart</h2>
         <p>Switch English ↔ বাংলা (অভ্র) ↔ বাংলা (জাতীয়) ↔ বাংলা (প্রভাত) from the top bar.</p>
       </div>
@@ -1118,6 +1220,7 @@
   <section id="privacy" class="alt" aria-labelledby="p-title">
     <div class="wrap">
       <div class="section-head reveal">
+        <p class="kicker">Privacy</p>
         <h2 id="p-title">A keyboard sees everything you type. Jolpai keeps it on your phone.</h2>
         <p>Open source, so anyone can check. Read the full <a href="privacy.html">privacy policy</a>.</p>
       </div>
@@ -1134,6 +1237,7 @@
   <section id="install" aria-labelledby="i-title">
     <div class="wrap">
       <div class="section-head reveal">
+        <p class="kicker">Install</p>
         <h2 id="i-title">Install in a minute</h2>
         <p>Most phones need the <b>arm64-v8a</b> APK; older 32-bit phones need armeabi-v7a.</p>
       </div>
@@ -1195,7 +1299,7 @@
   <!-- FAQ -->
   <section id="faq" class="alt" aria-labelledby="q-title">
     <div class="wrap">
-      <div class="section-head reveal"><h2 id="q-title">Questions</h2></div>
+      <div class="section-head reveal"><p class="kicker">FAQ</p><h2 id="q-title">Frequently asked questions</h2></div>
       <div class="faq">
         <details class="reveal"><summary>What is the best Bangla keyboard for Android?</summary><p>It depends on what you need. Jolpai is a strong choice if you want everything in one free app: Avro phonetic typing, the National (জাতীয়) and প্রভাত layouts, on-device AI predictions, an offline Bangla and English spelling check, offline translation and 64 themes, with no ads and no tracking. It is open source, so anyone can check what it does with your typing.</p></details>
         <details class="reveal"><summary>Is there an AI-powered Bangla keyboard?</summary><p>Yes. Jolpai runs a small neural model on your phone: it reads your sentence to suggest the next word, rank suggestions and fix typos, and picks emoji by meaning. Bangla next words come from a list counted from 91 million words of open Bangla text, plus what you type. Nothing is sent to a server.</p></details>
@@ -1218,6 +1322,7 @@
   <section id="bangla" class="bn" lang="bn" aria-labelledby="b-title">
     <div class="wrap">
       <div class="section-head reveal">
+        <p class="kicker">বাংলায়</p>
         <h2 id="b-title">জলপাই কিবোর্ড: অ্যান্ড্রয়েডের জন্য ফ্রি বাংলা কিবোর্ড</h2>
         <p>অভ্র ফোনেটিক, জাতীয় লেআউট আর ইংরেজি — সব একটি কিবোর্ডে। কোনো বিজ্ঞাপন নেই, ট্র্যাকিং নেই।</p>
       </div>
