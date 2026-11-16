@@ -1006,6 +1006,24 @@
   .demo-side button[aria-pressed="true"] { color: var(--olive); }
   .abi[aria-checked="true"] b { color: var(--olive); }
   @media (max-width: 720px) { .demo-tabs { border-radius: 18px; } }
+  /* The raised pill slides between the demo's options (one per group), springing into place */
+  .demo-tabs, .demo-side { position: relative; isolation: isolate; }
+  .seg-pill {
+    position: absolute; left: 0; top: 0; z-index: 0; pointer-events: none; border-radius: 14px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, .05), rgba(255, 255, 255, 0)), var(--raised);
+    border: 1px solid rgba(181, 201, 74, .22); box-shadow: var(--lift), 0 0 22px -8px rgba(181, 201, 74, .35);
+    opacity: 0; scale: .92;
+    transition: transform .5s cubic-bezier(.3, 1.35, .45, 1), width .5s cubic-bezier(.3, 1.35, .45, 1), height .5s cubic-bezier(.3, 1.35, .45, 1), opacity .3s ease, scale .4s cubic-bezier(.3, 1.35, .45, 1);
+  }
+  .demo-tabs .seg-pill { border-radius: 999px; }
+  .seg-pill.show { opacity: 1; scale: 1; }
+  .demo-tabs button, .demo-side button { position: relative; z-index: 1; transition: color .3s ease, background .25s ease, transform .2s cubic-bezier(.3, 1.35, .45, 1); }
+  .demo-tabs button[aria-pressed="true"], .demo-side button[aria-pressed="true"] { background: transparent; box-shadow: none; border-color: transparent; }
+  .demo-tabs button:active, .demo-side button:active { transform: scale(.96); }
+  .demo-side button:hover, .demo-side.left button:hover { transform: none; }
+  .demo-side .tic { transition: background .35s ease, color .35s ease, transform .45s cubic-bezier(.3, 1.35, .45, 1); }
+  .demo-side button[aria-pressed="true"] .tic { transform: scale(1.08); }
+  @media (prefers-reduced-motion: reduce) { .seg-pill, .demo-side .tic, .demo-tabs button, .demo-side button { transition: none; } }
 </style>
 </head>
 <body>
@@ -1370,6 +1388,7 @@
     <nav aria-label="Footer">
       <a href="https://github.com/Yeamin-Talukder/jolpai-keyboard">Source code</a>
       <a href="https://github.com/Yeamin-Talukder/jolpai-keyboard/releases">Releases</a>
+      <a href="bangla-keyboard/">Bangla keyboard guide</a>
       <a href="privacy.html">Privacy policy</a>
       <a href="https://github.com/Yeamin-Talukder/jolpai-keyboard/issues">Report a problem</a>
       <a href="https://github.com/Yeamin-Talukder/jolpai-keyboard/issues/new?title=Feature%20idea%3A%20">Suggest a feature</a>
@@ -2685,6 +2704,24 @@
     $(i < half ? 'tabsL' : 'tabsR').appendChild(s);
   });
   let current = 0, visible = true;
+  // One raised pill per group slides to the playing scene's button; a group without it fades it out.
+  function placePills() {
+    ['tabsL', 'tabsR', 'tabs'].forEach(id => {
+      const g = $(id);
+      let p = g.querySelector('.seg-pill');
+      if (!p) { p = document.createElement('i'); p.className = 'seg-pill'; p.setAttribute('aria-hidden', 'true'); g.appendChild(p); }
+      const on = g.querySelector('[aria-pressed="true"]');
+      if (!on || !on.offsetWidth) { p.classList.remove('show'); return; }
+      const arriving = !p.classList.contains('show');
+      if (arriving) p.style.transition = 'opacity .3s ease, scale .45s cubic-bezier(.3, 1.35, .45, 1)';
+      p.style.width = on.offsetWidth + 'px';
+      p.style.height = on.offsetHeight + 'px';
+      p.style.transform = `translate(${on.offsetLeft}px, ${on.offsetTop}px)`;
+      if (arriving) { void p.offsetWidth; p.style.transition = ''; }
+      p.classList.add('show');
+    });
+  }
+  addEventListener('resize', () => requestAnimationFrame(placePills));
   function tidy() {
     stage.querySelectorAll('.pop, .hint, .tapdot').forEach(e => e.remove());
     document.querySelectorAll('.key').forEach(k => k.classList.remove('down', 'grow', 'grow2', 'dim', 'flip'));
@@ -2701,6 +2738,7 @@
       for (;;) {
         const sc = SCENES[current];
         document.querySelectorAll('[data-scene]').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.scene === current)));
+        placePills();
         // Keep the playing scene's tab in view when the tabs scroll sideways (phones).
         const on = tabs.children[current];
         if (tabs.scrollWidth > tabs.clientWidth) tabs.scrollTo({ left: on.offsetLeft - (tabs.clientWidth - on.offsetWidth) / 2, behavior: 'smooth' });
