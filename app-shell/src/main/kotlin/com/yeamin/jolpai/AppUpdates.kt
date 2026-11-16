@@ -36,6 +36,14 @@ object Changelog {
     /** Newest first. */
     val RELEASES: List<ChangelogRelease> = listOf(
         ChangelogRelease(
+            "0.13.1", "16 Nov 2026",
+            listOf(
+                "No more empty band under the keyboard on Android 14 and older phones (seen on Xiaomi HyperOS): the keys sit right on the system bar",
+                "On those phones the bar under the keyboard takes the keyboard's colour instead of plain black",
+                "Landscape: the keys, the floating keyboard and the voice pill stay clear of the camera cutout and a side navigation bar",
+            ),
+        ),
+        ChangelogRelease(
             "0.13.0", "16 Nov 2026",
             listOf(
                 "A new logo: a keyboard with an olive as the lit key and a leaf, on an olive tile (shared with Jolpai Type), with a themed-icon version",
