@@ -37,6 +37,13 @@ object Changelog {
     /** Newest first. */
     val RELEASES: List<ChangelogRelease> = listOf(
         ChangelogRelease(
+            "0.13.3", "17 Nov 2026",
+            listOf(
+                "The keyboard chooser lists your keyboards on vivo (OriginOS 6) instead of opening empty",
+                "A \"List empty? Set it in keyboard settings\" link under Choose keyboard",
+            ),
+        ),
+        ChangelogRelease(
             "0.13.2", "17 Nov 2026",
             listOf(
                 "Choose keyboard works on phones that block the keyboard chooser (seen on vivo OriginOS): Jolpai opens the keyboard settings instead",

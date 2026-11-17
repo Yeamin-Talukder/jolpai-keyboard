@@ -1,7 +1,9 @@
 package com.yeamin.jolpai
 
 import android.content.Intent
+import android.widget.EditText
 import android.widget.Toast
+import android.view.ViewGroup
 import android.os.Build
 import android.os.SystemClock
 import android.view.View
@@ -280,26 +282,59 @@ class MainActivity : ComponentActivity() {
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
         if (!hasFocus) pickerPending = false // the chooser opened over this screen
-        if (hasFocus) viewModel.refreshSetup()
+        if (hasFocus) {
+            dropPickerAnchor()
+            viewModel.refreshSetup()
+        }
+    }
+
+    /** An invisible text field focused while the chooser is asked for (see [pickKeyboard]). */
+    private var pickerAnchor: EditText? = null
+
+    private fun dropPickerAnchor() {
+        val anchor = pickerAnchor ?: return
+        if (pickerPending) return // still waiting for the chooser
+        pickerAnchor = null
+        getSystemService(InputMethodManager::class.java).hideSoftInputFromWindow(anchor.windowToken, 0)
+        (anchor.parent as? ViewGroup)?.removeView(anchor)
     }
 
     /** True from asking for the keyboard chooser until it takes focus from this screen. */
     private var pickerPending = false
 
     /**
-     * Opens the system keyboard chooser. Some phones (vivo OriginOS / Funtouch, and other skins)
-     * ignore showInputMethodPicker() without an error, so if the chooser hasn't taken focus
-     * shortly after, open the phone's keyboard settings instead, where the default keyboard is set.
+     * Opens the system keyboard chooser.
+     *
+     * Some phones build the chooser's list from the keyboard connected to a text field: with no
+     * field focused, vivo OriginOS 6 (Android 16) shows "Select input method" with an empty list.
+     * So an invisible text field takes focus first (connecting the current keyboard, without
+     * showing it), and the chooser is asked for a moment later. Other skins ignore the request
+     * entirely: if the chooser hasn't taken focus shortly after, the keyboard settings open instead.
      */
     private fun pickKeyboard() {
+        val imm = getSystemService(InputMethodManager::class.java)
+        val content = findViewById<ViewGroup>(android.R.id.content)
+        val anchor = pickerAnchor ?: EditText(this).apply {
+            alpha = 0f
+            isFocusableInTouchMode = true
+            showSoftInputOnFocus = false
+            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+            layoutParams = ViewGroup.LayoutParams(1, 1)
+            content.addView(this)
+            pickerAnchor = this
+        }
+        anchor.requestFocus()
         pickerPending = true
-        runCatching { getSystemService(InputMethodManager::class.java).showInputMethodPicker() }
-        window.decorView.postDelayed({
-            if (pickerPending && !isFinishing) {
-                pickerPending = false
-                openDefaultKeyboardSettings()
-            }
-        }, PICKER_WAIT_MS)
+        anchor.postDelayed({
+            runCatching { imm.showInputMethodPicker() }
+            anchor.postDelayed({
+                if (pickerPending && !isFinishing) {
+                    pickerPending = false
+                    dropPickerAnchor()
+                    openDefaultKeyboardSettings()
+                }
+            }, PICKER_WAIT_MS)
+        }, ANCHOR_SETTLE_MS)
     }
 
     private fun openDefaultKeyboardSettings() {
@@ -310,6 +345,9 @@ class MainActivity : ComponentActivity() {
 
 /** How long the keyboard chooser may take to appear before falling back to keyboard settings. */
 private const val PICKER_WAIT_MS = 900L
+
+/** Time for the invisible text field to connect to the keyboard before the chooser is asked for. */
+private const val ANCHOR_SETTLE_MS = 250L
 
 /** How long the launch screen stays up after onCreate, so its 1 s logo animation can finish. */
 private const val LAUNCH_HOLD_MS = 850L

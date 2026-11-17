@@ -198,14 +198,18 @@ private fun SetupCard(setup: SetupStatus, layouts: List<LayoutId>, onOpenKeyboar
                 FilledTonalButton(onClick = onPickKeyboard) { Text("Switch keyboard") }
             } else {
                 SetupStep(1, "Turn on Jolpai Keyboard", "Switch on “Jolpai Keyboard” in the list. Android warns that keyboards can see what you type — Jolpai keeps everything on your phone.", setup.enabled, "Open keyboard list", onOpenKeyboardSettings, enabled = true)
-                SetupStep(2, "Choose Jolpai", "Pick “Jolpai Keyboard” in the keyboard chooser.", setup.selected, "Choose keyboard", onPickKeyboard, enabled = setup.enabled)
+                SetupStep(2, "Choose Jolpai", "Pick “Jolpai Keyboard” in the keyboard chooser.", setup.selected, "Choose keyboard", onPickKeyboard, enabled = setup.enabled,
+                    help = "List empty? Set it in keyboard settings" to onOpenKeyboardSettings)
             }
         }
     }
 }
 
 @Composable
-private fun SetupStep(number: Int, title: String, detail: String, done: Boolean, action: String, onAction: () -> Unit, enabled: Boolean) {
+private fun SetupStep(
+    number: Int, title: String, detail: String, done: Boolean, action: String, onAction: () -> Unit, enabled: Boolean,
+    help: Pair<String, () -> Unit>? = null,
+) {
     Row(verticalAlignment = Alignment.Top) {
         Surface(
             shape = RoundedCornerShape(50),
@@ -226,6 +230,7 @@ private fun SetupStep(number: Int, title: String, detail: String, done: Boolean,
             if (!done) {
                 Text(detail, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Button(onClick = onAction, enabled = enabled) { Text(action) }
+                if (help != null) TextButton(onClick = help.second, enabled = enabled) { Text(help.first) }
             }
         }
     }
