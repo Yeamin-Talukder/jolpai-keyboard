@@ -1,6 +1,7 @@
 package com.yeamin.jolpai
 
 import android.content.Intent
+import android.widget.Toast
 import android.os.Build
 import android.os.SystemClock
 import android.view.View
@@ -169,8 +170,8 @@ class MainActivity : ComponentActivity() {
                             themeName = theme.name,
                             learnedWordCount = learnedCount,
                             personalWordCount = personalWords.size,
-                            onOpenKeyboardSettings = { startActivity(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)) },
-                            onPickKeyboard = { getSystemService(InputMethodManager::class.java).showInputMethodPicker() },
+                            onOpenKeyboardSettings = { startFirst(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS), Intent(Settings.ACTION_SETTINGS)) },
+                            onPickKeyboard = ::pickKeyboard,
                             onOpen = open,
                             themes = listOf(BuiltInThemes.forSystem(systemDark)) + BuiltInThemes.all.filter { it.id != BuiltInThemes.MATERIAL_YOU_LIGHT.id && it.id != BuiltInThemes.MATERIAL_YOU_DARK.id } + customThemes,
                             activeThemeId = theme.id,
@@ -278,9 +279,37 @@ class MainActivity : ComponentActivity() {
     /** The keyboard picker is a dialog over this screen, so focus returns here when it closes. */
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
+        if (!hasFocus) pickerPending = false // the chooser opened over this screen
         if (hasFocus) viewModel.refreshSetup()
     }
+
+    /** True from asking for the keyboard chooser until it takes focus from this screen. */
+    private var pickerPending = false
+
+    /**
+     * Opens the system keyboard chooser. Some phones (vivo OriginOS / Funtouch, and other skins)
+     * ignore showInputMethodPicker() without an error, so if the chooser hasn't taken focus
+     * shortly after, open the phone's keyboard settings instead, where the default keyboard is set.
+     */
+    private fun pickKeyboard() {
+        pickerPending = true
+        runCatching { getSystemService(InputMethodManager::class.java).showInputMethodPicker() }
+        window.decorView.postDelayed({
+            if (pickerPending && !isFinishing) {
+                pickerPending = false
+                openDefaultKeyboardSettings()
+            }
+        }, PICKER_WAIT_MS)
+    }
+
+    private fun openDefaultKeyboardSettings() {
+        Toast.makeText(this, "Choose “Jolpai Keyboard” as the default or current keyboard", Toast.LENGTH_LONG).show()
+        startFirst(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS), Intent(Settings.ACTION_SETTINGS))
+    }
 }
+
+/** How long the keyboard chooser may take to appear before falling back to keyboard settings. */
+private const val PICKER_WAIT_MS = 900L
 
 /** How long the launch screen stays up after onCreate, so its 1 s logo animation can finish. */
 private const val LAUNCH_HOLD_MS = 850L

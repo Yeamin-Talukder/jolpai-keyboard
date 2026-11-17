@@ -152,12 +152,16 @@ object AppUpdater {
 
     /** Android's "Install unknown apps" page for Jolpai. */
     fun openInstallPermission(context: Context) {
-        runCatching {
-            context.startActivity(
-                Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, "package:${context.packageName}".toUri())
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-            )
-        }
+        // Some phones have no per-app page (or block it): fall back to the list of apps, Jolpai's
+        // own app info, then security settings, where "Install unknown apps" lives on older skins.
+        val pkg = "package:${context.packageName}".toUri()
+        context.startFirst(
+            Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, pkg),
+            Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES),
+            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, pkg),
+            Intent(Settings.ACTION_SECURITY_SETTINGS),
+            Intent(Settings.ACTION_SETTINGS),
+        )
     }
 
     /** The user came back from settings: continue if they allowed it. */

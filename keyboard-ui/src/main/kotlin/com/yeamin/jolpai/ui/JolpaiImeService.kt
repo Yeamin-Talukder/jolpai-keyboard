@@ -774,8 +774,7 @@ class JolpaiImeService : InputMethodService(), LifecycleOwner, SavedStateRegistr
     /** Commands only the service can carry out (also used by gesture shortcuts). */
     private fun handleHost(command: HostCommand) {
         when (command) {
-            HostCommand.SYSTEM_KEYBOARD_PICKER ->
-                (getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager).showInputMethodPicker()
+            HostCommand.SYSTEM_KEYBOARD_PICKER -> showKeyboardPicker()
             HostCommand.OPEN_SETTINGS -> openApp(null)
             HostCommand.HIDE_KEYBOARD -> requestHideSelf(0)
             HostCommand.TOGGLE_NUMBER_ROW -> scope.launch { settingsRepository.toggleNumberRow() }
@@ -895,7 +894,7 @@ class JolpaiImeService : InputMethodService(), LifecycleOwner, SavedStateRegistr
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             MicPermissionActivity.clearBlocked(this@JolpaiImeService)
             requestHideSelf(0)
-            startActivity(intent)
+            startFirst(intent, Intent(android.provider.Settings.ACTION_SETTINGS))
         }
     }
 
@@ -913,7 +912,22 @@ class JolpaiImeService : InputMethodService(), LifecycleOwner, SavedStateRegistr
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
         if (screen != null) intent.putExtra(EXTRA_SCREEN, screen)
         requestHideSelf(0)
-        startActivity(intent)
+        startFirst(intent)
+    }
+
+    /**
+     * The system keyboard chooser. The current keyboard may always ask for it, but if a phone's
+     * skin refuses, switch to the next keyboard instead, so the key still does something.
+     */
+    private fun showKeyboardPicker() {
+        val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+        val shown = runCatching { imm.showInputMethodPicker() }.isSuccess
+        if (!shown && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) runCatching { switchToNextInputMethod(false) }
+    }
+
+    /** Starts the first of [intents] the phone can open (some phones leave out system screens). */
+    private fun startFirst(vararg intents: Intent): Boolean = intents.any { intent ->
+        runCatching { startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }.isSuccess
     }
 
     override fun onDestroy() {

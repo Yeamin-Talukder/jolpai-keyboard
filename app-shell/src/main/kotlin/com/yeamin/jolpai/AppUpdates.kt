@@ -3,6 +3,7 @@ package com.yeamin.jolpai
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.widget.Toast
 import androidx.core.net.toUri
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -35,6 +36,13 @@ data class ChangelogRelease(val version: String, val date: String?, val changes:
 object Changelog {
     /** Newest first. */
     val RELEASES: List<ChangelogRelease> = listOf(
+        ChangelogRelease(
+            "0.13.2", "17 Nov 2026",
+            listOf(
+                "Choose keyboard works on phones that block the keyboard chooser (seen on vivo OriginOS): Jolpai opens the keyboard settings instead",
+                "Settings buttons (install permission, keyboard settings, microphone permission) fall back to other settings pages on phones that leave a page out, instead of doing nothing",
+            ),
+        ),
         ChangelogRelease(
             "0.13.1", "16 Nov 2026",
             listOf(
@@ -341,11 +349,20 @@ fun deviceInfo(context: Context): DeviceInfo {
     )
 }
 
-/** Opens [url] in the browser; does nothing if the phone has no app for links. */
+/** Opens [url] in the browser, or says so if the phone has no app for links. */
 fun openLink(context: Context, url: String) {
-    runCatching {
-        context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    if (!context.startFirst(Intent(Intent.ACTION_VIEW, url.toUri()))) {
+        Toast.makeText(context, "No app on this phone can open links", Toast.LENGTH_SHORT).show()
     }
+}
+
+/**
+ * Starts the first of [intents] the phone can open and returns whether one opened. Phone makers'
+ * Android versions (vivo, Xiaomi, OPPO…) leave out or block some system screens, so every system
+ * page Jolpai opens has fallbacks instead of a button that silently does nothing.
+ */
+fun Context.startFirst(vararg intents: Intent): Boolean = intents.any { intent ->
+    runCatching { startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }.isSuccess
 }
 
 /** Android's share sheet with a short pitch and the download link. */
