@@ -1,5 +1,7 @@
 package com.yeamin.jolpai.suggest
 
+import kotlin.math.abs
+
 /** What kind of mistake a [TextIssue] is. */
 enum class IssueKind(val label: String) { SPELLING("Spelling"), PUNCTUATION("Punctuation"), GRAMMAR("Grammar") }
 
@@ -47,6 +49,8 @@ class TextChecker(
     private val costs: TypingCosts = TypingCosts.DEFAULT,
     /** The English next-word model: ranks spelling fixes by the sentence and finds wrong word choices. */
     private val lm: LanguageModel? = null,
+    /** Recognises Bangla typed in English letters, which is left alone (not "corrected" to English). */
+    private val roman: RomanBangla? = null,
 ) {
     /** True when the next-word model is loaded, so `check(useModel = true)` can add to the rules. */
     val canUseModel: Boolean get() = lm?.loaded != null
@@ -54,8 +58,9 @@ class TextChecker(
     /**
      * Checks [text]; [ignored] holds originals the user chose to ignore. [endsAtFieldEnd]: the
      * text is the end of what was written (only then is a missing full stop reported).
-     * [useModel]: use the next-word model (if loaded) for context. Issues are in text order and
-     * never overlap.
+     * [useModel]: use the next-word model (if loaded) for context. [searchLimit]: at most this many unknown
+     * words are looked up for corrections, those nearest [focus] (the cursor) first. Issues are in
+     * text order and never overlap.
      */
     fun check(
         text: String,
@@ -63,15 +68,18 @@ class TextChecker(
         endsAtFieldEnd: Boolean = true,
         limit: Int = MAX_ISSUES,
         useModel: Boolean = false,
+        searchLimit: Int = MAX_SEARCHED_WORDS,
+        focus: Int = text.length,
     ): List<TextIssue> {
         if (text.isBlank()) return emptyList()
         val out = ArrayList<TextIssue>()
         val protected = protectedRanges(text)
         val model = lm?.takeIf { useModel && it.loaded != null }
+        val romanParts = romanParts(text, protected)
         punctuation(text, out)
-        grammar(text, out)
-        if (model != null) wordChoice(text, protected, model, out)
-        spelling(text, protected, model, out)
+        grammar(text, romanParts, out)
+        if (model != null) wordChoice(text, protected, romanParts, model, out)
+        spelling(text, protected, romanParts, model, searchLimit, focus, out)
         val kept = ArrayList<TextIssue>()
         fun keep(issue: TextIssue) {
             if (issue.original == issue.replacement) return
@@ -83,24 +91,93 @@ class TextChecker(
         out.sortedWith(compareBy<TextIssue> { it.start }.thenBy { -it.end }).forEach(::keep)
         // The missing full stop covers the last word, so it comes last: a spelling or grammar fix
         // on that word wins ("i want to takl"), and the full stop is offered once it's fixed.
-        if (endsAtFieldEnd) ArrayList<TextIssue>().also { endOfText(text, it) }.forEach(::keep)
+        // Roman Bangla ("ami valo achi") has its own sentence habits: no full stop asked for.
+        if (endsAtFieldEnd && !romanParts.inSentence(text.trimEnd().length - 1)) ArrayList<TextIssue>().also { endOfText(text, it) }.forEach(::keep)
         return kept.sortedBy { it.start }.take(limit)
+    }
+
+    // ------------------------------------------------------------------ Roman Bangla
+
+    /** Bangla typed in English letters: the sentences written in it, and the words to leave alone (by start). */
+    private class RomanParts(val sentences: List<IntRange>, val words: Set<Int>) {
+        fun inSentence(at: Int) = sentences.any { at in it }
+    }
+
+    /**
+     * A sentence with two or more Roman Bangla words ("kal ki tumi bari jabe") is Roman Bangla:
+     * none of its unknown words is spelt "wrong", and its capitals and full stop are left alone.
+     * Elsewhere a lone Roman Bangla word of [RomanBangla.MIN_LONE_LENGTH]+ letters is skipped
+     * ("ok bhai"), since short English slips can look like Bangla too (se → সে).
+     */
+    private fun romanParts(text: String, protected: List<IntRange>): RomanParts {
+        val r = roman?.takeIf { it.ready } ?: return NO_ROMAN
+        val dict = english() ?: return NO_ROMAN
+        val sentences = ArrayList<IntRange>()
+        val words = HashSet<Int>()
+        var start = 0
+        while (start < text.length) {
+            var end = start
+            while (end < text.length && text[end] !in ".!?।\n") end++
+            val latin = WORD.findAll(text.substring(start, end))
+                .filter { m -> m.value.all { it in 'a'..'z' || it in 'A'..'Z' } && protected.none { start + m.range.first in it } }
+                .toList()
+            val romanWords = latin.filter { r.isRomanBangla(it.value) }
+            if (romanWords.size >= 2) {
+                sentences += start..end
+                latin.filter { dict.lookup(it.value) == null }.forEach { words += start + it.range.first }
+                romanWords.forEach { words += start + it.range.first }
+            } else {
+                romanWords.filter { it.value.length >= RomanBangla.MIN_LONE_LENGTH }.forEach { words += start + it.range.first }
+            }
+            start = end + 1
+        }
+        return if (sentences.isEmpty() && words.isEmpty()) NO_ROMAN else RomanParts(sentences, words)
     }
 
     // ------------------------------------------------------------------ spelling
 
-    private fun spelling(text: String, protected: List<IntRange>, model: LanguageModel?, out: MutableList<TextIssue>) {
-        var checkedUnknown = 0
-        WORD.findAll(text).forEach { m ->
+    private fun spelling(
+        text: String, protected: List<IntRange>, romanParts: RomanParts, model: LanguageModel?,
+        searchLimit: Int, focus: Int, out: MutableList<TextIssue>,
+    ) {
+        // Unknown words (cheap to find), then the correction search (what costs time) for the
+        // ones nearest the cursor, up to [searchLimit]: a long text full of names or another
+        // language stays fast, and the words being written are checked first.
+        val unknown = WORD.findAll(text).filter { m ->
+            val bangla = isBangla(m.value)
+            protected.none { m.range.first in it } &&
+                (bangla || m.range.first !in romanParts.words) &&
+                !isKnownWord(text, m.value, m.range.first, bangla)
+        }.toList()
+        val chosen = if (unknown.size <= searchLimit) unknown else {
+            unknown.sortedBy { abs(it.range.first - focus) }.take(searchLimit).sortedBy { it.range.first }
+        }
+        var found = 0
+        for (m in chosen) {
+            if (found >= MAX_UNKNOWN_WORDS) break
             val word = m.value
-            if (protected.any { m.range.first in it }) return@forEach
-            if (checkedUnknown >= MAX_UNKNOWN_WORDS) return@forEach
-            val issue = if (isBangla(word)) banglaSpelling(text, word, m.range.first) else englishSpelling(text, word, m.range.first, model.takeIf { checkedUnknown < MAX_MODEL_SPELLING })
+            val issue = if (isBangla(word)) banglaSpelling(text, word, m.range.first) else englishSpelling(text, word, m.range.first, model.takeIf { found < MAX_MODEL_SPELLING })
             if (issue != null) {
                 out += issue
-                checkedUnknown++
+                found++
             }
         }
+    }
+
+    /**
+     * A cheap "nothing to look up" test before the correction search, which is what costs time:
+     * known words, and words the spelling check skips anyway (names, acronyms, one letter).
+     */
+    private fun isKnownWord(text: String, word: String, start: Int, bangla: Boolean): Boolean {
+        if (bangla) {
+            val dict = bangla() ?: return true
+            val w = BanglaSpelling.normalize(word)
+            return w.length < 3 || dict.contains(w) || history?.isKnown(Language.BANGLA, w, minCount = 1) == true
+        }
+        val dict = english() ?: return true
+        if (word.length < 2 || word.drop(1).any { it.isUpperCase() }) return true
+        if (word[0].isUpperCase() && !startsSentence(text, start)) return true
+        return dict.lookup(word) != null
     }
 
     private fun englishSpelling(text: String, word: String, start: Int, model: LanguageModel?): TextIssue? {
@@ -166,9 +243,9 @@ class TextChecker(
      * itself and the word after it (or the sentence end). Reported only when another choice is
      * far more likely ([WORD_CHOICE_MARGIN]), so correct text is left alone.
      */
-    private fun wordChoice(text: String, protected: List<IntRange>, model: LanguageModel, out: MutableList<TextIssue>) {
+    private fun wordChoice(text: String, protected: List<IntRange>, romanParts: RomanParts, model: LanguageModel, out: MutableList<TextIssue>) {
         val found = WORD.findAll(text)
-            .filter { m -> CONFUSED[m.value.lowercase().replace('’', '\'')] != null && protected.none { m.range.first in it } }
+            .filter { m -> CONFUSED[m.value.lowercase().replace('’', '\'')] != null && protected.none { m.range.first in it } && !romanParts.inSentence(m.range.first) }
             .toList()
             .takeLast(MAX_WORD_CHOICE) // the ones nearest the cursor, if a long text has many
         for (m in found) {
@@ -242,8 +319,8 @@ class TextChecker(
 
     private fun banglaSpelling(text: String, word: String, start: Int): TextIssue? {
         val dict = bangla() ?: return null
-        if (word.length < 3 || word.any { it in '০'..'৯' } || word in BANGLA_OK) return null
         val w = BanglaSpelling.normalize(word)
+        if (w.length < 3 || w.any { it in '০'..'৯' } || w in BANGLA_OK) return null
         if (history?.isKnown(Language.BANGLA, word, minCount = 1) == true || history?.isKnown(Language.BANGLA, w, minCount = 1) == true) return null
         if (BanglaSpelling.isKnown(w) { dict.contains(it) }) return null
         // Among close fixes: a word the user writes after the previous one wins, then a word they
@@ -333,15 +410,16 @@ class TextChecker(
 
     // ------------------------------------------------------------------ grammar (English)
 
-    private fun grammar(text: String, out: MutableList<TextIssue>) {
+    private fun grammar(text: String, romanParts: RomanParts, out: MutableList<TextIssue>) {
         // "i" on its own → "I"
         LONE_I.findAll(text).forEach { m ->
             out += TextIssue(m.range.first, m.range.last + 1, "i", "I", IssueKind.GRAMMAR, "“I” is always a capital")
         }
-        // Sentence starts with a small letter.
+        // Sentence starts with a small letter (not in Roman Bangla: "ami valo achi").
         SENTENCE_START.findAll(text).forEach { m ->
             val w = m.groups[1]!!
             if (w.value == "i" || w.value.length < 2 && w.value != "a") return@forEach
+            if (romanParts.inSentence(w.range.first) || w.range.first in romanParts.words || roman?.isRomanBangla(w.value) == true) return@forEach
             if (m.range.first > 0 && wordBefore(text, m.range.first + 1).lowercase() in ABBREVIATIONS) return@forEach
             if (w.value.any { it.isUpperCase() }) return@forEach
             out += TextIssue(w.range.first, w.range.last + 1, w.value, w.value.replaceFirstChar { it.uppercaseChar() }, IssueKind.GRAMMAR, "Start the sentence with a capital letter")
@@ -350,6 +428,7 @@ class TextChecker(
         REPEATED_WORD.findAll(text).forEach { m ->
             val w = m.groups[1]!!.value
             if (w.lowercase() in DOUBLE_OK || w.any { it.isDigit() }) return@forEach
+            if (romanParts.inSentence(m.range.first)) return@forEach // "na na", "accha accha"
             out += TextIssue(m.range.first, m.range.last + 1, m.value, w, IssueKind.GRAMMAR, if (isBangla(w)) "একই শব্দ দুবার" else "Repeated word")
         }
         // a/an
@@ -425,8 +504,19 @@ class TextChecker(
     companion object {
         const val MAX_ISSUES = 30
 
-        /** Words looked up for corrections per check (keeps a long text fast). */
+        /** Misspellings reported per check. */
         private const val MAX_UNKNOWN_WORDS = 25
+
+        /**
+         * Unknown words looked up for corrections per check, found or not (keeps a long text with
+         * many names or another language fast: the first pass runs while the card opens).
+         */
+        const val MAX_SEARCHED_WORDS = 40
+
+        /** Unknown words looked up in the Check card's first pass, which runs as the card opens. */
+        const val QUICK_SEARCH = 12
+
+        private val NO_ROMAN = RomanParts(emptyList(), emptySet())
 
         /** Close English words considered per misspelling, and other choices shown besides the fix. */
         private const val CANDIDATES = 6
@@ -447,7 +537,7 @@ class TextChecker(
 
         /** Word choice: another word must be this many log units (about 55×) more likely. */
         internal const val WORD_CHOICE_MARGIN = 4f
-        private const val MAX_WORD_CHOICE = 8
+        private const val MAX_WORD_CHOICE = 12
 
         /** Misspellings per check ranked with the model (each costs a few model runs). */
         private const val MAX_MODEL_SPELLING = 8
@@ -473,6 +563,11 @@ class TextChecker(
             listOf("advice", "advise"),
             listOf("breath", "breathe"),
             listOf("peace", "piece"),
+            listOf("to", "too"),
+            listOf("by", "buy"),
+            listOf("here", "hear"),
+            listOf("no", "know"),
+            listOf("were", "where"),
         ).flatMap { set -> set.map { it to set } }.toMap()
 
         private const val MIN_WORDS_FOR_FULL_STOP = 4
@@ -544,9 +639,72 @@ object BanglaSpelling {
     /** Clusters that are easy to forget: হসন্ত, য-ফলা, ব-ফলা, র-ফলা, রেফ, ং, ঁ. */
     private val CLUSTERS = listOf("\u09CD", "\u09CD\u09AF", "\u09CD\u09AC", "\u09CD\u09B0", "\u09B0\u09CD", "\u0982", "\u0981")
 
-    /** য + ় → য়, ড + ় → ড়, ঢ + ় → ঢ় (the list uses the single characters). */
-    fun normalize(word: String): String =
-        word.replace("\u09AF\u09BC", "\u09DF").replace("\u09A1\u09BC", "\u09DC").replace("\u09A2\u09BC", "\u09DD")
+    /**
+     * The word list's spelling of [word]: \u09AF + \u09BC \u2192 \u09AF\u09BC, \u09A1 + \u09BC \u2192 \u09A1\u09BC, \u09A2 + \u09BC \u2192 \u09A2\u09BC (the list uses the
+     * single characters), and \u09C7 + \u09BE \u2192 \u09CB, \u09C7 + \u09D7 \u2192 \u09CC. \u099C\u09BE\u09A4\u09C0\u09AF\u09BC types every key as pressed, like Ridmik,
+     * so \u09CB typed as \u09C7 then \u09BE stays two characters; it looks the same, and Unicode counts the two
+     * spellings as the same letter.
+     */
+    fun normalize(word: String): String {
+        if (word.none { it == '\u09BC' || it == '\u09BE' || it == '\u09D7' }) return word
+        return word.replace("\u09AF\u09BC", "\u09DF").replace("\u09A1\u09BC", "\u09DC").replace("\u09A2\u09BC", "\u09DD")
+            .replace("\u09C7\u09BE", "\u09CB").replace("\u09C7\u09D7", "\u09CC")
+    }
+
+    /** Vowel signs written before their consonant: \u09BF, \u09C7, \u09C8. */
+    private const val PRE_BASE = "\u09BF\u09C7\u09C8"
+
+    /** A vowel sign with no consonant to sit on \u2192 the full vowel (\u09BE \u2192 \u0986, \u09BF \u2192 \u0987 \u2026). */
+    private val SIGN_TO_VOWEL = mapOf(
+        '\u09BE' to '\u0986', '\u09BF' to '\u0987', '\u09C0' to '\u0988', '\u09C1' to '\u0989', '\u09C2' to '\u098A',
+        '\u09C3' to '\u098B', '\u09C7' to '\u098F', '\u09C8' to '\u0990', '\u09CB' to '\u0993', '\u09CC' to '\u0994',
+    )
+
+    /**
+     * Words stored in the wrong order, as \u099C\u09BE\u09A4\u09C0\u09AF\u09BC typed key by key produces them: a vowel sign
+     * typed before its consonant, the Bijoy way (\u09BF + \u0995 \u2192 \u0995\u09BF, \u09C7 + \u0995 + \u09BE \u2192 \u0995\u09CB, \u09BF + \u0995\u09CD\u09B7 \u2192 \u0995\u09CD\u09B7\u09BF), a
+     * vowel sign with no consonant before it (\u09BE \u2192 \u0986) and \u09B9\u09B8\u09A8\u09CD\u09A4 + vowel sign (\u09CD + \u09BE \u2192 \u0986). Returns
+     * the reordered spellings (normalised), not [word] itself; empty when nothing is out of order.
+     */
+    fun repairs(word: String): List<String> {
+        if (word.none { it in SIGN_TO_VOWEL }) return emptyList()
+        val out = LinkedHashSet<String>()
+        // Pre-base signs moved after the consonant (or conjunct) that follows them.
+        val moved = StringBuilder()
+        var i = 0
+        var changed = false
+        while (i < word.length) {
+            val c = word[i]
+            val prev = moved.lastOrNull()
+            if (c in PRE_BASE && (prev == null || !isConsonant(prev)) && i + 1 < word.length && isConsonant(word[i + 1])) {
+                var j = i + 2
+                while (j + 1 < word.length && word[j] == HASANTA && isConsonant(word[j + 1])) j += 2
+                moved.append(word, i + 1, j).append(c)
+                i = j
+                changed = true
+            } else {
+                moved.append(c)
+                i++
+            }
+        }
+        if (changed) out += normalize(moved.toString())
+        // Signs with nothing to sit on \u2192 full vowels.
+        val vowels = StringBuilder()
+        changed = false
+        for (c in word) {
+            val prev = vowels.lastOrNull()
+            val full = SIGN_TO_VOWEL[c]
+            when {
+                full != null && prev == c -> changed = true // the same sign twice: a double tap (আমিি → আমি)
+                full != null && prev == HASANTA -> { vowels.setCharAt(vowels.length - 1, full); changed = true }
+                full != null && (prev == null || prev in '\u0985'..'\u0994' || prev in VOWEL_SIGNS) -> { vowels.append(full); changed = true }
+                else -> vowels.append(c)
+            }
+        }
+        if (changed) out += normalize(vowels.toString())
+        out.remove(word)
+        return out.toList()
+    }
 
     /** [word] (normalised) or its stem after removing common endings is a known word. */
     fun isKnown(word: String, known: (String) -> Boolean): Boolean {
@@ -607,6 +765,15 @@ object BanglaSpelling {
      * মানষ → মানুষ (common) rather than the rare look-alike মানস.
      */
     fun corrections(word: String, known: (String) -> Boolean, limit: Int, usage: (String) -> Int = { 0 }): List<String> {
+        // Typed in the wrong order (ি before its consonant …): the reordered word, if it is known,
+        // is what was meant; otherwise the reordered word is corrected like any other.
+        val repaired = repairs(word)
+        repaired.firstOrNull { isKnown(it, known) }?.let { return listOf(it) }
+        val base = repaired.firstOrNull { wellFormed(it) } ?: word
+        return nearOrFar(base, known, limit, usage)
+    }
+
+    private fun nearOrFar(word: String, known: (String) -> Boolean, limit: Int, usage: (String) -> Int): List<String> {
         val near = closeCandidates(word, known).take(12).toList()
         if (near.isNotEmpty()) {
             return near.groupBy({ it.first }, { it.second })

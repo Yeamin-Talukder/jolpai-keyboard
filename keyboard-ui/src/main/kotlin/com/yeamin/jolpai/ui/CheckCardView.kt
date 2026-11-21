@@ -91,12 +91,12 @@ class CheckCardView(
     private val title = TextView(context).apply {
         text = "Check"
         setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
-        setTextColor(palette.text)
+        setTextColor(palette.card.text)
         typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
     }
     private val summary = TextView(context).apply {
         setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
-        setTextColor(palette.hint)
+        setTextColor(palette.card.hint)
         isSingleLine = true
         ellipsize = TextUtils.TruncateAt.END
     }
@@ -113,16 +113,16 @@ class CheckCardView(
     /** ✨ AI: deeper English proofreading on phones with on-device AI. */
     private val aiButton = TextView(context).apply {
         setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
-        setTextColor(AI_VIOLET)
+        setTextColor(palette.card.ai)
         typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
         gravity = Gravity.CENTER
         setPadding(dp(10f), 0, dp(10f), 0)
         background = RippleDrawable(
-            ColorStateList.valueOf(ColorUtils.setAlphaComponent(AI_VIOLET, 0x33)),
+            ColorStateList.valueOf(ColorUtils.setAlphaComponent(palette.card.ai, 0x33)),
             GradientDrawable().apply {
                 cornerRadius = 100 * density
-                setColor(ColorUtils.setAlphaComponent(AI_VIOLET, 0x1A))
-                setStroke(dp(1f).coerceAtLeast(1), ColorUtils.setAlphaComponent(AI_VIOLET, 0x88))
+                setColor(ColorUtils.setAlphaComponent(palette.card.ai, 0x1A))
+                setStroke(dp(1f).coerceAtLeast(1), ColorUtils.setAlphaComponent(palette.card.ai, 0x88))
             },
             null,
         )
@@ -173,7 +173,7 @@ class CheckCardView(
     }
     private val message = TextView(context).apply {
         setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
-        setTextColor(palette.text)
+        setTextColor(palette.card.text)
         gravity = Gravity.CENTER_VERTICAL
         compoundDrawablePadding = dp(10f)
         setPadding(dp(14f), 0, dp(14f), 0)
@@ -189,7 +189,7 @@ class CheckCardView(
             orientation = HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
             addView(ImageView(context).apply {
-                setImageDrawable(KeyboardIcon.SPELLCHECK.drawable(context, palette.accent, 18 * density))
+                setImageDrawable(KeyboardIcon.SPELLCHECK.drawable(context, palette.card.accentText, 18 * density))
                 scaleType = ImageView.ScaleType.CENTER
             }, LayoutParams(dp(26f), dp(30f)))
             addView(title, LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT).apply { leftMargin = dp(2f) })
@@ -272,7 +272,7 @@ class CheckCardView(
             list.removeAllViews()
             message.isVisible = true
             val icon = if (m.empty) KeyboardIcon.EDIT else KeyboardIcon.CHECK_CIRCLE
-            message.setCompoundDrawablesRelative(icon.drawable(context, palette.accent, 26 * density).apply { setBounds(0, 0, dp(26f), dp(26f)) }, null, null, null)
+            message.setCompoundDrawablesRelative(icon.drawable(context, palette.card.accentText, 26 * density).apply { setBounds(0, 0, dp(26f), dp(26f)) }, null, null, null)
             message.text = when {
                 m.empty -> "Type something, then tap ↻ to check spelling, punctuation and grammar."
                 else -> "No spelling, punctuation or grammar problems found. Checked on your phone, offline."
@@ -315,9 +315,9 @@ class CheckCardView(
     }
 
     private fun kindColor(kind: IssueKind): Int = when (kind) {
-        IssueKind.SPELLING -> SPELLING_RED
-        IssueKind.PUNCTUATION -> PUNCTUATION_BLUE
-        IssueKind.GRAMMAR -> GRAMMAR_AMBER
+        IssueKind.SPELLING -> palette.card.spelling
+        IssueKind.PUNCTUATION -> palette.card.punctuation
+        IssueKind.GRAMMAR -> palette.card.grammar
     }
 
     private fun issueCard(issue: TextIssue): View {
@@ -327,7 +327,7 @@ class CheckCardView(
             setPadding(dp(12f), dp(8f), dp(8f), dp(6f))
             background = GradientDrawable().apply {
                 cornerRadius = 14 * density
-                setColor(ColorUtils.setAlphaComponent(palette.key or 0xFF000000.toInt(), (255 * palette.keyOpacity.coerceIn(0.6f, 1f)).toInt()))
+                setColor(palette.card.surface)
                 setStroke(dp(1f).coerceAtLeast(1), ColorUtils.setAlphaComponent(color, 0x66))
             }
         }
@@ -345,7 +345,7 @@ class CheckCardView(
         card.addView(TextView(context).apply {
             text = change(issue)
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
-            setTextColor(palette.text)
+            setTextColor(palette.card.text)
             isSingleLine = true
             ellipsize = TextUtils.TruncateAt.END
         }, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT).apply { topMargin = dp(2f) })
@@ -358,7 +358,7 @@ class CheckCardView(
                 addView(TextView(context).apply {
                     text = issue.reason
                     setTextSize(TypedValue.COMPLEX_UNIT_SP, 11f)
-                    setTextColor(palette.hint)
+                    setTextColor(palette.card.hint)
                     maxLines = 2
                     ellipsize = TextUtils.TruncateAt.END
                 }, LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f))
@@ -369,7 +369,7 @@ class CheckCardView(
                     addView(TextView(context).apply {
                         text = "or"
                         setTextSize(TypedValue.COMPLEX_UNIT_SP, 11f)
-                        setTextColor(palette.hint)
+                        setTextColor(palette.card.hint)
                     })
                     issue.alternatives.forEach { alt ->
                         addView(alternativeChip(alt) { remove(card) { listener.onFix(issue.copy(replacement = alt)) } },
@@ -393,21 +393,21 @@ class CheckCardView(
             setPadding(dp(12f), dp(8f), dp(8f), dp(6f))
             background = GradientDrawable().apply {
                 cornerRadius = 14 * density
-                setColor(ColorUtils.blendARGB(palette.key or 0xFF000000.toInt(), AI_VIOLET, 0.10f))
-                setStroke(dp(1f).coerceAtLeast(1), ColorUtils.setAlphaComponent(AI_VIOLET, 0xAA))
+                setColor(ColorUtils.blendARGB(palette.card.surface, palette.card.ai, 0.10f))
+                setStroke(dp(1f).coerceAtLeast(1), ColorUtils.setAlphaComponent(palette.card.ai, 0xAA))
             }
         }
         card.addView(TextView(context).apply {
             text = "✨ AI suggestion"
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 11f)
-            setTextColor(AI_VIOLET)
+            setTextColor(palette.card.ai)
             typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
         })
         val (from, to) = changedPart(a.original, a.replacement)
         card.addView(TextView(context).apply {
             text = change(TextIssue(0, from.length, from, to, IssueKind.GRAMMAR, ""))
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
-            setTextColor(palette.text)
+            setTextColor(palette.card.text)
             maxLines = 2
             ellipsize = TextUtils.TruncateAt.END
         }, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT).apply { topMargin = dp(2f) })
@@ -417,7 +417,7 @@ class CheckCardView(
             addView(TextView(context).apply {
                 text = "Proofread on this phone"
                 setTextSize(TypedValue.COMPLEX_UNIT_SP, 11f)
-                setTextColor(palette.hint)
+                setTextColor(palette.card.hint)
                 maxLines = 1
             }, LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f))
             addView(textButton("Dismiss", filled = false) { remove(card) { setAi(Ai.Ready(needsDownload = false)) } }, LayoutParams(LayoutParams.WRAP_CONTENT, dp(28f)).apply { leftMargin = dp(4f) })
@@ -449,12 +449,12 @@ class CheckCardView(
         val from = shown(issue.original)
         sb.append(from)
         sb.setSpan(StrikethroughSpan(), 0, sb.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-        sb.setSpan(ForegroundColorSpan(palette.hint), 0, sb.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        sb.setSpan(ForegroundColorSpan(palette.card.hint), 0, sb.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         sb.append("  →  ")
         val start = sb.length
         sb.append(shown(issue.replacement))
         sb.setSpan(StyleSpan(Typeface.BOLD), start, sb.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-        sb.setSpan(ForegroundColorSpan(palette.text), start, sb.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        sb.setSpan(ForegroundColorSpan(palette.card.text), start, sb.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         return sb
     }
 
@@ -490,7 +490,7 @@ class CheckCardView(
     private fun alternativeChip(word: String, onClick: () -> Unit) = TextView(context).apply {
         text = word
         setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
-        setTextColor(palette.text)
+        setTextColor(palette.card.text)
         gravity = Gravity.CENTER
         isSingleLine = true
         ellipsize = TextUtils.TruncateAt.END
@@ -500,7 +500,7 @@ class CheckCardView(
             ColorStateList.valueOf(palette.keyPressed),
             GradientDrawable().apply {
                 cornerRadius = 100 * density
-                setStroke(dp(1f).coerceAtLeast(1), ColorUtils.setAlphaComponent(palette.hint, 0x80))
+                setStroke(dp(1f).coerceAtLeast(1), ColorUtils.setAlphaComponent(palette.card.hint, 0x80))
             },
             null,
         )
@@ -518,19 +518,19 @@ class CheckCardView(
             setTextColor(palette.onAccent)
             background = pill(palette.accent, ColorUtils.setAlphaComponent(palette.onAccent, 0x40))
         } else {
-            setTextColor(palette.hint)
+            setTextColor(palette.card.hint)
             background = RippleDrawable(ColorStateList.valueOf(palette.keyPressed), null, GradientDrawable().apply { cornerRadius = 100 * density; setColor(Color.WHITE) })
         }
         setOnClickListener { onClick() }
     }
 
     private fun circle(icon: KeyboardIcon, description: String, onClick: () -> Unit) = ImageView(context).apply {
-        setImageDrawable(icon.drawable(context, palette.text, 18 * density))
+        setImageDrawable(icon.drawable(context, palette.card.text, 18 * density))
         scaleType = ImageView.ScaleType.CENTER
         contentDescription = description
         background = RippleDrawable(
             ColorStateList.valueOf(palette.keyPressed),
-            GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(palette.functionKey or 0xFF000000.toInt()) },
+            GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(palette.card.raised) },
             null,
         )
         setOnClickListener { onClick() }
@@ -544,11 +544,7 @@ class CheckCardView(
 
     private companion object {
         val SETTLE = PathInterpolator(0.2f, 0.9f, 0.25f, 1f)
-
-        // Fixed colours for the three kinds, readable on light and dark themes.
-        val SPELLING_RED = Color.rgb(0xE5, 0x48, 0x4D)
-        val PUNCTUATION_BLUE = Color.rgb(0x3E, 0x8E, 0xF0)
-        val GRAMMAR_AMBER = Color.rgb(0xE0, 0x9A, 0x1F)
-        val AI_VIOLET = Color.rgb(0x9B, 0x7B, 0xF7)
+        // The kinds' colours (spelling red, punctuation blue, grammar amber, AI violet) come from
+        // palette.card, adjusted per theme so they stay readable (they used to be fixed).
     }
 }

@@ -32,6 +32,16 @@ data class KeyboardPalette(
     val boldLabels: Boolean,
     val backgroundImage: String?,
     val imageDim: Float,
+    /** Soft lights over the background (ambient themes). */
+    val glows: List<com.yeamin.jolpai.theme.Glow> = emptyList(),
+    /** One loop of drifting glows in ms, or 0 when they stay still. */
+    val driftPeriodMs: Long = 0L,
+    /** Animation where a key is pressed, or null. */
+    val pressEffect: com.yeamin.jolpai.theme.PressEffect? = null,
+    /** Colour of [pressEffect], or null for the accent. */
+    val effectColor: Int? = null,
+    /** Readable colours for the Translate and Check cards (see [com.yeamin.jolpai.theme.CardColors]). */
+    val card: com.yeamin.jolpai.theme.CardColors = com.yeamin.jolpai.theme.CardColors.of(com.yeamin.jolpai.theme.BuiltInThemes.DEFAULT),
 ) {
     companion object {
         /** The default theme (Olive night), drawn before the user's settings have loaded. */
@@ -64,12 +74,27 @@ data class KeyboardPalette(
                 boldLabels = t.boldLabels,
                 backgroundImage = t.backgroundImage,
                 imageDim = t.imageDim,
+                glows = t.glows,
+                driftPeriodMs = (t.live as? com.yeamin.jolpai.theme.LiveStyle.Drift)?.let { it.periodSeconds * 1000L } ?: 0L,
+                pressEffect = t.pressEffect,
+                effectColor = t.effectColor,
+                card = com.yeamin.jolpai.theme.CardColors.of(t),
             )
         }
 
-        /** [theme] with its real colours: wallpaper colours for a dynamic (Material You) theme, as is otherwise. */
-        fun resolveDynamic(context: Context, theme: KeyboardTheme): KeyboardTheme =
-            if (theme.dynamic) materialYou(context, theme) else theme
+        /**
+         * [theme] with its real colours: wallpaper colours for a Material You theme, the colours of
+         * this moment for a time-of-day theme, as is otherwise. A Chameleon theme that the keyboard
+         * service hasn't already coloured for the app being typed in (previews in Jolpai's own
+         * screens) takes Jolpai's own colour, since that is the app you are in.
+         */
+        fun resolveDynamic(context: Context, theme: KeyboardTheme): KeyboardTheme {
+            var t = com.yeamin.jolpai.theme.LiveThemes.at(theme, java.time.LocalTime.now())
+            if (t.live is com.yeamin.jolpai.theme.LiveStyle.AppColour) {
+                t = com.yeamin.jolpai.theme.AppTint.apply(t, AppColours.colourNow(context, context.packageName))
+            }
+            return if (t.dynamic) materialYou(context, t) else t
+        }
 
         /** Android 12+ wallpaper colours (Material You); the theme's own colours before that. */
         private fun materialYou(context: Context, t: KeyboardTheme): KeyboardTheme {

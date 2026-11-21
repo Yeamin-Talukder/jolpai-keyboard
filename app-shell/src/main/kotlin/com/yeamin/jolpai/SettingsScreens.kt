@@ -175,6 +175,11 @@ fun TypingScreen(vm: MainViewModel, settings: KeyboardSettings, onBack: () -> Un
         SettingsGroup("Typing") {
             SettingsSwitch("Auto-capitalisation", "Capital letter at the start of each English sentence", settings.autoCapitalize, vm::setAutoCapitalize, UiR.drawable.ms_text_fields)
             SettingsSwitch("Double-space full stop", "Two spaces type “. ” in English and “। ” in Bangla", settings.doubleSpacePeriod, vm::setDoubleSpacePeriod, UiR.drawable.ms_space_bar)
+            SettingsSwitch(
+                "Fix vowel signs automatically",
+                "জাতীয় and প্রভাত: ্ + া types আ, a vowel sign with nothing before it becomes its vowel (ি → ই), ে + া joins into ো. Off: every key goes in exactly as typed, like Ridmik.",
+                settings.banglaAutoVowels, vm::setBanglaAutoVowels, UiR.drawable.ms_auto_awesome,
+            )
         }
         SettingsGroup("Hold for more characters") {
             LongPressSetting(settings.longPressMs, vm::setLongPressMs)
@@ -391,6 +396,7 @@ fun ToolbarScreen(
     onPlacement: (com.yeamin.jolpai.core.settings.PanelPlacement) -> Unit,
 ) {
     SettingsScaffold("Toolbar & panels", onBack) {
+        SettingsNote("Classic (like Ridmik), Simple (like Gboard) and Modern set these in one tap: Home → Quick setup.")
         SettingsGroup("Emoji and clipboard open") {
             com.yeamin.jolpai.core.settings.PanelPlacement.entries.forEach { p ->
                 SettingsRadio(p.label, p.summary, selected = placement == p) { onPlacement(p) }

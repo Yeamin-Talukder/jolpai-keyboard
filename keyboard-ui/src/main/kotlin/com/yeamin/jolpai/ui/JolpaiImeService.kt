@@ -246,6 +246,7 @@ class JolpaiImeService : InputMethodService(), LifecycleOwner, SavedStateRegistr
                     touchPrefs.edit { putLong(KEY_RESET_SEEN, it.touchCalibrationReset).putString(KEY_CALIBRATION, "") }
                 }
                 controller.updateSettings(it)
+                noteTypingApp(typingPackage) // a Chameleon theme just chosen needs the app's colour
                 rebuildIfAppearanceChanged()
             }
         }
@@ -449,12 +450,41 @@ class JolpaiImeService : InputMethodService(), LifecycleOwner, SavedStateRegistr
 
     // ------------------------------------------------------------------ appearance
 
-    /** The chosen theme, or on a festival day (with "Festival themes" on) that day's theme. */
+    /**
+     * The chosen theme, or on a festival day (with "Festival themes" on) that day's theme. A
+     * time-of-day theme comes with the colours of this moment, so [appearanceKey] changes (and the
+     * keyboard is rebuilt when it next opens) as the day goes on.
+     */
     private fun currentTheme(): KeyboardTheme {
         if (settings.festivalThemes) {
             com.yeamin.jolpai.theme.Festivals.on(java.time.LocalDate.now())?.let { return it.theme }
         }
-        return ThemeRepository.resolve(settings.themeId, customThemes, KeyboardPalette.isNight(this))
+        val chosen = ThemeRepository.resolve(settings.themeId, customThemes, KeyboardPalette.isNight(this))
+        val now = com.yeamin.jolpai.theme.LiveThemes.at(chosen, java.time.LocalTime.now())
+        if (now.live !is com.yeamin.jolpai.theme.LiveStyle.AppColour) return now
+        // Chameleon: the colour of the app being typed in. Until a new app's colour is worked out,
+        // the last one stays, so the keyboard doesn't flash grey in between.
+        val pkg = typingPackage
+        if (pkg != null && AppColours.known(pkg)) lastAppColour = AppColours.cached(pkg)
+        return com.yeamin.jolpai.theme.AppTint.apply(now, lastAppColour)
+    }
+
+    /** The app the keyboard is typing into, for Chameleon themes. */
+    private var typingPackage: String? = null
+    private var lastAppColour: Int? = null
+
+    /**
+     * Notes the app being typed in. With a Chameleon theme, an app seen for the first time has its
+     * icon colour worked out off the main thread (a few ms), then the keyboard takes it on.
+     */
+    private fun noteTypingApp(pkg: String?) {
+        typingPackage = pkg
+        if (pkg == null || AppColours.known(pkg)) return
+        if (ThemeRepository.resolve(settings.themeId, customThemes, false).live !is com.yeamin.jolpai.theme.LiveStyle.AppColour) return
+        scope.launch {
+            withContext(Dispatchers.Default) { AppColours.colourNow(this@JolpaiImeService, pkg) }
+            if (typingPackage == pkg) rebuildIfAppearanceChanged()
+        }
     }
 
     private fun layoutOptions(): KeyboardContainer.LayoutOptions {
@@ -467,6 +497,8 @@ class JolpaiImeService : InputMethodService(), LifecycleOwner, SavedStateRegistr
             floatX = settings.floatX,
             floatY = settings.floatY,
             keyFont = settings.keyFont,
+            banglaKeyFont = settings.banglaKeyFont,
+            customFontVersion = settings.customKeyFontVersion,
             split = when (settings.splitKeys) {
                 com.yeamin.jolpai.core.settings.SplitKeys.OFF -> false
                 com.yeamin.jolpai.core.settings.SplitKeys.LANDSCAPE -> landscape
@@ -622,6 +654,12 @@ class JolpaiImeService : InputMethodService(), LifecycleOwner, SavedStateRegistr
 
     override fun onStartInputView(info: EditorInfo, restarting: Boolean) {
         super.onStartInputView(info, restarting)
+        // A time-of-day theme may have moved on since the keyboard was last shown, or a Chameleon
+        // theme may need another app's colour (rebuilds only if the look changed).
+        if (!restarting) {
+            noteTypingApp(info.packageName)
+            rebuildIfAppearanceChanged()
+        }
         controller.onStartInput(FieldClassifier.classify(info.inputType, info.imeOptions), restarting)
         // Back from the microphone dialog with permission: carry on where voice typing was asked for.
         if (MicPermissionActivity.consumeStartAfterGrant(this) && voice.hasPermission()) {

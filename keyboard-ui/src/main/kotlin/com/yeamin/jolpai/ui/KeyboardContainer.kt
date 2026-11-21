@@ -31,7 +31,8 @@ import com.yeamin.jolpai.core.model.KeyAction
 import com.yeamin.jolpai.core.gesture.GestureDispatcher
 import com.yeamin.jolpai.core.gesture.GestureType
 import com.yeamin.jolpai.core.gesture.GestureZone
-import com.yeamin.jolpai.core.gesture.SwipeClassifier
+import com.yeamin.jolpai.core.gesture.SwipeDirection
+import com.yeamin.jolpai.core.gesture.ToolbarSwipe
 import com.yeamin.jolpai.core.model.LayoutId
 import com.yeamin.jolpai.core.model.Panel
 import com.yeamin.jolpai.core.model.ToolbarItem
@@ -82,6 +83,10 @@ class KeyboardContainer(
         val floatY: Float = 0f,
         /** The typeface on the keys. */
         val keyFont: com.yeamin.jolpai.core.settings.KeyFont = com.yeamin.jolpai.core.settings.KeyFont.SYSTEM,
+        /** A separate font for Bangla letters (null: [keyFont] for both, if it has them). */
+        val banglaKeyFont: com.yeamin.jolpai.core.settings.KeyFont? = null,
+        /** Changes when a new custom key font is picked or removed, so the keyboard reloads it. */
+        val customFontVersion: Long = 0,
         /** Keys split into two halves (worked out from the setting and the orientation). */
         val split: Boolean = false,
     )
@@ -340,10 +345,10 @@ class KeyboardContainer(
         this.feedback = feedback
         heightScale = options.heightScale
         split = options.split && !options.floating && options.oneHanded == OneHanded.OFF
-        KeyFonts.load(context, options.keyFont).let { fonts ->
-            setKeyFont(fonts)
-            popupView.setKeyFont(fonts)
-        }
+        val english = KeyFonts.load(context, options.keyFont)
+        val bangla = KeyFonts.load(context, com.yeamin.jolpai.core.settings.banglaLettersFont(options.keyFont, options.banglaKeyFont))
+        setKeyFont(english, bangla)
+        popupView.setKeyFont(english, bangla)
     }
 
     /** Toolbar + keys: the whole keyboard (the movable card in floating mode). */
@@ -360,6 +365,9 @@ class KeyboardContainer(
     enum class VoiceCommand { START, OPEN_PANEL, MIC, LANGUAGE, CLOSE, BACKSPACE }
 
     private val topBar = FrameLayout(context)
+
+    /** Draws the top-bar swipe's pill (see [SwipeHintView]). */
+    private val swipeHint = SwipeHintView(context, palette)
     private lateinit var toolbarRow: View
     private lateinit var keysHolder: View
     private val columnBackground by lazy { keyboardBackground() }
@@ -390,6 +398,12 @@ class KeyboardContainer(
     private companion object {
         /** Bottom padding last worked out from the system's insets (-1 until known). */
         var lastBottomPadding = -1
+
+        /** A top-bar touch moving less than this is still a tap on a button. */
+        const val SWIPE_SLOP_DP = 12f
+
+        /** The top-bar swipe's pill is full (let go to run it) after at least this far. */
+        const val MIN_ARM_DP = 56f
 
         /** Height of the emoji / clipboard section above the toolbar. */
         const val UPPER_HEIGHT_DP = 236f
@@ -587,10 +601,18 @@ class KeyboardContainer(
         topBar.addView(toolbar, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
         voiceBar.visibility = View.GONE
         topBar.addView(voiceBar, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
+        // Shows a top-bar swipe as it happens (the top bar has a fixed height, so this can't stretch it).
+        topBar.addView(swipeHint, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
         column.addView(topBar, LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, (44 * density).toInt()))
         // The keys stay laid out (invisible) under a panel, so the keyboard keeps its height.
         val keysArea = FrameLayout(context).apply {
             addView(keyboardView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
+            // Theme press effects: a layer over the keys that redraws only while an effect plays.
+            palette.pressEffect?.let { effect ->
+                val effects = KeyEffectsView(context, effect, palette.effectColor ?: palette.accent, keyboardView.keyCorner, keyboardView.letterTypeface)
+                keyboardView.onKeyPressed = effects::press
+                addView(effects, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
+            }
             addView(OverlayFrame(context).apply { addView(panelView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)) }, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
         }
         if (options.oneHanded != OneHanded.OFF && !options.floating) {
@@ -741,9 +763,14 @@ class KeyboardContainer(
         return (if (h > 0) h else (40 * density).toInt()).coerceAtMost((56 * density).toInt())
     }
 
-    /** The theme background: flat colour, vertical gradient, or a picture with a dark overlay. */
+    /**
+     * The theme background: flat colour, vertical gradient, soft glows (ambient themes, drifting
+     * for dynamic ones), or a picture with a dark overlay.
+     */
     private fun keyboardBackground(): android.graphics.drawable.Drawable {
-        val base = palette.backgroundEnd?.let {
+        val base = if (palette.glows.isNotEmpty()) {
+            AmbientBackgroundDrawable(context, palette.background, palette.backgroundEnd, palette.glows, palette.driftPeriodMs)
+        } else palette.backgroundEnd?.let {
             GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, intArrayOf(palette.background, it))
         } ?: palette.background.toDrawable()
         val image = palette.backgroundImage?.let { thumbnail(it, 1080) } ?: return base
@@ -832,6 +859,7 @@ class KeyboardContainer(
     fun render(state: KeyboardUiState) {
         keyboardView.setKeyboard(state.layout, state.shift)
         keyboardView.cursorSwipe = state.cursorSwipe
+        keyboardView.spaceLanguageSwipe = state.spaceLanguageSwipe
         keyboardView.trackpadVertical = state.trackpadVertical
         keyboardView.longPressMs = state.longPressMs
         keyboardView.gestures = state.gestures
@@ -1000,38 +1028,118 @@ class KeyboardContainer(
         stripScroll.visibility != View.VISIBLE || stripRow.width <= stripScroll.width
 
     /**
-     * The top bar, recognising swipe shortcuts over it. Taps still reach the buttons: the swipe
-     * is only claimed (and the buttons' touch cancelled) once it is long and straight enough.
+     * The top bar, with swipe shortcuts (by default left = Undo, right = Redo) that show what they
+     * will do and can be called off (see [ToolbarSwipe]):
+     * - a touch that barely moves stays a tap for the button under it;
+     * - once the finger clearly heads sideways, a pill with the action slides in and fills;
+     * - full pill: a tick, and letting go runs the action (pill pops and glides off);
+     * - letting go early, or sliding back, does nothing.
      */
     private inner class SwipeToolbar : LinearLayout(context) {
-        private var downX = 0f
-        private var downY = 0f
-        private var claimed = false
+        private var swipe: ToolbarSwipe? = null
+        private var gestures: GestureDispatcher? = null
+        private var wasArmed = false
+
+        private fun binding(dir: SwipeDirection) = gestures?.bindingFor(GestureZone.TOOLBAR, GestureType.swipe(dir))
+
+        private fun begin(e: android.view.MotionEvent) {
+            val g = toolbarGestures
+            swipe = if (g == null || !toolbarSwipeAllowed()) null else ToolbarSwipe(
+                slop = SWIPE_SLOP_DP * density,
+                // Far enough to be deliberate, never so short that a sloppy tap fires it.
+                armDistance = maxOf(g.thresholds.minSwipeDp, MIN_ARM_DP) * density,
+                dominance = g.thresholds.dominance,
+            ) { dir -> g.bindingFor(GestureZone.TOOLBAR, GestureType.swipe(dir)) != null }
+            gestures = g
+            wasArmed = false
+            swipe?.down(e.x, e.y)
+        }
+
+        private fun track(phase: ToolbarSwipe.Phase) {
+            when (phase) {
+                ToolbarSwipe.Phase.Idle -> Unit
+                is ToolbarSwipe.Phase.Tracking -> {
+                    wasArmed = false
+                    val b = binding(phase.direction)
+                    if (b == null) swipeHint.cancel()
+                    else swipeHint.show(phase.direction, shortTitle(b.action.title), iconFor(b.action, phase.direction), phase.progress, armed = false)
+                }
+                is ToolbarSwipe.Phase.Armed -> {
+                    if (!wasArmed) performHapticFeedback(android.view.HapticFeedbackConstants.CLOCK_TICK)
+                    wasArmed = true
+                    val b = binding(phase.direction) ?: return
+                    swipeHint.show(phase.direction, shortTitle(b.action.title), iconFor(b.action, phase.direction), 1f, armed = true)
+                }
+            }
+        }
+
+        private fun finish() {
+            val s = swipe ?: return
+            val dir = s.up()
+            val action = dir?.let { gestures?.actionFor(GestureZone.TOOLBAR, GestureType.swipe(it)) }
+            if (action != null) {
+                performHapticFeedback(
+                    if (android.os.Build.VERSION.SDK_INT >= 30) android.view.HapticFeedbackConstants.CONFIRM
+                    else android.view.HapticFeedbackConstants.LONG_PRESS,
+                )
+                swipeHint.fire()
+                onAction(action)
+            } else {
+                swipeHint.cancel()
+            }
+            swipe = null
+        }
+
+        private fun abandon() {
+            swipe?.cancel()
+            swipe = null
+            swipeHint.cancel()
+        }
 
         override fun onInterceptTouchEvent(e: android.view.MotionEvent): Boolean {
             when (e.actionMasked) {
-                android.view.MotionEvent.ACTION_DOWN -> {
-                    downX = e.x
-                    downY = e.y
-                    claimed = false
+                android.view.MotionEvent.ACTION_DOWN -> begin(e)
+                android.view.MotionEvent.ACTION_POINTER_DOWN -> abandon() // a second finger: not a swipe
+                android.view.MotionEvent.ACTION_MOVE -> {
+                    val s = swipe ?: return false
+                    track(s.move(e.x, e.y))
+                    if (s.claimed) {
+                        // Ours now: the button under the finger gets a cancel, not a click.
+                        parent?.requestDisallowInterceptTouchEvent(true)
+                        return true
+                    }
                 }
-                android.view.MotionEvent.ACTION_MOVE -> if (!claimed && e.pointerCount == 1) {
-                    val g = toolbarGestures ?: return false
-                    if (!toolbarSwipeAllowed()) return false
-                    val t = g.thresholds
-                    val dir = SwipeClassifier.classify(e.x - downX, e.y - downY, t.minSwipeDp * density, t.dominance) ?: return false
-                    val action = g.actionFor(GestureZone.TOOLBAR, GestureType.swipe(dir)) ?: return false
-                    claimed = true
-                    performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS)
-                    onAction(action)
-                    return true
+                android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> {
+                    // Never claimed: it was a tap or a small wobble on a button.
+                    swipe = null
                 }
             }
             return false
         }
 
-        @SuppressLint("ClickableViewAccessibility") // only swallows the rest of a claimed swipe
-        override fun onTouchEvent(e: android.view.MotionEvent): Boolean = claimed
+        @SuppressLint("ClickableViewAccessibility") // handles only the swipe; taps go to the buttons
+        override fun onTouchEvent(e: android.view.MotionEvent): Boolean {
+            val s = swipe ?: return false
+            when (e.actionMasked) {
+                android.view.MotionEvent.ACTION_MOVE -> track(s.move(e.x, e.y))
+                android.view.MotionEvent.ACTION_UP -> finish()
+                android.view.MotionEvent.ACTION_CANCEL -> abandon()
+            }
+            return true
+        }
+    }
+
+    /** A short name for the pill ("Open emoji panel" → "Emoji panel"). */
+    private fun shortTitle(title: String): String = title.removePrefix("Open ").replaceFirstChar { it.uppercase() }
+
+    private fun iconFor(action: com.yeamin.jolpai.core.gesture.GestureAction, dir: SwipeDirection): KeyboardIcon = when (action) {
+        com.yeamin.jolpai.core.gesture.GestureAction.UNDO -> KeyboardIcon.UNDO
+        com.yeamin.jolpai.core.gesture.GestureAction.REDO -> KeyboardIcon.REDO
+        else -> when (dir) {
+            SwipeDirection.LEFT -> KeyboardIcon.ARROW_BACK
+            SwipeDirection.RIGHT -> KeyboardIcon.ARROW_FORWARD
+            else -> KeyboardIcon.ARROW_DOWN
+        }
     }
 
     private val dividerWidth = density.toInt().coerceAtLeast(1)

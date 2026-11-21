@@ -24,6 +24,9 @@ my @icons = qw(
     expand_less close_fullscreen stop mic:fill drag_indicator rotate_90_degrees_ccw
     swap_horiz g_translate
     share bug_report new_releases system_update
+    undo redo select select_all calendar_today keyboard_arrow_up keyboard_arrow_down keyboard_arrow_left
+    keyboard_arrow_right first_page last_page text_select_move_back_word text_select_move_forward_word
+    keyboard_double_arrow_left keyboard_double_arrow_right
 );
 
 my $out = 'keyboard-ui/src/main/res/drawable';

@@ -249,4 +249,29 @@ class CheckModeTest {
         c.onKey(KeyAction.EndCheck)
         assertNull(c.state.value.check)
     }
+
+    /** A background pass that never finishes: what the card shows before it arrives. */
+    private val never = object : BackgroundWork {
+        override fun <T> run(work: () -> T, deliver: (T) -> Unit) = Unit
+    }
+
+    @Test fun `the first pass checks the words near the cursor, fix all checks everything`() {
+        // 16 misspellings, more than the quick first pass looks up (2026-11-21).
+        val typos = listOf("recieved", "mesage", "definately", "tomorow", "writting", "freind", "beutiful", "adress",
+            "libary", "scool", "becuase", "beleive", "goverment", "anounced", "seperate", "untill")
+        val field = CursorEditor(typos.joinToString(" ") + ".")
+        val c = KeyboardController(field, clock = { 0L }, suggester = Suggester({ en }, { bn }, { null }, UserHistory()), checkRunner = never).apply {
+            updateSettings(KeyboardSettings(autoCapitalize = false))
+            onStartInput(FieldInfo.DEFAULT, restarting = false)
+        }
+        c.onKey(KeyAction.StartCheck)
+        val first = c.state.value.check!!.issues.filter { it.kind == com.yeamin.jolpai.suggest.IssueKind.SPELLING }.map { it.original }
+        assertEquals(com.yeamin.jolpai.suggest.TextChecker.QUICK_SEARCH, first.size)
+        assertTrue("the words nearest the cursor (the end): $first", "untill" in first && "seperate" in first)
+        c.onKey(KeyAction.FixAllIssues)
+        val fixed = field.text.toString()
+        val words = fixed.lowercase().split(' ', '.').toSet()
+        assertTrue(fixed, typos.none { it in words })
+        assertTrue(fixed, words.containsAll(listOf("received", "message", "definitely", "tomorrow", "until")))
+    }
 }

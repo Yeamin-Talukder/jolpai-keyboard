@@ -130,6 +130,27 @@ class MainActivity : ComponentActivity() {
                 }
                 val peek by animateFloatAsState(backProgress, spring(stiffness = Spring.StiffnessMediumLow), label = "peek")
                 val theme = ThemeRepository.resolve(settings.themeId, customThemes, systemDark)
+                val showWelcome by viewModel.showWelcome.collectAsStateWithLifecycle()
+
+                // First run: the welcome flow, then the settings home fades in. Nothing is drawn
+                // until the flag has loaded (the launch screen is still up then).
+                AnimatedContent(
+                    targetState = showWelcome,
+                    transitionSpec = { fadeIn(tween(360)) togetherWith fadeOut(tween(240)) },
+                    label = "welcome",
+                ) { welcome ->
+                if (welcome == true) {
+                    WelcomeFlow(
+                        settings = settings,
+                        theme = theme,
+                        setup = setup,
+                        onApply = viewModel::applyWelcome,
+                        // Opened again from Quick setup, it returns there (the page stack is kept).
+                        onFinish = viewModel::finishWelcome,
+                        onOpenKeyboardSettings = { startFirst(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS), Intent(Settings.ACTION_SETTINGS)) },
+                        onPickKeyboard = ::pickKeyboard,
+                    )
+                } else if (welcome == false) {
 
                 AnimatedContent(
                     targetState = screen,
@@ -219,14 +240,19 @@ class MainActivity : ComponentActivity() {
                         Destination.THEMES -> ThemesScreen(viewModel, settings, customThemes, systemDark, onEdit = { editingTheme = it; open(Destination.THEME_EDITOR) }, onBack = back)
                         Destination.THEME_EDITOR -> editingTheme?.let { ThemeEditorScreen(viewModel, settings, it, back) } ?: back()
                         Destination.SIZE -> SizeScreen(viewModel, settings, theme, back)
+                        Destination.KEY_FONT -> KeyFontScreen(viewModel, settings, theme, back)
                         Destination.SOUND -> SoundScreen(viewModel, settings, back)
                         Destination.PRIVACY -> PrivacyScreen(viewModel, settings, learnedCount, back)
                         Destination.BACKUP -> BackupScreen(viewModel, back)
-                        Destination.ABOUT -> AboutScreen(back)
+                        Destination.ABOUT -> AboutScreen(back, onReport = { open(Destination.REPORT_BUG) })
                         Destination.TEST_FIELDS -> TestFieldsScreen(back)
                         Destination.STATS -> TypingStatsScreen(back)
+                        Destination.QUICK_SETUP -> QuickSetupScreen(viewModel, settings, theme, back)
+                        Destination.REPORT_BUG -> BugReportScreen(settings, setup, back)
                     }
                     }
+                }
+                }
                 }
             }
         }
@@ -353,17 +379,17 @@ private const val ANCHOR_SETTLE_MS = 250L
 private const val LAUNCH_HOLD_MS = 850L
 
 /** Page push timing: long enough to see, short enough not to wait for. */
-private const val PAGE_MS = 380
+internal const val PAGE_MS = 380
 
 /** Lets the new page's heavy first frame pass before anything moves. */
-private const val PAGE_DELAY_MS = 50
+internal const val PAGE_DELAY_MS = 50
 
 /** A quick start that settles gently (iOS/Material page-push feel), no overshoot. */
-private val PageEasing = CubicBezierEasing(0.2f, 0.9f, 0.25f, 1f)
+internal val PageEasing = CubicBezierEasing(0.2f, 0.9f, 0.25f, 1f)
 
 /** The app's screens. */
 
 enum class Destination {
-    HOME, LANGUAGES, TYPING, GESTURES, SUGGESTIONS, DICTIONARY, THEMES, THEME_EDITOR, SIZE, SOUND,
-    CLIPBOARD_SETTINGS, CLIPBOARD, SNIPPETS, TOOLBAR, VOICE, MEDIA, PRIVACY, BACKUP, ABOUT, TEST_FIELDS, STATS,
+    HOME, LANGUAGES, TYPING, GESTURES, SUGGESTIONS, DICTIONARY, THEMES, THEME_EDITOR, SIZE, KEY_FONT, SOUND,
+    CLIPBOARD_SETTINGS, CLIPBOARD, SNIPPETS, TOOLBAR, VOICE, MEDIA, PRIVACY, BACKUP, ABOUT, TEST_FIELDS, STATS, QUICK_SETUP, REPORT_BUG,
 }

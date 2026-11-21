@@ -63,7 +63,17 @@ import com.yeamin.jolpai.core.settings.OneHanded
 import com.yeamin.jolpai.core.theme.ThemeRepository
 import com.yeamin.jolpai.theme.BuiltInThemes
 import com.yeamin.jolpai.theme.KeyboardTheme
+import com.yeamin.jolpai.theme.AppTint
+import com.yeamin.jolpai.theme.AppTintStyle
+import com.yeamin.jolpai.theme.LiveStyle
+import com.yeamin.jolpai.theme.LiveThemes
+import com.yeamin.jolpai.theme.PressEffect
+import com.yeamin.jolpai.theme.ThemeFamily
+import com.yeamin.jolpai.theme.ThemeTypes
+import androidx.compose.material3.FilterChip
 import com.yeamin.jolpai.theme.ThemeCodec
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import com.yeamin.jolpai.ui.KeyboardContainer
 import com.yeamin.jolpai.ui.KeyboardPalette
 import com.yeamin.jolpai.ui.R as UiR
@@ -74,7 +84,7 @@ import com.yeamin.jolpai.ui.R as UiR
  */
 @Composable
 fun KeyboardPreview(theme: KeyboardTheme, settings: KeyboardSettings) {
-    key(theme, settings.heightPortrait, settings.numberRow, settings.oneHanded, settings.enabledLayouts) {
+    key(theme, settings.heightPortrait, settings.numberRow, settings.oneHanded, settings.enabledLayouts, settings.toolbar, settings.panelPlacement, settings.keyLook, settings.keyFont, settings.banglaKeyFont, settings.customKeyFontVersion) {
         AndroidView(
             modifier = Modifier
                 .fillMaxWidth()
@@ -93,7 +103,13 @@ fun KeyboardPreview(theme: KeyboardTheme, settings: KeyboardSettings) {
                     },
                     servicePanel = { _, _, _ -> },
                     palette = KeyboardPalette.from(context, theme),
-                    options = KeyboardContainer.LayoutOptions(heightScale = settings.heightPortrait / 100f, oneHanded = settings.oneHanded),
+                    options = KeyboardContainer.LayoutOptions(
+                        heightScale = settings.heightPortrait / 100f,
+                        oneHanded = settings.oneHanded,
+                        keyFont = settings.keyFont,
+                        banglaKeyFont = settings.banglaKeyFont,
+                        customFontVersion = settings.customKeyFontVersion,
+                    ),
                 )
                 view.render(controller.state.value)
                 view
@@ -116,28 +132,88 @@ fun ThemesScreen(
     var importMessage by remember { mutableStateOf<String?>(null) }
     var exported by remember { mutableStateOf<String?>(null) }
     val active = ThemeRepository.resolve(settings.themeId, customThemes, systemDark)
+    // Which kind of theme to show: a ThemeFamily name, FESTIVALS, YOURS, or null for all.
+    var filter by rememberSaveable { mutableStateOf<String?>(null) }
+    fun shows(key: String) = filter == null || filter == key
+    // Chameleon preview colour: null shows Jolpai's own (the app you're in); a swatch shows how
+    // the Chameleon themes look in an app of that colour.
+    var sample by rememberSaveable { mutableStateOf<Int?>(null) }
+    fun shown(t: KeyboardTheme): KeyboardTheme {
+        val s = sample
+        return if (s != null && t.live is LiveStyle.AppColour) AppTint.apply(t, s) else t
+    }
 
     SettingsScaffold("Themes", onBack) {
-        KeyboardPreview(active, settings)
+        KeyboardPreview(shown(active), settings)
+        Text(
+            "In use: ${active.name} · ${themeTypeLabel(active.id)}",
+            Modifier.padding(horizontal = 4.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
 
-        SettingsGroup("Built-in") {
-            ThemeRow(
-                "System",
-                "Material You: your wallpaper colours, light or dark with the phone",
-                BuiltInThemes.forSystem(systemDark),
-                settings.themeId == KeyboardTheme.SYSTEM_ID,
-            ) { vm.selectTheme(KeyboardTheme.SYSTEM_ID) }
-            BuiltInThemes.all.forEach { t ->
-                ThemeRow(
-                    t.name, if (t.dynamic) "Your wallpaper colours (Android 12+)" else null, t, settings.themeId == t.id,
-                    actions = {
-                        IconButton(onClick = { vm.duplicateTheme(t, onEdit) }) { MsIcon(UiR.drawable.ms_edit, "Customise ${t.name}") }
-                    },
-                ) { vm.selectTheme(t.id) }
+        // Filter by kind: one tap shows only that kind of theme.
+        Row(
+            Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(vertical = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            val chips = listOf<Pair<String?, String>>(null to "All") +
+                ThemeFamily.entries.map { it.name to it.label } +
+                listOf(FESTIVALS to "Festivals", YOURS to "Yours")
+            chips.forEach { (key, label) ->
+                FilterChip(selected = filter == key, onClick = { filter = key }, label = { Text(label) })
             }
         }
 
-        SettingsGroup("Festivals") {
+        ThemeFamily.entries.filter { shows(it.name) }.forEach { family ->
+            if (family == ThemeFamily.CHAMELEON) {
+                SettingsNote(
+                    "Chameleon themes take the colour of the app you're typing in, read from its icon on this phone " +
+                        "(a keyboard can't see the screen itself; nothing leaves the phone). Here they show Jolpai's own " +
+                        "colour; tap a colour to see them as they'd look in an app of that colour.",
+                )
+                Row(
+                    Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(vertical = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    CHAMELEON_SAMPLES.forEach { (colour, label) ->
+                        FilterChip(
+                            selected = sample == colour,
+                            onClick = { sample = colour },
+                            label = { Text(label) },
+                            leadingIcon = {
+                                Box(
+                                    Modifier.size(14.dp).clip(CircleShape)
+                                        .background(colour?.let { Color(it) } ?: MaterialTheme.colorScheme.primary),
+                                )
+                            },
+                        )
+                    }
+                }
+            }
+            ThemeTypes.inFamily(family).forEach { type ->
+                SettingsGroup("${type.name} · ${type.themes.size + if (family == ThemeFamily.BASICS) 1 else 0}") {
+                    if (family == ThemeFamily.BASICS) {
+                        ThemeRow(
+                            "System",
+                            "Material You: your wallpaper colours, light or dark with the phone",
+                            BuiltInThemes.forSystem(systemDark),
+                            settings.themeId == KeyboardTheme.SYSTEM_ID,
+                        ) { vm.selectTheme(KeyboardTheme.SYSTEM_ID) }
+                    }
+                    type.themes.forEach { t ->
+                        val summary = if (t.dynamic) "Your wallpaper colours (Android 12+)" else liveSummary(t)
+                        BuiltInThemeRow(vm, t, summary, settings.themeId, onEdit, shown = shown(t))
+                    }
+                }
+                type.description?.let { SettingsNote("$it.") }
+            }
+        }
+        if (shows(ThemeFamily.DYNAMIC.name)) {
+            SettingsNote("With the phone's animations turned off, nothing moves.")
+        }
+
+        if (shows(FESTIVALS)) SettingsGroup("Festivals · ${BuiltInThemes.festivals.size}") {
             val today = remember { com.yeamin.jolpai.theme.Festivals.on(java.time.LocalDate.now()) }
             SettingsSwitch(
                 "Festival themes on festival days",
@@ -157,13 +233,13 @@ fun ThemesScreen(
             }
         }
 
-        SettingsGroup("Yours") {
+        if (shows(YOURS)) SettingsGroup("Yours · ${customThemes.size}") {
             if (customThemes.isEmpty()) {
                 SettingsNote("Tap the pencil on any theme to make your own copy.", Modifier.padding(vertical = 8.dp))
             }
             customThemes.forEach { t ->
                 ThemeRow(
-                    t.name, null, t, settings.themeId == t.id,
+                    t.name, if (t.dynamic) "Your wallpaper colours (Android 12+)" else liveSummary(t), t, settings.themeId == t.id,
                     actions = {
                         IconButton(onClick = { onEdit(t) }) { MsIcon(UiR.drawable.ms_edit, "Edit ${t.name}") }
                         IconButton(onClick = { vm.duplicateTheme(t) { } }) { MsIcon(UiR.drawable.ms_content_copy, "Duplicate ${t.name}") }
@@ -175,7 +251,7 @@ fun ThemesScreen(
         }
         exported?.let { SettingsNote("“$it” copied as text. Paste it anywhere to share or back it up (the background picture isn't included).") }
 
-        SettingsGroup("Import a theme") {
+        if (shows(YOURS)) SettingsGroup("Import a theme") {
             Column(Modifier.padding(GroupContentPadding), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = importText,
@@ -199,6 +275,102 @@ fun ThemesScreen(
             }
         }
     }
+}
+
+/**
+ * A built-in theme with a pencil that makes a custom copy. A dynamic theme is copied as it looks
+ * right now (custom themes don't change by themselves; ambient glows are kept); a Chameleon in
+ * the colour it is [shown] in. [shown] is what the sketch draws (a Chameleon in a preview colour).
+ */
+@Composable
+private fun BuiltInThemeRow(
+    vm: MainViewModel,
+    t: KeyboardTheme,
+    summary: String?,
+    activeId: String,
+    onEdit: (KeyboardTheme) -> Unit,
+    shown: KeyboardTheme = t,
+) {
+    val context = LocalContext.current
+    ThemeRow(
+        t.name, summary, shown, activeId == t.id,
+        actions = {
+            // The copy keeps everything, including how the theme changes by itself (app colour,
+            // time of day, drifting glows, wallpaper colours); the editor can turn those off.
+            IconButton(onClick = { vm.duplicateTheme(t, onEdit) }) {
+                MsIcon(UiR.drawable.ms_edit, "Customise ${t.name}")
+            }
+        },
+    ) { vm.selectTheme(t.id) }
+}
+
+private const val FESTIVALS = "FESTIVALS"
+private const val YOURS = "YOURS"
+
+/** Colours to preview Chameleon themes in (null: Jolpai's own, the app you're in). */
+private val CHAMELEON_SAMPLES: List<Pair<Int?, String>> = listOf(
+    null to "Jolpai",
+    0xFF25D366.toInt() to "Green",
+    0xFF1877F2.toInt() to "Blue",
+    0xFF2AABEE.toInt() to "Sky",
+    0xFF7C4DFF.toInt() to "Purple",
+    0xFFE1306C.toInt() to "Pink",
+    0xFFFF0033.toInt() to "Red",
+    0xFFFF6D00.toInt() to "Orange",
+    0xFFFFC107.toInt() to "Yellow",
+    0xFF9E9E9E.toInt() to "Grey",
+)
+
+/** The kind of the theme being drawn ([id]), for the "In use" line: its family and type ("Dark · Soft dark"). */
+private fun themeTypeLabel(id: String): String = when {
+    id.startsWith(KeyboardTheme.CUSTOM_PREFIX) -> "Yours"
+    BuiltInThemes.festivals.any { it.id == id } -> "Festivals"
+    else -> ThemeTypes.typeOf(id)?.let { "${it.family.label} · ${it.name}" } ?: "Basics · Essentials"
+}
+
+/** What a changing theme does, for its row in the gallery. */
+private fun liveSummary(t: KeyboardTheme): String? = when (val live = t.live) {
+    is LiveStyle.TimeOfDay -> when (t.id) {
+        BuiltInThemes.NIGHT_SHIFT.id -> "Always dark: cool by day, warmer and lower in blue light late at night"
+        BuiltInThemes.TWILIGHT_CYCLE.id -> "Always dark: rose dawn, indigo day, magenta evening, navy night"
+        else -> "Follows the time of day: light by day, dark at night"
+    }
+    is LiveStyle.Drift -> t.pressEffect?.let { "Drifting glow, and ${pressEffectSummary(it).replaceFirstChar(Char::lowercase)}" }
+        ?: "Slowly drifting glow (still when animations are off)"
+    is LiveStyle.AppColour -> when {
+        live.driftSeconds > 0 -> "Glows in the app's colour that slowly drift"
+        t.pressEffect != null -> "In the app's colour; ${pressEffectSummary(t.pressEffect!!).replaceFirstChar(Char::lowercase)}"
+        else -> when (live.style) {
+            AppTintStyle.GLOW -> "Glows in the colour of the app you're typing in"
+            AppTintStyle.MIST -> "A deep wash of the app's colour"
+            AppTintStyle.LIGHT -> "Light, tinted with the app's colour"
+            AppTintStyle.BLACK -> "Pure black; the app's colour in the outlines and Enter"
+            AppTintStyle.NEON -> "Bright outlines in the app's colour"
+            AppTintStyle.SPOTLIGHT -> "Lit from the top by the app's colour"
+            AppTintStyle.DUO -> "The app's colour with its opposite, as two glows"
+            AppTintStyle.GLASS -> "Frosted keys over a gradient of the app's colour"
+            AppTintStyle.PASTEL -> "Soft pastel keys in the app's colour"
+        }
+    }
+    null -> t.pressEffect?.let { pressEffectSummary(it) }
+}
+
+private fun pressEffectSummary(e: PressEffect): String = when (e) {
+    PressEffect.INK -> "A soft wash of colour spreads from your fingertip"
+    PressEffect.BACKLIGHT -> "Keys light up from within, like a backlit keyboard"
+    PressEffect.FLOAT -> "The letter you type floats up and fades"
+    PressEffect.HALO -> "A thin glowing outline lifts off each key"
+    PressEffect.TRAIL -> "A soft light trail joins the keys as you type"
+    PressEffect.MOTES -> "A glowing mote or two drifts up from the key"
+    PressEffect.POP -> "Keys give a soft, springy bounce of light"
+    PressEffect.SHEEN -> "A glint of light sweeps across each key"
+    PressEffect.SPARKLE -> "Little stars twinkle at the key's edges"
+    PressEffect.DROPLET -> "Rings spread from your fingertip like a raindrop"
+    PressEffect.HEARTS -> "A small heart floats up from each key"
+    PressEffect.UNDERLINE -> "A glowing line grows under each key"
+    PressEffect.RUBBER -> "Soft rubber keys that squash and bounce back"
+    PressEffect.SQUISH -> "Soft keys that squish and settle with one gentle bounce"
+    PressEffect.JELLY -> "Jelly keys: a deep squash and a slow wobble"
 }
 
 /** A theme: a small keyboard sketch in its colours, its name, a check when in use, and actions. */
@@ -278,6 +450,18 @@ private fun SketchBody(sketched: KeyboardTheme) {
             .size(width = 76.dp, height = 48.dp)
             .clip(RoundedCornerShape(12.dp))
             .background(bg)
+            .drawBehind {
+                // Ambient glows, at rest (the sketches don't animate).
+                theme.glows.forEach { g ->
+                    val center = Offset(g.x * size.width, g.y * size.height)
+                    val radius = (g.radius * size.width).coerceAtLeast(1f)
+                    drawCircle(
+                        Brush.radialGradient(listOf(Color(g.color), Color(g.color).copy(alpha = 0f)), center, radius),
+                        radius,
+                        center,
+                    )
+                }
+            }
             .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp))
             .padding(6.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -304,8 +488,12 @@ private val SWATCHES = listOf(
 /** Edits a custom theme with a live preview. */
 @Composable
 fun ThemeEditorScreen(vm: MainViewModel, settings: KeyboardSettings, initial: KeyboardTheme, onDone: () -> Unit) {
-    var t by remember(initial.id) { mutableStateOf(initial.copy(dynamic = false)) }
+    // Everything is kept, including how the theme changes by itself (see "Changes by itself").
+    var t by remember(initial.id) { mutableStateOf(initial) }
     var imageNote by remember { mutableStateOf<String?>(null) }
+    val context = LocalContext.current
+    /** The colours as they look right now (app colour, time of day, wallpaper applied), as plain colours. */
+    fun stillColours(x: KeyboardTheme): KeyboardTheme = LiveThemes.at(KeyboardPalette.resolveDynamic(context, x), java.time.LocalTime.now())
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         if (uri != null) vm.pickThemeBackground(uri) { path ->
             if (path != null) t = t.copy(backgroundImage = path) else imageNote = "That picture couldn't be used."
@@ -327,7 +515,22 @@ fun ThemeEditorScreen(vm: MainViewModel, settings: KeyboardSettings, initial: Ke
             modifier = Modifier.fillMaxWidth(),
         )
 
-        SettingsGroup("Colours") {
+        LiveSettings(initial, t, onChange = { t = it }, stillColours = ::stillColours)
+
+        val colourSource = when {
+            t.live is LiveStyle.AppColour -> "the app you're typing in"
+            t.live is LiveStyle.TimeOfDay -> "the time of day"
+            t.dynamic -> "your wallpaper (Android 12+)"
+            else -> null
+        }
+        if (colourSource != null) {
+            SettingsGroup("Colours") {
+                SettingsNote(
+                    "The colours come from $colourSource. Turn that off above to pick your own; they start from how the theme looks now.",
+                    Modifier.padding(vertical = 8.dp),
+                )
+            }
+        } else SettingsGroup("Colours") {
             Column(Modifier.padding(GroupContentPadding), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 ColorRow("Background", t.background) { t = t.copy(background = it) }
                 OptionalColorRow("Gradient bottom", t.backgroundEnd) { t = t.copy(backgroundEnd = it) }
@@ -353,6 +556,14 @@ fun ThemeEditorScreen(vm: MainViewModel, settings: KeyboardSettings, initial: Ke
             SettingsSwitch("Key shadows", checked = t.shadow, onChange = { t = t.copy(shadow = it) }, icon = UiR.drawable.ms_tune)
             SettingsSwitch("Dark theme", "For the panels and previews", t.dark, { t = t.copy(dark = it) }, UiR.drawable.ms_dark_mode)
         }
+
+        SettingsGroup("Key press effect") {
+            SettingsRadio("None", selected = t.pressEffect == null) { t = t.copy(pressEffect = null) }
+            PressEffect.entries.forEach { e ->
+                SettingsRadio(e.label, selected = t.pressEffect == e) { t = t.copy(pressEffect = e) }
+            }
+        }
+        SettingsNote("Drawn in the accent colour (or the theme's own effect colour). Try it on the preview above.")
 
         SettingsGroup("Background picture") {
             Column(Modifier.padding(GroupContentPadding), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -381,6 +592,96 @@ fun ThemeEditorScreen(vm: MainViewModel, settings: KeyboardSettings, initial: Ke
             TextButton(onClick = onDone) { Text("Cancel") }
         }
     }
+}
+
+/**
+ * "Changes by itself": switches for what makes [initial] change on its own, so a customised
+ * copy keeps it (or drops it on purpose). Only what the theme has, plus drifting for any theme
+ * with glows. Turning a colour source off keeps the colours as they look now ([stillColours]).
+ */
+@Composable
+private fun LiveSettings(initial: KeyboardTheme, t: KeyboardTheme, onChange: (KeyboardTheme) -> Unit, stillColours: (KeyboardTheme) -> KeyboardTheme) {
+    val originalApp = initial.live as? LiveStyle.AppColour
+    val originalTime = initial.live as? LiveStyle.TimeOfDay
+    val appColour = t.live as? LiveStyle.AppColour
+    val canDrift = t.glows.isNotEmpty() || appColour != null || initial.live is LiveStyle.Drift || (originalApp?.driftSeconds ?: 0) > 0
+    if (originalApp == null && originalTime == null && !initial.dynamic && !canDrift) return
+
+    SettingsGroup("Changes by itself") {
+        if (initial.dynamic) {
+            SettingsSwitch(
+                "Wallpaper colours",
+                "Material You: the colours of your wallpaper (Android 12+)",
+                checked = t.dynamic,
+                onChange = { on -> onChange(if (on) t.copy(dynamic = true) else stillColours(t).copy(dynamic = false)) },
+                icon = UiR.drawable.ms_auto_awesome,
+            )
+        }
+        if (originalApp != null) {
+            SettingsSwitch(
+                "Colours from the app",
+                "Takes the colour of the app you're typing in (Chameleon)",
+                checked = appColour != null,
+                onChange = { on ->
+                    onChange(
+                        if (on) t.copy(live = LiveStyle.AppColour(originalApp.style, originalApp.driftSeconds))
+                        // Keep the colours as they look now; drifting glows stay if they were drifting.
+                        else stillColours(t),
+                    )
+                },
+                icon = UiR.drawable.ms_auto_awesome,
+            )
+        }
+        if (originalTime != null) {
+            SettingsSwitch(
+                "Colours follow the time of day",
+                "They change through the day, each time the keyboard opens",
+                checked = t.live is LiveStyle.TimeOfDay,
+                onChange = { on -> onChange(if (on) t.copy(live = originalTime) else stillColours(t).copy(live = null)) },
+                icon = UiR.drawable.ms_dark_mode,
+            )
+        }
+        if (canDrift && t.live !is LiveStyle.TimeOfDay) {
+            val drifting = t.live is LiveStyle.Drift || (appColour?.driftSeconds ?: 0) > 0
+            SettingsSwitch(
+                "Glows drift slowly",
+                "Still when the phone's animations are off or battery saver is on",
+                checked = drifting,
+                onChange = { on ->
+                    val period = (initial.live as? LiveStyle.Drift)?.periodSeconds ?: originalApp?.driftSeconds?.takeIf { it > 0 } ?: 50
+                    onChange(
+                        when {
+                            appColour != null -> t.copy(live = appColour.copy(driftSeconds = if (on) period else 0))
+                            on -> t.copy(live = LiveStyle.Drift(period))
+                            else -> t.copy(live = null)
+                        },
+                    )
+                },
+                icon = UiR.drawable.ms_tune,
+            )
+        }
+    }
+    if (appColour != null) {
+        SettingsGroup("Chameleon look") {
+            AppTintStyle.entries.forEach { style ->
+                SettingsRadio(appTintLabel(style), selected = appColour.style == style) {
+                    onChange(t.copy(live = appColour.copy(style = style), dark = style != AppTintStyle.LIGHT && style != AppTintStyle.PASTEL))
+                }
+            }
+        }
+    }
+}
+
+private fun appTintLabel(style: AppTintStyle): String = when (style) {
+    AppTintStyle.GLOW -> "Glow: near-black with glows in the app's colour"
+    AppTintStyle.MIST -> "Mist: a deep wash of the app's colour"
+    AppTintStyle.LIGHT -> "Light: a pale tint, white keys"
+    AppTintStyle.BLACK -> "Black: pure black, coloured outlines and Enter"
+    AppTintStyle.NEON -> "Neon: bright outlines in the app's colour"
+    AppTintStyle.SPOTLIGHT -> "Spotlight: lit from the top by the app's colour"
+    AppTintStyle.DUO -> "Duo: the app's colour and its opposite"
+    AppTintStyle.GLASS -> "Glass: frosted keys over the app's colour"
+    AppTintStyle.PASTEL -> "Pastel: soft pastel keys"
 }
 
 @Composable
@@ -488,43 +789,6 @@ fun SizeScreen(vm: MainViewModel, settings: KeyboardSettings, theme: KeyboardThe
             }
         }
         SettingsNote("Split keys move the two halves of the keyboard to the sides, for typing with both thumbs on a wide screen or tablet. Not in one-handed or floating mode.")
-
-        SettingsGroup("Key font") {
-            com.yeamin.jolpai.core.settings.KeyFont.entries.forEach { font ->
-                KeyFontRow(font, selected = settings.keyFont == font) { vm.setKeyFont(font) }
-            }
-        }
-        SettingsNote("Bangla fonts from Google Fonts (SIL Open Font License). They change the letters on the keys, not the text you type.")
-    }
-}
-
-/** A key font choice, previewed in that font: "অ আ ক খ  Aa". */
-@Composable
-private fun KeyFontRow(font: com.yeamin.jolpai.core.settings.KeyFont, selected: Boolean, onSelect: () -> Unit) {
-    val context = androidx.compose.ui.platform.LocalContext.current
-    val family = remember(font) {
-        com.yeamin.jolpai.ui.KeyFonts.load(context, font)?.first?.let { androidx.compose.ui.text.font.FontFamily(it) }
-    }
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .selectable(selected, role = Role.RadioButton, onClick = onSelect)
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        androidx.compose.material3.RadioButton(selected = selected, onClick = null)
-        Spacer(Modifier.width(16.dp))
-        Column(Modifier.weight(1f)) {
-            Text(font.label, style = MaterialTheme.typography.bodyLarge)
-            Text(
-                "অ আ ক খ গ  ধন্যবাদ  Aa",
-                style = MaterialTheme.typography.titleMedium,
-                fontFamily = family,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-            )
-        }
     }
 }
 

@@ -3,6 +3,7 @@ package com.yeamin.jolpai.core
 import com.yeamin.jolpai.bangla.phonetic.AvroGrammar
 import com.yeamin.jolpai.bangla.phonetic.PhoneticEngine
 import com.yeamin.jolpai.core.editor.TextEditor
+import com.yeamin.jolpai.core.editor.UndoHistory
 import com.yeamin.jolpai.core.field.FieldInfo
 import com.yeamin.jolpai.core.field.FieldKind
 import com.yeamin.jolpai.core.input.AvroProcessor
@@ -104,6 +105,8 @@ data class KeyboardUiState(
     val selecting: Boolean = false,
     /** Space-bar and backspace swipe gestures are on. */
     val cursorSwipe: Boolean = true,
+    /** Ridmik look: sliding along the space bar changes the language instead of moving the cursor. */
+    val spaceLanguageSwipe: Boolean = false,
     /** Holding space for trackpad mode, moving up or down moves between lines. */
     val trackpadVertical: Boolean = true,
     /** How long a key is held before its long-press characters appear, in ms. */
@@ -298,6 +301,13 @@ class KeyboardController(
     private data class AutoCorrection(val original: String, val replacement: String)
     private var undoableCorrection: AutoCorrection? = null
 
+    /** Undo and redo of Jolpai's own edits in this field (see [UndoHistory]). */
+    private val history = UndoHistory()
+
+    /** Whether the last Undo/Redo was done by Jolpai itself (false: it was passed to the app). */
+    var lastUndoHandled: Boolean = false
+        private set
+
     /** A word the user un-corrected; it is not autocorrected again while being typed. */
     private var rejectedWord: String? = null
 
@@ -330,9 +340,9 @@ class KeyboardController(
                 else suggester?.avro(term)
             },
         ),
-        LayoutId.NATIONAL to NationalProcessor({ settings.doubleSpacePeriod }),
+        LayoutId.NATIONAL to NationalProcessor({ settings.doubleSpacePeriod }, { settings.banglaAutoVowels }),
         // Probhat types in the same logical order as the National layout, so it shares its composer.
-        LayoutId.PROBHAT to NationalProcessor({ settings.doubleSpacePeriod }),
+        LayoutId.PROBHAT to NationalProcessor({ settings.doubleSpacePeriod }, { settings.banglaAutoVowels }),
     )
 
     private val processor: InputProcessor get() = processors.getValue(activeLayout)
@@ -347,7 +357,8 @@ class KeyboardController(
 
     fun updateSettings(newSettings: KeyboardSettings) {
         val first = !settingsLoaded
-        val layoutsChanged = newSettings.enabledLayouts != settings.enabledLayouts || newSettings.numberRow != settings.numberRow
+        val layoutsChanged = newSettings.enabledLayouts != settings.enabledLayouts || newSettings.numberRow != settings.numberRow ||
+            newSettings.keyLook != settings.keyLook
         settings = newSettings
         settingsLoaded = true
         if (layoutsChanged) layouts = layoutFactory(newSettings)
@@ -383,6 +394,7 @@ class KeyboardController(
             panel = Panel.NONE
             selecting = false
             endSelectSlide()
+            history.clear() // undo steps belong to the field they were made in
         }
         undoableCorrection = null
         rejectedWord = null
@@ -405,6 +417,7 @@ class KeyboardController(
 
     /** Dictionaries finished loading: recompute suggestions for what is on screen. */
     fun onSuggestionDataLoaded() {
+        translateIssuesCache = null
         refreshSuggestions(force = true)
         publish()
     }
@@ -441,6 +454,9 @@ class KeyboardController(
     }
 
     fun onKey(action: KeyAction) {
+        // Jolpai's own undo history (so Undo works in every app): mark a step before the edit.
+        val isUndoRedo = action is KeyAction.Edit && (action.command == EditCommand.UNDO || action.command == EditCommand.REDO)
+        if (!isUndoRedo) history.before(undoKindOf(action), appEditor, clock())
         val undo = undoableCorrection
         undoableCorrection = null
         if (action !is KeyAction.Shift && action !is KeyAction.SwitchPage) offerToAdd = null
@@ -562,12 +578,15 @@ class KeyboardController(
                 editor.commit(formatDateTime(action.kind))
             }
             is KeyAction.ShowPanel -> {
+                // Emoji and clipboard toggle: asking for the open one again (the 😊 key, a
+                // gesture) closes it, like the toolbar button does.
+                val toggleOff = action.panel == panel && action.panel in TOGGLE_PANELS && searchPanel == null
                 emojiTab = null
                 if (searchPanel != null) endSearch(keepQuery = false)
                 if (checking && action.panel != Panel.NONE) endCheck()
                 if (translating && action.panel != Panel.NONE) endTranslate()
-                if (action.panel != Panel.NONE) endComposing()
-                panel = action.panel
+                if (action.panel != Panel.NONE && !toggleOff) endComposing()
+                panel = if (toggleOff) Panel.NONE else action.panel
                 if (panel != Panel.EDITING) selecting = false
             }
             is KeyAction.InsertEmoji -> {
@@ -640,13 +659,14 @@ class KeyboardController(
             }
             KeyAction.FixAllIssues -> if (checking) {
                 endComposing()
-                if (checkStale) runCheck()
+                // "Fix all" fixes the whole text, not only what the quick first pass looked up.
+                if (checkStale) runCheck(full = true)
                 // A fix can uncover the next one ("its better then"): check again, up to 3 rounds.
                 var rounds = 0
                 while (checkIssues.isNotEmpty() && rounds < 3) {
                     checkFixed += checkIssues.size
                     applyFixes(checkIssues)
-                    runCheck()
+                    runCheck(full = true)
                     rounds++
                 }
             }
@@ -694,9 +714,28 @@ class KeyboardController(
             is KeyAction.Host -> Unit // handled by the service before it reaches here
         }
         if (checking && !action.isCheckAction()) checkStale = true
+        if (undoKindOf(action) != UndoHistory.Kind.OTHER || isUndoRedo) history.after(appEditor)
         updateAutoShift()
         refreshSuggestions(force = false)
         publish()
+    }
+
+    /** What kind of edit [action] makes in the app's field, for undo steps. */
+    private fun undoKindOf(action: KeyAction): UndoHistory.Kind = when {
+        typingInBox -> UndoHistory.Kind.OTHER // typing into a panel's search box or the translate box
+        action is KeyAction.Text -> if (endsWord(action.text) || action.text.isBlank()) UndoHistory.Kind.WORD_END else UndoHistory.Kind.TYPE
+        action == KeyAction.Space || action == KeyAction.Enter -> UndoHistory.Kind.WORD_END
+        action == KeyAction.Delete -> UndoHistory.Kind.DELETE
+        action is KeyAction.EndSelectBack -> if (action.delete) UndoHistory.Kind.DELETE else UndoHistory.Kind.OTHER
+        action is KeyAction.CommitCandidate || action is KeyAction.PasteText || action is KeyAction.InsertSnippet ||
+            action is KeyAction.ReplaceBefore || action is KeyAction.ExpandSnippet || action is KeyAction.InsertDateTime ||
+            action is KeyAction.InsertEmoji || action is KeyAction.FixIssue || action is KeyAction.FixAllIssues ||
+            action is KeyAction.CommitTranslation -> UndoHistory.Kind.INSERT
+        action is KeyAction.Edit -> when (action.command) {
+            EditCommand.CUT, EditCommand.PASTE, EditCommand.DELETE_WORD -> UndoHistory.Kind.INSERT
+            else -> UndoHistory.Kind.OTHER
+        }
+        else -> UndoHistory.Kind.OTHER
     }
 
     private fun KeyAction.isCheckAction() = this is KeyAction.StartCheck || this is KeyAction.Recheck || this is KeyAction.ApplyRewrite ||
@@ -719,7 +758,7 @@ class KeyboardController(
      * sentence boundary) and checks it. Positions are kept as absolute offsets in the field, so
      * fixes can be applied anywhere in it.
      */
-    private fun runCheck() {
+    private fun runCheck(full: Boolean = false) {
         val before = appEditor.textBeforeCursor(CHECK_WINDOW).toString()
         val after = appEditor.textAfterCursor(CHECK_WINDOW).toString()
         var cut = 0
@@ -735,14 +774,18 @@ class KeyboardController(
         checkEmpty = text.isBlank()
         val checker = suggester?.checker
         val endsAtFieldEnd = after.length < CHECK_WINDOW
-        // The rules first, at once; then the next-word model (word choice, spelling by context) in
-        // the background, replacing the list if the text is still the same.
-        checkIssues = checker?.check(text, checkIgnored, endsAtFieldEnd).orEmpty()
+        // The rules first, at once, looking up only the unknown words nearest the cursor (the card
+        // opens without a wait); then the whole text in the background, with the next-word model
+        // (word choice, spelling by context) when it is on, replacing the list if the text is unchanged.
+        val focus = before.length - cut
+        val searchLimit = if (full) com.yeamin.jolpai.suggest.TextChecker.MAX_SEARCHED_WORDS else com.yeamin.jolpai.suggest.TextChecker.QUICK_SEARCH
+        checkIssues = checker?.check(text, checkIgnored, endsAtFieldEnd, searchLimit = searchLimit, focus = focus).orEmpty()
         checkStale = false
         val generation = ++checkGeneration
-        if (checker != null && settings.smartPredictions && checker.canUseModel) {
+        val useModel = settings.smartPredictions && checker?.canUseModel == true
+        if (checker != null && (useModel || !full)) {
             val ignored = checkIgnored.toSet()
-            checkRunner.run(work = { checker.check(text, ignored, endsAtFieldEnd, useModel = true) }) { issues ->
+            checkRunner.run(work = { checker.check(text, ignored, endsAtFieldEnd, useModel = useModel, focus = focus) }) { issues ->
                 if (generation == checkGeneration && checking && !checkStale && checkText == text) {
                     checkIssues = issues.filter { it.original !in checkIgnored }
                     publish()
@@ -803,6 +846,7 @@ class KeyboardController(
     private fun endTranslate() {
         if (!translating) return
         translateIgnored.clear()
+        translateIssuesCache = null
         processor.finishComposing(translateBuffer)
         processors.values.forEach { it.reset() }
         translating = false
@@ -852,8 +896,16 @@ class KeyboardController(
         val checker = suggester?.checker ?: return emptyList()
         val done = if (text.last().isWhitespace() || text.last() in ".,!?।") text.length else text.trimEnd().lastIndexOf(' ').let { if (it < 0) 0 else it }
         if (done == 0) return emptyList()
-        return checker.check(text.substring(0, done), translateIgnored, endsAtFieldEnd = false)
+        val finished = text.substring(0, done)
+        // Asked on every screen update (several per key press): check each finished text once.
+        translateIssuesCache?.let { (key, issues) -> if (key.first == finished && key.second == translateIgnored) return issues }
+        val issues = checker.check(finished, translateIgnored, endsAtFieldEnd = false)
+        translateIssuesCache = (finished to translateIgnored.toSet()) to issues
+        return issues
     }
+
+    /** The last [translateIssues] result, for the finished text and dismissed words it was for. */
+    private var translateIssuesCache: Pair<Pair<String, Set<String>>, List<com.yeamin.jolpai.suggest.TextIssue>>? = null
 
     /** Applies [issues] to the translate box (last first, so earlier positions stay valid). */
     private fun fixTranslate(issues: List<com.yeamin.jolpai.suggest.TextIssue>) {
@@ -1002,8 +1054,15 @@ class KeyboardController(
             EditCommand.CUT -> { editor.run(EditorCommand.CUT); selecting = false }
             EditCommand.COPY -> { editor.run(EditorCommand.COPY); selecting = false }
             EditCommand.PASTE -> editor.run(EditorCommand.PASTE)
-            EditCommand.UNDO -> editor.run(EditorCommand.UNDO)
-            EditCommand.REDO -> editor.run(EditorCommand.REDO)
+            // Our own history first (works in every app); otherwise ask the app (Ctrl+Z).
+            EditCommand.UNDO -> {
+                lastUndoHandled = !typingInBox && history.undo(appEditor)
+                if (!lastUndoHandled) editor.run(EditorCommand.UNDO)
+            }
+            EditCommand.REDO -> {
+                lastUndoHandled = !typingInBox && history.redo(appEditor)
+                if (!lastUndoHandled) editor.run(EditorCommand.REDO)
+            }
             EditCommand.LEFT -> editor.run(EditorCommand.LEFT, selecting)
             EditCommand.RIGHT -> editor.run(EditorCommand.RIGHT, selecting)
             EditCommand.UP -> editor.run(EditorCommand.UP, selecting)
@@ -1561,7 +1620,7 @@ class KeyboardController(
         }
     }
 
-    private fun layoutFactory(s: KeyboardSettings) = LayoutFactory(s.enabledLayouts, s.numberRow)
+    private fun layoutFactory(s: KeyboardSettings) = LayoutFactory(s.enabledLayouts, s.numberRow, s.keyLook)
 
     private fun buildState() = KeyboardUiState(
         layout = layouts.build(activeLayout, page, shift != ShiftState.OFF, editorField),
@@ -1574,6 +1633,7 @@ class KeyboardController(
         panel = panel,
         selecting = selecting,
         cursorSwipe = settings.cursorSwipe,
+        spaceLanguageSwipe = settings.keyLook == com.yeamin.jolpai.core.settings.KeyLook.RIDMIK && settings.enabledLayouts.size > 1,
         trackpadVertical = settings.trackpadVertical,
         longPressMs = settings.longPressMs.toLong(),
         gestures = GestureDispatcher(settings.gestures, BuiltIns(settings.cursorSwipe, settings.doubleSpacePeriod)).takeIf { settings.gestures.enabled && !editorField.isPassword },
@@ -1602,6 +1662,9 @@ class KeyboardController(
     )
 
     private companion object {
+        /** Panels that a second "open" closes again. */
+        val TOGGLE_PANELS = setOf(Panel.EMOJI, Panel.CLIPBOARD)
+
         const val DOUBLE_TAP_MS = 350L
         const val CONTEXT_CHARS = 128
 

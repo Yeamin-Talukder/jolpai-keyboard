@@ -79,14 +79,14 @@ class TranslateCardView(
     private var shownTranslation: String? = null
     private var hiding = false
 
-    private val fromLabel = label(bold = true, color = palette.text)
-    private val toLabel = label(bold = true, color = palette.accent)
+    private val fromLabel = label(bold = true, color = palette.card.text)
+    private val toLabel = label(bold = true, color = palette.card.accentText)
     private val swapButton = circle(KeyboardIcon.SWAP, "Swap languages") { listener.onSwap() }
     private val closeButton = circle(KeyboardIcon.CLOSE, "Close translate") { listener.onClose() }
 
     private val sourceText = TextView(context).apply {
         setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
-        setTextColor(palette.text)
+        setTextColor(palette.card.text)
         isSingleLine = true
         ellipsize = TextUtils.TruncateAt.START // keep the end, where you are typing, in view
         gravity = Gravity.CENTER_VERTICAL
@@ -95,7 +95,7 @@ class TranslateCardView(
 
     private val resultText = TextView(context).apply {
         setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
-        setTextColor(palette.text)
+        setTextColor(palette.card.text)
         maxLines = 2
         ellipsize = TextUtils.TruncateAt.END
         gravity = Gravity.CENTER_VERTICAL
@@ -158,7 +158,7 @@ class TranslateCardView(
             orientation = HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
             addView(ImageView(context).apply {
-                setImageDrawable(KeyboardIcon.TRANSLATE.drawable(context, palette.accent, 18 * density))
+                setImageDrawable(KeyboardIcon.TRANSLATE.drawable(context, palette.card.accentText, 18 * density))
                 scaleType = ImageView.ScaleType.CENTER
             }, LayoutParams(dp(26f), dp(30f)))
             addView(fromLabel, LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT).apply { leftMargin = dp(2f) })
@@ -172,8 +172,8 @@ class TranslateCardView(
         inputBox = FrameLayout(context).apply {
             background = GradientDrawable().apply {
                 cornerRadius = 14 * density
-                setColor(ColorUtils.setAlphaComponent(palette.key or 0xFF000000.toInt(), (255 * palette.keyOpacity.coerceIn(0.5f, 1f)).toInt()))
-                setStroke(dp(1f).coerceAtLeast(1), ColorUtils.setAlphaComponent(palette.hint, 0x40))
+                setColor(palette.card.surface)
+                setStroke(dp(1f).coerceAtLeast(1), ColorUtils.setAlphaComponent(palette.card.hint, 0x40))
             }
             addView(sourceText, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT).apply {
                 leftMargin = dp(14f)
@@ -291,9 +291,9 @@ class TranslateCardView(
     /** "recieved → received" in the kind's colour; tap fixes it, ✕ dismisses it. */
     private fun issueChip(issue: com.yeamin.jolpai.suggest.TextIssue): View {
         val color = when (issue.kind) {
-            com.yeamin.jolpai.suggest.IssueKind.SPELLING -> android.graphics.Color.rgb(0xE5, 0x48, 0x4D)
-            com.yeamin.jolpai.suggest.IssueKind.PUNCTUATION -> android.graphics.Color.rgb(0x3E, 0x8E, 0xF0)
-            com.yeamin.jolpai.suggest.IssueKind.GRAMMAR -> android.graphics.Color.rgb(0xE0, 0x9A, 0x1F)
+            com.yeamin.jolpai.suggest.IssueKind.SPELLING -> palette.card.spelling
+            com.yeamin.jolpai.suggest.IssueKind.PUNCTUATION -> palette.card.punctuation
+            com.yeamin.jolpai.suggest.IssueKind.GRAMMAR -> palette.card.grammar
         }
         val chip = LinearLayout(context).apply {
             orientation = HORIZONTAL
@@ -314,7 +314,7 @@ class TranslateCardView(
         val from = issue.original.trim().ifEmpty { "␣" }
         label.append(from)
         label.setSpan(android.text.style.StrikethroughSpan(), 0, label.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-        label.setSpan(ForegroundColorSpan(palette.hint), 0, label.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        label.setSpan(ForegroundColorSpan(palette.card.hint), 0, label.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         label.append(" → ")
         val start = label.length
         label.append(issue.replacement.trim().ifEmpty { "␣" })
@@ -322,11 +322,11 @@ class TranslateCardView(
         chip.addView(TextView(context).apply {
             text = label
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
-            setTextColor(palette.text)
+            setTextColor(palette.card.text)
             isSingleLine = true
         })
         chip.addView(ImageView(context).apply {
-            setImageDrawable(KeyboardIcon.CLOSE.drawable(context, palette.hint, 13 * density))
+            setImageDrawable(KeyboardIcon.CLOSE.drawable(context, palette.card.hint, 13 * density))
             scaleType = ImageView.ScaleType.CENTER
             contentDescription = "Dismiss"
             setOnClickListener { shrinkAway(chip) { listener.onIgnoreIssue(issue) } }
@@ -404,15 +404,15 @@ class TranslateCardView(
         val sb = SpannableStringBuilder()
         if (m.source.isEmpty()) {
             sb.append(CARET)
-            sb.setSpan(ForegroundColorSpan(if (caretOn) palette.accent else 0), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            sb.setSpan(ForegroundColorSpan(if (caretOn) palette.card.accentText else 0), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
             val hint = if (m.toBangla) "Type in English…" else "বাংলায় লিখুন…"
             sb.append(hint)
-            sb.setSpan(ForegroundColorSpan(palette.hint), 1, sb.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            sb.setSpan(ForegroundColorSpan(palette.card.hint), 1, sb.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         } else {
             sb.append(m.source)
             val start = sb.length
             sb.append(CARET)
-            sb.setSpan(ForegroundColorSpan(if (caretOn) palette.accent else 0), start, sb.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            sb.setSpan(ForegroundColorSpan(if (caretOn) palette.card.accentText else 0), start, sb.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         }
         sourceText.text = sb
         clearButton.isVisible = m.source.isNotEmpty()
@@ -474,7 +474,7 @@ class TranslateCardView(
     private fun setResult(translation: String?, placeholder: String?) {
         if (translation != null) {
             resultText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 17f)
-            resultText.setTextColor(palette.text)
+            resultText.setTextColor(palette.card.text)
             if (translation != shownTranslation) {
                 resultText.text = translation
                 resultText.alpha = 0.35f
@@ -489,7 +489,7 @@ class TranslateCardView(
             resultText.alpha = 1f
             resultText.translationY = 0f
             resultText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
-            resultText.setTextColor(palette.hint)
+            resultText.setTextColor(palette.card.hint)
             resultText.text = placeholder
             shownTranslation = null
         }
@@ -517,19 +517,19 @@ class TranslateCardView(
     }
 
     private fun circle(icon: KeyboardIcon, description: String, onClick: () -> Unit) = ImageView(context).apply {
-        setImageDrawable(icon.drawable(context, palette.text, 18 * density))
+        setImageDrawable(icon.drawable(context, palette.card.text, 18 * density))
         scaleType = ImageView.ScaleType.CENTER
         contentDescription = description
         background = RippleDrawable(
             ColorStateList.valueOf(palette.keyPressed),
-            GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(palette.functionKey or 0xFF000000.toInt()) },
+            GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(palette.card.raised) },
             null,
         )
         setOnClickListener { onClick() }
     }
 
     private fun smallIcon(icon: KeyboardIcon, description: String, onClick: () -> Unit) = ImageView(context).apply {
-        setImageDrawable(icon.drawable(context, palette.hint, 16 * density))
+        setImageDrawable(icon.drawable(context, palette.card.hint, 16 * density))
         scaleType = ImageView.ScaleType.CENTER
         contentDescription = description
         background = RippleDrawable(ColorStateList.valueOf(palette.keyPressed), null, null).apply { radius = dp(16f) }
@@ -547,7 +547,7 @@ class TranslateCardView(
             for (i in 0 until 3) {
                 val phase = ((t - i * 0.18f) + 1f) % 1f
                 val lift = kotlin.math.sin(phase * Math.PI).toFloat().coerceAtLeast(0f)
-                paint.color = ColorUtils.setAlphaComponent(palette.accent, (90 + 165 * lift).toInt())
+                paint.color = ColorUtils.setAlphaComponent(palette.card.accentText, (90 + 165 * lift).toInt())
                 canvas.drawCircle(r + i * (2 * r + gap), height / 2f - lift * 3 * density, r, paint)
             }
             if (isVisible) postInvalidateOnAnimation()
@@ -566,14 +566,14 @@ class TranslateCardView(
 
         override fun onDraw(canvas: Canvas) {
             val h = height.toFloat()
-            paint.color = ColorUtils.setAlphaComponent(palette.accent, 0x33)
+            paint.color = ColorUtils.setAlphaComponent(palette.card.accentText, 0x33)
             rect.set(0f, 0f, width.toFloat(), h)
             canvas.drawRoundRect(rect, h / 2, h / 2, paint)
             if (!running) return
             val t = (SystemClock.uptimeMillis() % 1300) / 1300f
             val segment = width * 0.35f
             val x = -segment + (width + segment) * SETTLE.getInterpolation(t)
-            paint.color = palette.accent
+            paint.color = palette.card.accentText
             rect.set(x.coerceAtLeast(0f), 0f, (x + segment).coerceAtMost(width.toFloat()), h)
             if (rect.width() > 0) canvas.drawRoundRect(rect, h / 2, h / 2, paint)
             postInvalidateOnAnimation()

@@ -5,7 +5,8 @@ import org.junit.Test
 
 class NationalComposerTest {
 
-    private val composer = NationalComposer()
+    private val composer = NationalComposer(autoVowels = true)
+    private val ridmik = NationalComposer()
 
     /** Types [keys] one by one into an empty field and returns the resulting text. */
     private fun type(vararg keys: String, c: NationalComposer = composer): String {
@@ -37,8 +38,20 @@ class NationalComposerTest {
         assertEquals("আমি এ", type("্", "া", "ম", "ি", " ", "ে"))
     }
 
-    @Test fun `standalone kar is kept when the option is off`() {
-        assertEquals("ি", type("ি", c = NationalComposer(standaloneKarToVowel = false)))
+    /** By default every key goes in as typed, exactly like Ridmik (checked on a phone, 2026-11-21). */
+    @Test fun `by default keys go in as typed, like Ridmik`() {
+        assertEquals("ি", type("ি", c = ridmik))
+        assertEquals("্া", type("্", "া", c = ridmik))
+        assertEquals("িক", type("ি", "ক", c = ridmik))
+        assertEquals("কাি", type("ক", "া", "ি", c = ridmik))
+        assertEquals("ক্ি", type("ক", "্", "ি", c = ridmik))
+        assertEquals("ক া", type("ক", " ", "া", c = ridmik))
+        // ে + া stays two characters (U+09C7 U+09BE), as Ridmik types it.
+        assertEquals("\u0995\u09C7\u09BE", type("ক", "ে", "া", c = ridmik))
+        // The explicit hasanta still works.
+        assertEquals("ক্\u200Cষ", type("ক", "্", "্", "ষ", c = ridmik))
+        assertEquals("ক্ষ", type("ক", "্", "ষ", c = ridmik))
+        assertEquals("র্কি", type("র্", "ক", "ি", c = ridmik))
     }
 
     @Test fun `e-kar plus aa-kar makes o-kar`() = assertEquals("কো", type("ক", "ে", "া"))
@@ -58,7 +71,7 @@ class NationalComposerTest {
     @Test fun `reph is inserted where typed by default`() = assertEquals("কর্ম", type("ক", "র্", "ম"))
 
     @Test fun `reph moves before the cluster when reordering is on`() {
-        val reorder = NationalComposer(reorderReph = true)
+        val reorder = NationalComposer(autoVowels = true, reorderReph = true)
         assertEquals("কর্ম", type("ক", "ম", "র্", c = reorder))
         assertEquals("র্ক্ষ", type("ক", "্", "ষ", "র্", c = reorder))
         assertEquals("আর্", type("্", "া", "র্", c = reorder))

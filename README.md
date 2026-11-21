@@ -6,13 +6,13 @@
 
 **A free, open-source, AI-powered Bangla (Bengali) keyboard for Android with a clean, modern design: Avro phonetic typing,
 the National (জাতীয়) and প্রভাত (Probhat) layouts, English QWERTY, on-device AI predictions, an offline spelling and grammar
-check, offline English↔Bangla translation, voice typing, a clipboard manager and 64 themes. No ads, no tracking,
+check, offline English↔Bangla translation, voice typing, a clipboard manager and 143 themes. No ads, no tracking,
 and nothing you type leaves your phone.**
 
 [![Downloads](https://img.shields.io/github/downloads/Yeamin-Talukder/jolpai-keyboard/total?label=downloads&color=6E8A2C&logo=android&logoColor=white)](https://github.com/Yeamin-Talukder/jolpai-keyboard/releases)
 [![Views](https://hits.sh/github.com/Yeamin-Talukder/jolpai-keyboard.svg?label=views&color=6E8A2C)](https://hits.sh/github.com/Yeamin-Talukder/jolpai-keyboard/)
 [![Stars](https://img.shields.io/github/stars/Yeamin-Talukder/jolpai-keyboard?style=flat&color=B5C94A&logo=github)](https://github.com/Yeamin-Talukder/jolpai-keyboard/stargazers)
-[![Version](https://img.shields.io/badge/version-0.13.3--beta-B5C94A)](docs/ROADMAP.md)
+[![Version](https://img.shields.io/badge/version-0.14.0--beta-B5C94A)](docs/ROADMAP.md)
 [![License: Apache-2.0](https://img.shields.io/github/license/Yeamin-Talukder/jolpai-keyboard?color=4E6120)](LICENSE)
 <br>
 [![Android 8.0+](https://img.shields.io/badge/Android-8.0%2B%20(API%2026)-3DDC84?logo=android&logoColor=white)](#requirements)
@@ -23,7 +23,7 @@ and nothing you type leaves your phone.**
 [![Last commit](https://img.shields.io/github/last-commit/Yeamin-Talukder/jolpai-keyboard?color=4E6120)](https://github.com/Yeamin-Talukder/jolpai-keyboard/commits/main)
 [![Made in Bangladesh](https://img.shields.io/badge/Made%20in-Bangladesh-006A4E)](#)
 
-**[🌐 Website](https://yeamin-talukder.github.io/jolpai-keyboard/)** · [Coming next](#-coming-in-the-next-version) · [What's new](#-whats-new-in-0133) · [Demo](#-see-it-in-action) · [Features](#-features) · [Screenshots](#-screenshots) · [Download](#-download--install) · [Architecture](#-architecture) · [Build](#-build-from-source) · [FAQ](#-faq) · [বাংলা](#-বাংলায়-জলপাই-কিবোর্ড)
+**[🌐 Website](https://yeamin-talukder.github.io/jolpai-keyboard/)** · [What's new](#-whats-new-in-0140) · [Demo](#-see-it-in-action) · [Features](#-features) · [Screenshots](#-screenshots) · [Download](#-download--install) · [Architecture](#-architecture) · [Build](#-build-from-source) · [FAQ](#-faq) · [বাংলা](#-বাংলায়-জলপাই-কিবোর্ড)
 
 </div>
 
@@ -44,9 +44,9 @@ English↔Bangla translation run **offline**.
 > **Also known as:** Jolpai Bangla Keyboard · Jalpai Keyboard · জলপাই বাংলা কিবোর্ড · Jolpai Avro Keyboard
 > (package `com.yeamin.jolpai`; the project was first called *Lipi Keyboard*, package `com.yeamin.lipi` up to v0.8.0).
 
-## 🔜 Coming in the next version
+## 🆕 What's new in 0.14.0
 
-Already built and being tested on a phone; not released yet. It will arrive as a normal update (About → **Update**), and your words and settings stay.
+A big one: Jolpai now feels like the keyboard you already know, with a smarter spelling check, Chameleon themes and your own fonts. Update from About → **Update**; your words and settings stay.
 
 **Switching from Ridmik or Gboard gets easy**
 - 👋 **A friendly first start**: a short welcome, in Bangla and English, asks which keyboard you used before, your style and Bangla layouts, and helps you turn Jolpai on. Change your answers any time in **Typing → Quick setup** ("Set up like my old keyboard": Ridmik or Gboard).
@@ -78,23 +78,9 @@ Already built and being tested on a phone; not released yet. It will arrive as a
 - ↩️ **Undo and Redo that work in every app**: swipe the top bar left or right; a pill fills to show the action is ready, and you can slide back to cancel.
 - 🐞 **Report a bug** from the home screen (or About → Report a problem): write what happened and Jolpai opens a GitHub issue filled in with your phone and app details. You see exactly what is included and can leave it out; never your typing, words or clipboard. Needs a GitHub account.
 
-## 🆕 What's new in 0.13.3
+Earlier, in 0.13.1–0.13.3: the keyboard chooser and settings buttons work on vivo and similar phones, no empty band under the keyboard on Android 14 and older phones, and landscape fixes. In 0.13.0: a **new logo** (an olive as the lit key and a leaf) and a **launch animation** on Android 12+. In 0.12.0: **hold Enter for emoji**, **hold Enter and slide to select**, trackpad ticks on every cursor step, and emoji/clipboard above the keyboard or in place of the keys. In 0.11.0: **on-device AI for English** (next word from your sentence, smarter autocorrect, emoji by meaning), **Bangla next words** from the first word, learned phrases, the **প্রভাত** layout and clean vowel-sign keys. In 0.10.x: update right inside the app (About → **Update**, checked before it installs). In 0.9.0: the new app ID **`com.yeamin.jolpai`** (coming from 0.7.0 or 0.8.0, [move your data once](#-download--install)).
 
-- ⌨️ **The keyboard chooser lists your keyboards on vivo** (OriginOS 6, Android 16) instead of opening empty, plus a *keyboard settings* link under Choose keyboard.
-
-In 0.13.2:
-
-- ⌨️ **Choose keyboard works on vivo and similar phones**: where the system blocks the keyboard chooser (seen on OriginOS), Jolpai opens the keyboard settings instead.
-- 🛡️ **Every settings button opens something** on phones that leave out a system page (install permission, keyboard settings, microphone permission).
-
-In 0.13.1:
-
-- 📐 **No more empty band under the keyboard** on Android 14 and older phones (seen on Xiaomi HyperOS): the keys sit right on the system bar, and that bar now takes the keyboard's colour.
-- 📱 **Landscape:** the keys, the floating keyboard and the voice pill stay clear of the camera cutout and a side navigation bar.
-
-Earlier, in 0.13.0: a **new logo** (an olive as the lit key and a leaf) and a **launch animation** on Android 12+. In 0.12.0: **hold Enter for emoji**, **hold Enter and slide to select**, trackpad ticks on every cursor step, and emoji/clipboard above the keyboard or in place of the keys. In 0.11.0: **on-device AI for English** (next word from your sentence, smarter autocorrect, emoji by meaning), **Bangla next words** from the first word, learned phrases, the **প্রভাত** layout and clean vowel-sign keys. In 0.10.x: update right inside the app (About → **Update**, checked before it installs). In 0.9.0: the new app ID **`com.yeamin.jolpai`** (coming from 0.7.0 or 0.8.0, [move your data once](#-download--install)).
-
-[Full release notes](docs/release-notes/v0.13.3.md) · [All releases](https://github.com/Yeamin-Talukder/jolpai-keyboard/releases)
+[Full release notes](docs/release-notes/v0.14.0.md) · [All releases](https://github.com/Yeamin-Talukder/jolpai-keyboard/releases)
 
 ## ✨ Features
 
@@ -124,7 +110,7 @@ Earlier, in 0.13.0: a **new logo** (an olive as the lit key and a leaf) and a **
 - Fix one, **Fix all**, ignore, or add a word to your dictionary. Names, links, numbers and e-mail addresses are left alone.
 
 ### 🎨 Make it yours
-- **Key fonts**: Hind Siliguri, Tiro Bangla, Galada or Atma on the keys.
+- **Key fonts**: 30 fonts for the keys, Bangla (Kalpurush, Baloo Da 2, Galada …) and English (Poppins, Dancing Script, Lobster …), a different one for each script if you like, or your own font file. No dotted circle on vowel-sign keys.
 - **Sound packs**: Soft tap, Typewriter, Bubble or Wooden key sounds, made on the phone.
 - **Split keyboard** for landscape or tablets.
 - **Typing stats**: words per day, typing speed (WPM, best, accuracy), English vs বাংলা, autocorrections and letters saved (counts only, never words).
@@ -145,7 +131,7 @@ Earlier, in 0.13.0: a **new logo** (an olive as the lit key and a leaf) and a **
 - **Smart field handling**: calculator number pad, phone dial pad, and Send/Search/Go Enter keys.
 
 ### 🎨 Themes and customisation
-- **64 built-in themes**: Material You (default; follows your wallpaper, light and dark), soft pastels, jewel tones, gradients, AMOLED black, High contrast, and soft dark themes like *Olive night*, *Misty blue* and *Moonlight*.
+- **143 built-in themes** in groups: Material You (default; follows your wallpaper, light and dark), **Chameleon** themes in the colour of the app you're typing in, cool dark and ambient glows, themes that follow the time of day, gentle key-press effects and bouncy keys, soft pastels, jewel tones, gradients, AMOLED black, High contrast, and soft dark themes like *Olive night*, *Misty blue* and *Moonlight*.
 - **Theme editor**: your own colours, gradients or a background photo. Share themes as text.
 - **Festival themes**: পহেলা বৈশাখ, একুশে ফেব্রুয়ারি, বিজয় দিবস, রমজান and ঈদ themes, used automatically on those days (you can turn it off).
 - Keyboard **height** (portrait/landscape), **number row**, **one-handed** mode, **floating** keyboard.
@@ -218,13 +204,13 @@ Earlier, in 0.13.0: a **new logo** (an olive as the lit key and a leaf) and a **
 
 <img src="docs/images/themes.png" alt="Jolpai Keyboard themes: Material You, light pastel themes and soft dark themes for the Android Bangla keyboard" width="100%">
 
-*20 of the 64 built-in themes. Material You follows your wallpaper colours.*
+*20 of the 143 built-in themes. Material You follows your wallpaper colours.*
 
 </div>
 
 ## 📥 Download & install
 
-> **Status: beta (v0.13.3).** All seven development phases are built and 350+ unit tests pass. The app runs
+> **Status: beta (v0.14.0).** All seven development phases are built and 350+ unit tests pass. The app runs
 > daily on a Pixel 7 Pro (Android 17); testing on more phones is ongoing. See the [roadmap](docs/ROADMAP.md)
 > for exactly what works and what is pending.
 
@@ -248,7 +234,7 @@ for a newer version only when you tap it, and checks the download before it inst
 3. Step 2: choose **Jolpai Keyboard** as your current keyboard.
 4. Try it in the app's test fields (text, email, password, number, phone, multi-line).
 
-From the next version, a short welcome walks you through these steps on first start and sets the keyboard up like the one you used before.
+On first start, a short welcome walks you through these steps and sets the keyboard up like the one you used before (Ridmik or Gboard style); find it again in **Typing → Quick setup**.
 
 ## 🏗️ Architecture
 
@@ -264,7 +250,7 @@ flowchart TD
     BN["bangla-engine (JVM)<br/>Avro phonetic · National composer"]
     SG["suggestion-engine (JVM)<br/>dictionaries · autocorrect · next-word"]
     EM["emoji-engine (JVM)<br/>emoji + EN/BN keywords"]
-    TH["theme-engine (JVM)<br/>64 themes · import/export"]
+    TH["theme-engine (JVM)<br/>143 themes · import/export"]
     CB["clipboard-manager<br/>history · snippets · categories"]
     VO["voice-input<br/>speech · spoken punctuation"]
     ME["media<br/>GIFs · stickers"]
@@ -330,7 +316,7 @@ Full design notes, platform limits and the privacy model: **[docs/ARCHITECTURE.m
 | `emoji-engine` | Plain Kotlin. Unicode emoji with English and Bangla keywords, skin tones, kaomoji |
 | `voice-input` | Voice typing with Android's speech service, spoken punctuation, offline status |
 | `media` | GIF search (GIPHY, with your key) and your own stickers |
-| `theme-engine` | Plain Kotlin. Theme model, 64 built-in themes, theme import/export |
+| `theme-engine` | Plain Kotlin. Theme model, 143 built-in themes (live, Chameleon and press effects), theme import/export |
 | `keyboard-core` | Keyboard state machine, layouts, field detection, text editing over `InputConnection`, suggestion strip logic, editing commands, calculator, settings |
 | `keyboard-ui` | The keyboard service (`JolpaiImeService`), the Canvas key grid, key popups, suggestion strip, gestures, panels, translation |
 | `app-shell` | The app you open: setup, test fields, settings, personal dictionary, clipboard manager, snippets, themes, backup |
@@ -463,7 +449,7 @@ signed APKs, and publishes them with the notes and checksums.
 <details>
 <summary><b>Themes, size and feel</b></summary>
 
-- **Themes:** 64 built-in themes or your own (colours, gradient or a picture). Pick one from the app's home page or the Themes screen; changes show immediately. Share a theme by copying it as text.
+- **Themes:** 143 built-in themes in groups (Basics, Chameleon, Dark, Light, Ambient, Dynamic) or your own (colours, gradient or a picture). Pick one from the app's home page or the Themes screen; changes show immediately. Share a theme by copying it as text.
 - **Size & layout:** keyboard height (portrait and landscape separately), number row, one-handed (left/right) and a floating keyboard you can drag.
 - **Sound & vibration:** vibration strength, key sounds and volume.
 - **Feel:** keys sink and spring back softly, and the letter bubble pops up and fades.
@@ -478,7 +464,7 @@ signed APKs, and publishes them with the notes and checksums.
 **What is the best Bangla keyboard for Android?**
 It depends on what you need. Jolpai is a strong choice if you want everything in one free app: Avro
 phonetic typing, the National (জাতীয়) and প্রভাত layouts, on-device AI predictions, an offline Bangla and
-English spelling check, offline translation and 64 themes, with no ads and no tracking. It is open
+English spelling check, offline translation and 143 themes, with no ads and no tracking. It is open
 source, so anyone can check what it does with your typing.
 
 **Is there an AI-powered Bangla keyboard?**
@@ -488,7 +474,7 @@ from 91 million words of open Bangla text, plus what you type. Nothing is sent t
 
 **Which Bangla keyboard has the best design?**
 Jolpai is built for a clean, modern look: centred Bangla vowel signs without dotted circles, Material You
-colours, 64 themes (light, dark, gradients and your own photo), rounded keys, key fonts and smooth
+colours, 143 themes (light, dark, Chameleon, glowing and bouncy ones, and your own photo), rounded keys, key fonts and smooth
 animations. See the [screenshots](#-screenshots) and the [live demo](https://yeamin-talukder.github.io/jolpai-keyboard/).
 
 **How do I type Bangla on Android with Jolpai Keyboard?**
@@ -530,11 +516,11 @@ Yes. It is free and open source under the Apache License 2.0, with no ads and no
 **How is it different from Gboard or Ridmik Keyboard?**
 Jolpai combines Avro phonetic, the National layout and English in one open-source keyboard that keeps
 everything on your device, with an offline Bangla and English writing check, offline translation, a
-full clipboard manager and 64 themes.
+full clipboard manager and 143 themes.
 
 **I use Ridmik Keyboard. Will Jolpai feel familiar?**
-Yes. The জাতীয় layout is arranged like Ridmik's. In the next version, জাতীয় types exactly like
-Ridmik (checked key by key on a phone), and a **Classic** style works like Ridmik: slide the space bar to
+Yes. The জাতীয় layout is arranged like Ridmik's. জাতীয় types exactly like Ridmik
+(checked key by key on a phone), and a **Classic** style works like Ridmik: slide the space bar to
 change language, symbol hints on the letters, and emoji and clipboard in place of the keys. A short
 welcome on first start, or **Typing → Quick setup** later, sets this up in one tap ("Set up like my old
 keyboard"). There is a Gboard-like **Simple** style too.
@@ -543,7 +529,7 @@ keyboard"). There is a Gboard-like **Simple** style too.
 
 **জলপাই কিবোর্ড** অ্যান্ড্রয়েডের জন্য একটি ফ্রি, ওপেন-সোর্স ও এআই-চালিত **বাংলা কিবোর্ড**।
 এতে আছে **অভ্র ফোনেটিক** (`ami` → আমি), **জাতীয় কিবোর্ড লেআউট**, ইংরেজি QWERTY, স্মার্ট সাজেশন,
-**অফলাইন বানান ও ব্যাকরণ চেক**, **অফলাইন ইংরেজি↔বাংলা অনুবাদ**, ভয়েস টাইপিং, ক্লিপবোর্ড ম্যানেজার এবং ৬৪টি থিম।
+**অফলাইন বানান ও ব্যাকরণ চেক**, **অফলাইন ইংরেজি↔বাংলা অনুবাদ**, ভয়েস টাইপিং, ক্লিপবোর্ড ম্যানেজার এবং ১৪৩টি থিম।
 
 - 🔒 **প্রাইভেসি আগে:** কোনো অ্যাকাউন্ট, বিজ্ঞাপন বা ট্র্যাকিং নেই। আপনি যা লেখেন তা আপনার ফোনেই থাকে, এনক্রিপ্টেড অবস্থায়।
 - ⚡ **দ্রুত:** প্রতিটি কী-চাপ এক ফ্রেমেরও কম সময়ে লেখা হয়।
@@ -551,7 +537,7 @@ keyboard"). There is a Gboard-like **Simple** style too.
 - ✓ **বানান চেক:** বাংলা ও ইংরেজি লেখার বানান, যতিচিহ্ন ও ব্যাকরণের ভুল দেখায়, এক ট্যাপে ঠিক করা যায়।
 - 📊 **টাইপিং পরিসংখ্যান:** প্রতিদিন কত শব্দ লিখলেন, টাইপিং স্পিড (WPM) ও নির্ভুলতা।
 - 🎨 **Material You:** আপনার ওয়ালপেপারের রঙে কিবোর্ড সাজে, সাথে সফট ডার্ক থিম।
-- 🔜 **শীঘ্রই আসছে:** রিদমিকের মতো ক্লাসিক আর জিবোর্ডের মতো সহজ স্টাইল, হুবহু রিদমিকের মতো জাতীয় লেআউট, ১৪০টির বেশি থিম, ৩০টি কী-ফন্ট (নিজের ফন্টও চলবে), আরও ভালো বানান চেক আর এক ট্যাপে বাগ রিপোর্ট।
+- 🆕 **নতুন (০.১৪.০):** রিদমিকের মতো ক্লাসিক আর জিবোর্ডের মতো সহজ স্টাইল, হুবহু রিদমিকের মতো জাতীয় লেআউট, ১৪০টির বেশি থিম, ৩০টি কী-ফন্ট (নিজের ফন্টও চলবে), আরও ভালো বানান চেক আর এক ট্যাপে বাগ রিপোর্ট।
 
 ## 🤝 Contributing
 

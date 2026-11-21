@@ -70,12 +70,28 @@ class KeyboardView(context: Context, private val palette: KeyboardPalette) : Vie
 
     /** Vibration and sound for presses; null uses the plain system key haptic. */
     var feedback: KeyFeedback? = null
+
+    /**
+     * Told about each key as a finger comes down on it, for theme press effects: its drawn
+     * bounds, the touch point, and the letter it shows (null for Space, Shift and other keys
+     * that don't type one character).
+     */
+    var onKeyPressed: ((key: RectF, x: Float, y: Float, letter: String?) -> Unit)? = null
+
+    /** The typeface letters are drawn in (the chosen key font). */
+    val letterTypeface: Typeface get() = regular
+
+    /** Corner radius of the keys, in px. */
+    val keyCorner: Float get() = radius
     var popup: KeyPopupView? = null
 
     private class Cell(val key: Key, val hit: RectF, val draw: RectF) {
         // Prepared once, so drawing doesn't build strings.
         val label: String = DisplayLabel.of(key.label)
         val hint: String? = key.hint?.let(DisplayLabel::of)
+        // Bangla labels use the Bangla letters font (they differ when the fonts are mixed).
+        val bangla: Boolean = DisplayLabel.isBangla(label)
+        val hintBangla: Boolean = hint != null && DisplayLabel.isBangla(hint)
     }
 
     private var layout = KeyboardLayout(emptyList())
@@ -124,13 +140,26 @@ class KeyboardView(context: Context, private val palette: KeyboardPalette) : Vie
     private val icons = KeyIconCache(context, intArrayOf(palette.text, palette.onAccent, palette.accent))
     private var regular: Typeface = if (palette.boldLabels) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
     private var medium: Typeface = if (palette.boldLabels) Typeface.DEFAULT_BOLD else Typeface.create("sans-serif-medium", Typeface.NORMAL)
+    private var banglaRegular: Typeface = regular
+    private var banglaMedium: Typeface = medium
+    private var hintTypeface: Typeface = Typeface.DEFAULT
+    private var banglaHintTypeface: Typeface = Typeface.DEFAULT
 
-    /** Uses a chosen key font (regular for letters, medium for labels); bold labels stay bold. */
-    fun setKeyFont(fonts: Pair<Typeface, Typeface>?) {
-        val (r, m) = fonts ?: return
-        regular = if (palette.boldLabels) Typeface.create(r, Typeface.BOLD) else r
-        medium = if (palette.boldLabels) Typeface.create(m, Typeface.BOLD) else m
-        hintPaint.typeface = r
+    /**
+     * Uses the chosen key fonts (regular for letters, medium for labels): [fonts] for English
+     * letters and other labels, [bangla] for Bangla ones; null means the phone's font. Bold labels
+     * stay bold.
+     */
+    fun setKeyFont(fonts: Pair<Typeface, Typeface>?, bangla: Pair<Typeface, Typeface>? = fonts) {
+        val bold = palette.boldLabels
+        val defaultRegular = if (bold) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
+        val defaultMedium = if (bold) Typeface.DEFAULT_BOLD else Typeface.create("sans-serif-medium", Typeface.NORMAL)
+        regular = fonts?.first?.let { if (bold) KeyFonts.bold(it) else it } ?: defaultRegular
+        medium = fonts?.second?.let { if (bold) KeyFonts.bold(it) else it } ?: defaultMedium
+        banglaRegular = bangla?.first?.let { if (bold) KeyFonts.bold(it) else it } ?: defaultRegular
+        banglaMedium = bangla?.second?.let { if (bold) KeyFonts.bold(it) else it } ?: defaultMedium
+        hintTypeface = fonts?.first ?: Typeface.DEFAULT
+        banglaHintTypeface = bangla?.first ?: Typeface.DEFAULT
         invalidate()
     }
 
@@ -278,6 +307,9 @@ class KeyboardView(context: Context, private val palette: KeyboardPalette) : Vie
      */
     var cursorSwipe = true
 
+    /** Ridmik look: a slide along the space bar changes the language (once per slide). */
+    var spaceLanguageSwipe = false
+
     /** In trackpad mode (hold the space bar), moving up and down moves between lines. */
     var trackpadVertical = true
 
@@ -419,7 +451,7 @@ class KeyboardView(context: Context, private val palette: KeyboardPalette) : Vie
             }
         }
         cells = out
-        press = FloatArray(out.size)
+        resetPress()
         targets = out.map { TouchTarget(it.draw.left, it.draw.top, it.draw.right, it.draw.bottom, letterOf(it.key)) }
     }
 
@@ -451,15 +483,40 @@ class KeyboardView(context: Context, private val palette: KeyboardPalette) : Vie
             press[i] = a
             if ((down && a < 1f) || (!down && a > 0f)) animating = true
             val e = a * a * (3 - 2 * a) // smoothstep: gentle start and end
-            val scale = 1f - PRESS_SCALE * e
-            canvas.withScale(scale, scale, cell.draw.centerX(), cell.draw.centerY()) { drawKey(this, cell, e) }
+            val sp = springiness
+            if (sp != null) {
+                // Bouncy keys: a spring per key squashes it from the top (its base stays put)
+                // and lets it wobble back when released.
+                val target = if (down) 1f else 0f
+                com.yeamin.jolpai.theme.RubberSpring.step(rubberPos, rubberVel, i, target, dt, sp)
+                if (!com.yeamin.jolpai.theme.RubberSpring.settled(rubberPos[i], rubberVel[i], target)) animating = true
+                val s = rubberPos[i]
+                canvas.withScale(
+                    com.yeamin.jolpai.theme.RubberSpring.scaleX(s, sp), com.yeamin.jolpai.theme.RubberSpring.scaleY(s, sp),
+                    cell.draw.centerX(), cell.draw.bottom,
+                ) { drawKey(this, cell, e) }
+            } else {
+                val scale = 1f - PRESS_SCALE * e
+                canvas.withScale(scale, scale, cell.draw.centerX(), cell.draw.centerY()) { drawKey(this, cell, e) }
+            }
         }
         if (animating) postInvalidateOnAnimation() else lastFrame = 0L
     }
 
-    /** Keeps one press amount per key (normally sized when the keys are laid out). */
+    /**
+     * The spring of a bouncy-key theme (Rubber, Squish, Jelly), or null for the plain sink, which
+     * is also used when the phone's animations are turned off.
+     */
+    private val springiness = com.yeamin.jolpai.theme.RubberSpring.forEffect(palette.pressEffect)
+        ?.takeIf { android.animation.ValueAnimator.areAnimatorsEnabled() }
+    private var rubberPos = FloatArray(0)
+    private var rubberVel = FloatArray(0)
+
+    /** Keeps one press amount (and rubber spring) per key (normally sized when the keys are laid out). */
     private fun resetPress() {
         press = FloatArray(cells.size)
+        rubberPos = FloatArray(cells.size)
+        rubberVel = FloatArray(cells.size)
     }
 
     private fun drawKey(canvas: Canvas, cell: Cell, pressAmount: Float) {
@@ -511,7 +568,10 @@ class KeyboardView(context: Context, private val palette: KeyboardPalette) : Vie
                 else -> palette.text
             }
             labelPaint.textSize = labelSize(key)
-            labelPaint.typeface = if (key.style == KeyStyle.CHARACTER) regular else medium
+            labelPaint.typeface = when {
+                key.style == KeyStyle.CHARACTER -> if (cell.bangla) banglaRegular else regular
+                else -> if (cell.bangla) banglaMedium else medium
+            }
             val fm = labelPaint.fontMetrics
             val baseline = r.centerY() - (fm.ascent + fm.descent) / 2
             if (DisplayLabel.isSign(cell.label)) DisplayLabel.drawSignCentered(canvas, cell.label, r.centerX(), r.centerY(), labelPaint)
@@ -519,6 +579,7 @@ class KeyboardView(context: Context, private val palette: KeyboardPalette) : Vie
         }
 
         cell.hint?.let { hint ->
+            hintPaint.typeface = if (cell.hintBangla) banglaHintTypeface else hintTypeface
             if (DisplayLabel.isSign(hint)) DisplayLabel.drawSignTopRight(canvas, hint, r.right - 4 * density, r.top + 5 * density, hintPaint)
             else canvas.drawText(hint, r.right - 4 * density, r.top + 3 * density + hintPaint.textSize, hintPaint)
         }
@@ -657,6 +718,7 @@ class KeyboardView(context: Context, private val palette: KeyboardPalette) : Vie
         pointers[id] = p
         if (cell == null) return
         feedback?.keyDown(this, cell.key.style) ?: performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+        onKeyPressed?.invoke(cell.draw, x, y, cell.label.takeIf { cell.key.style == KeyStyle.CHARACTER && it.isNotBlank() && it.length <= 3 })
         startPress(p, cell)
         if (cell.key.style == KeyStyle.SPACE) handler.postDelayed(p.trackpadStart, TRACKPAD_MS)
         val hold = enterHold
@@ -674,8 +736,23 @@ class KeyboardView(context: Context, private val palette: KeyboardPalette) : Vie
 
     /** Handles space-bar and backspace swipes. Returns true if the move was used for a swipe. */
     private fun handleSwipe(p: Pointer, x: Float): Boolean {
-        if (!cursorSwipe || p.consumed || p.repeating || p.showingChoices) return false
+        if (p.consumed || p.repeating || p.showingChoices) return false
         val cell = p.cell ?: return false
+        if (spaceLanguageSwipe && cell.key.style == KeyStyle.SPACE) {
+            // Ridmik: slide right for the next language, left for the previous one. Holding
+            // space (without sliding) still turns the keyboard into a cursor trackpad.
+            val dx = x - p.downX
+            if (!p.swiping && kotlin.math.abs(dx) < swipeStart * 2) return false
+            if (!p.swiping && gestureOwns(cell.key.zone, dx, p.lastY - p.downY)) return false
+            if (!p.swiping) {
+                handler.removeCallbacks(p.trackpadStart)
+                p.swiping = true
+                emit(if (dx > 0) KeyAction.NextLayout else KeyAction.PreviousLayout)
+                stepTick()
+            }
+            return true
+        }
+        if (!cursorSwipe) return false
         when (cell.key.style) {
             KeyStyle.SPACE -> {
                 // Gboard: slide along the space bar to move the cursor a character at a time.

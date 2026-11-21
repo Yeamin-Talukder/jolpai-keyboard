@@ -63,8 +63,11 @@ class Suggester(
     /** Next-character probabilities for predictive touch targets. */
     val nextChars = NextCharPredictor(english, bangla, avro, history, lm)
 
+    /** Recognises Bangla typed in English letters (kept away from English autocorrect and the checker). */
+    val romanBangla = RomanBangla(english, bangla, avro)
+
     /** Offline spelling, punctuation and grammar checking (the ✓ Check tool). */
-    val checker = TextChecker(english, bangla, history, costs, lm)
+    val checker = TextChecker(english, bangla, history, costs, lm, romanBangla)
 
     // ------------------------------------------------------------------ English
 
@@ -118,6 +121,8 @@ class Suggester(
         val autoCorrect = when {
             !options.autoCorrect -> null
             shortcut != null -> applyCase(typed, shortcut)
+            // Bangla in English letters ("tumi kemon acho"): never turned into English words.
+            isRomanBanglaHere(typed, options.context) -> null
             // Known word in the wrong case, e.g. "i" → "I".
             entry != null -> applyCase(typed, entry.word).takeIf { it != typed && typed == lower && entry.word != lower }
             known -> null
@@ -125,6 +130,15 @@ class Suggester(
             else -> null
         }
         return WordSuggestions(typed, candidates, autoCorrect, known)
+    }
+
+    /**
+     * [typed] is Bangla in English letters: it reads as a common Bangla word and is long enough
+     * not to be a short English slip (se → সে), or the sentence already has Roman Bangla in it.
+     */
+    private fun isRomanBanglaHere(typed: String, context: List<String>): Boolean {
+        if (!romanBangla.isRomanBangla(typed)) return false
+        return typed.length >= RomanBangla.MIN_LONE_LENGTH || context.takeLast(4).any { romanBangla.isRomanBangla(it) }
     }
 
     /**
@@ -172,24 +186,43 @@ class Suggester(
     fun bangla(typed: String, limit: Int = 3, options: SuggestOptions = SuggestOptions()): WordSuggestions {
         val dict = bangla() ?: return WordSuggestions(typed, emptyList(), null, false)
         if (typed.isEmpty()) return WordSuggestions.EMPTY
-        val known = dict.contains(typed) || history.isKnown(Language.BANGLA, typed)
-        val p = if (options.useModel) lmBangla.predict(options.context) else null
+        // জাতীয় types keys as pressed (ো as ে + া): look words up in the list's spelling.
+        val key = BanglaSpelling.normalize(typed)
+        val known = dict.contains(key) || history.isKnown(Language.BANGLA, key) || history.isKnown(Language.BANGLA, typed)
+        val p = if (options.useModel) lmBangla.predict(options.context.map(BanglaNextWords::normalize)) else null
+        val candidates: List<String>
         if (p == null) {
             val out = LinkedHashSet<String>()
-            history.wordsWithPrefix(Language.BANGLA, typed, limit).forEach { out += it }
-            dict.completions(typed, limit * 2).forEach { out += it }
+            history.wordsWithPrefix(Language.BANGLA, key, limit).forEach { out += it }
+            dict.completions(key, limit * 2).forEach { out += it }
             out.remove(typed)
-            return WordSuggestions(typed, out.take(limit), null, known)
+            out.remove(key)
+            candidates = out.take(limit)
+        } else {
+            // With the model: the user's words first, then list completions and words the sentence
+            // makes likely, ranked by frequency blended with the model (as for English).
+            val scores = LinkedHashMap<String, Float>()
+            history.wordsWithPrefix(Language.BANGLA, key, limit).forEach { scores[it] = USER_WORD + history.count(Language.BANGLA, it) }
+            val fromList = dict.completions(key, limit * 4)
+            val fromModel = p.top(MODEL_COMPLETIONS, key) { dict.contains(it) || history.isKnown(Language.BANGLA, it, minCount = 1) }.map { it.first }
+            (fromList + fromModel).forEach { w -> if (w != key && w !in scores) scores[w] = blendBangla(w, dict.frequency(w), p) }
+            scores.remove(typed)
+            scores.remove(key)
+            candidates = scores.entries.sortedByDescending { it.value }.map { it.key }.take(limit)
         }
-        // With the model: the user's words first, then list completions and words the sentence
-        // makes likely, ranked by frequency blended with the model (as for English).
-        val scores = LinkedHashMap<String, Float>()
-        history.wordsWithPrefix(Language.BANGLA, typed, limit).forEach { scores[it] = USER_WORD + history.count(Language.BANGLA, it) }
-        val fromList = dict.completions(typed, limit * 4)
-        val fromModel = p.top(MODEL_COMPLETIONS, typed) { dict.contains(it) || history.isKnown(Language.BANGLA, it, minCount = 1) }.map { it.first }
-        (fromList + fromModel).forEach { w -> if (w != typed && w !in scores) scores[w] = blendBangla(w, dict.frequency(w), p) }
-        scores.remove(typed)
-        return WordSuggestions(typed, scores.entries.sortedByDescending { it.value }.map { it.key }.take(limit), null, known)
+        // No word starts like this: it is probably misspelt (পরিক্ষা, মুহুর্ত). Offer the checker's
+        // fixes first (never applied by themselves: Bangla has no autocorrect).
+        val fixes = if (!known && candidates.isEmpty()) banglaFixes(dict, key, options.context.lastOrNull(), limit) else emptyList()
+        return WordSuggestions(typed, (fixes + candidates).distinct().take(limit), null, known)
+    }
+
+    /** Spelling fixes for an unknown Bangla word, as the checker finds them (ranked by the user's words, then frequency). */
+    private fun banglaFixes(dict: BanglaDictionary, word: String, previous: String?, limit: Int): List<String> {
+        if (word.length < 3 || BanglaSpelling.isKnown(word) { dict.contains(it) }) return emptyList()
+        return BanglaSpelling.corrections(word, { dict.contains(it) }, limit) {
+            val pair = if (previous != null) history.bigramCount(Language.BANGLA, previous, it) else 0
+            minOf(pair, 5) * 5000 + history.count(Language.BANGLA, it) * 1000 + dict.frequency(it)
+        }
     }
 
     /** As [blend], on the Bangla list's scale (12 points per doubling of a word's count). */
@@ -237,7 +270,7 @@ class Suggester(
         val previous2 = secondPrevious(previous, options.context)
         val learnedScores = if (previous.isNullOrBlank()) emptyList() else history.nextWordScores(language, previous2, previous, limit * 2)
         if (language == Language.BANGLA) {
-            val p = if (options.useModel) lmBangla.predict(options.context) else null
+            val p = if (options.useModel) lmBangla.predict(options.context.map(BanglaNextWords::normalize)) else null
             return banglaNextWords(previous2, previous, learnedScores, limit, p)
         }
         val learned = learnedScores.map { it.first }

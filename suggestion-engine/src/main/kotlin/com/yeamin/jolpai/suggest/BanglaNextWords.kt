@@ -123,11 +123,11 @@ class BanglaNextWords private constructor(private val pairs: Lines, private val 
         private fun resource(path: String): ByteArray? =
             BanglaNextWords::class.java.getResourceAsStream(path)?.use { it.readBytes() }
 
-        /** As the lists were built: precomposed য় ড় ঢ়, no zero-width joiners. */
+        /** As the lists were built: precomposed য় ড় ঢ়, ো / ৌ as one letter ([BanglaSpelling.normalize]), no zero-width joiners. */
         fun normalize(word: String): String {
-            if (word.none { it == '়' || it == '‌' || it == '‍' }) return word
-            return word.replace("য়", "য়").replace("ড়", "ড়").replace("ঢ়", "ঢ়")
-                .replace("‌", "").replace("‍", "")
+            val w = BanglaSpelling.normalize(word)
+            if (w.none { it == '‌' || it == '‍' }) return w
+            return w.replace("‌", "").replace("‍", "")
         }
     }
 }

@@ -58,11 +58,28 @@ fun HomeScreen(
     activeThemeId: String = "",
     onSelectTheme: (String) -> Unit = {},
 ) {
-    SettingsScaffold("Jolpai Keyboard", onBack = null) {
+    SettingsScaffold(
+        "Jolpai Keyboard",
+        onBack = null,
+        actions = {
+            // Report a bug: a form that opens a filled-in GitHub issue with the phone's details.
+            androidx.compose.material3.IconButton(onClick = { onOpen(Destination.REPORT_BUG) }) {
+                MsIcon(UiR.drawable.ms_bug_report, "Report a bug")
+            }
+        },
+    ) {
         SetupCard(setup, settings.enabledLayouts, onOpenKeyboardSettings, onPickKeyboard)
         TryField(onMore = { onOpen(Destination.TEST_FIELDS) })
 
         SettingsGroup("Typing", tone = GroupTone.PRIMARY) {
+            SettingsItem(
+                "Quick setup",
+                listOfNotNull(
+                    com.yeamin.jolpai.core.settings.KeyboardStyle.of(settings)?.label ?: "Custom",
+                    "like your old keyboard, layouts, sound",
+                ).joinToString(" · "),
+                UiR.drawable.ms_tune,
+            ) { onOpen(Destination.QUICK_SETUP) }
             SettingsItem(
                 "Languages & layouts",
                 settings.enabledLayouts.joinToString(" · ") { it.displayName },
@@ -117,6 +134,11 @@ fun HomeScreen(
                 ).joinToString(" · "),
                 UiR.drawable.ms_height,
             ) { onOpen(Destination.SIZE) }
+            SettingsItem(
+                "Key font",
+                settings.banglaKeyFont?.let { bn -> "${settings.keyFont.label} · ${bn.label}" } ?: settings.keyFont.label,
+                UiR.drawable.ms_text_fields,
+            ) { onOpen(Destination.KEY_FONT) }
             SettingsItem(
                 "Sound & vibration",
                 (if (settings.haptics == HapticLevel.OFF) "No vibration" else "Vibration: ${settings.haptics.label.lowercase()}") +
@@ -206,7 +228,7 @@ private fun SetupCard(setup: SetupStatus, layouts: List<LayoutId>, onOpenKeyboar
 }
 
 @Composable
-private fun SetupStep(
+internal fun SetupStep(
     number: Int, title: String, detail: String, done: Boolean, action: String, onAction: () -> Unit, enabled: Boolean,
     help: Pair<String, () -> Unit>? = null,
 ) {

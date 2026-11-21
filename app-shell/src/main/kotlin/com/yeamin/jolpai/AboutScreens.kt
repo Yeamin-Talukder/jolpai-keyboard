@@ -100,7 +100,7 @@ private val NOTICES = listOf(
     Notice("Icons (Material Symbols by Google) — Apache-2.0", "/icons/NOTICE.txt", "/en/LICENSE-APACHE-2.0.txt"),
     Notice("Bangla word frequencies (FrequencyWords, OpenSubtitles) — CC BY-SA 4.0; code MIT", "/bn/NOTICE.txt", "/bn/LICENSE-MIT-FrequencyWords.txt"),
     Notice("English next-word model (Destin Moss, youcoded.ai; FineWeb and Tatoeba) — ODC-By 1.0 and CC BY 2.0 FR", "/lm/NOTICE.txt", "/lm/ODC-By-1.0.txt"),
-    Notice("Key fonts: Hind Siliguri, Tiro Bangla, Galada, Atma (Google Fonts) — SIL Open Font License 1.1", "/fonts/NOTICE.txt", "/fonts/OFL.txt"),
+    Notice("Key fonts: Hind Siliguri, Tiro Bangla, Galada, Atma, Baloo Da 2, Mina, Poppins, Quicksand, Space Mono, Pacifico, Dancing Script, Lobster, Kaushan Script, Indie Flower, Righteous, Orbitron, Press Start 2P (Google Fonts) — SIL Open Font License 1.1", "/fonts/NOTICE.txt", "/fonts/OFL.txt"),
 )
 
 // Read through one of the app's own classes: NOTICES::class.java is a system List class whose
@@ -111,7 +111,7 @@ private fun resourceText(path: String): String =
 /** Where an update check stands. */
 /** Version, updates, developer, privacy summary, permissions, and the licences of everything Jolpai includes. */
 @Composable
-fun AboutScreen(onBack: () -> Unit) {
+fun AboutScreen(onBack: () -> Unit, onReport: (() -> Unit)? = null) {
     val context = LocalContext.current
     val info = remember { deviceInfo(context) }
     val version = info.appVersion
@@ -130,8 +130,8 @@ fun AboutScreen(onBack: () -> Unit) {
         SettingsGroup("Updates & feedback", tone = GroupTone.PRIMARY) {
             UpdateSection(update, version)
             SettingsItem("What's new", "Changes in each version", UiR.drawable.ms_new_releases) { showChanges = true }
-            SettingsItem("Report a problem", "Opens a GitHub issue with your phone and app version filled in", UiR.drawable.ms_bug_report) {
-                openLink(context, AppUpdates.issueUrl(info) { Uri.encode(it) })
+            SettingsItem("Report a problem", "Describe it; Jolpai fills in a GitHub issue with your phone's details", UiR.drawable.ms_bug_report) {
+                if (onReport != null) onReport() else openLink(context, AppUpdates.issueUrl(info) { Uri.encode(it) })
             }
             SettingsItem("Share Jolpai", "Send the download link to a friend", UiR.drawable.ms_share) { shareJolpai(context) }
         }

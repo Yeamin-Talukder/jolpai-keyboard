@@ -197,8 +197,9 @@ class UserHistory(
      * after [previous2] [previous] when the word before that is known too.
      */
     @Synchronized
-    fun recordWord(language: Language, word: String, previous: String?, previous2: String? = null) {
-        if (word.isBlank()) return
+    fun recordWord(language: Language, word0: String, previous: String?, previous2: String? = null) {
+        if (word0.isBlank()) return
+        val word = if (language == Language.BANGLA) BanglaSpelling.normalize(word0) else word0
         val now = clock()
         val map = words.getOrPut(language) { HashMap() }
         val e = map.getOrPut(key(word)) { Entry(word, 0, now, 0f) }
@@ -231,7 +232,7 @@ class UserHistory(
 
     @Synchronized
     fun addPersonal(language: Language, word: String) {
-        val w = word.trim()
+        val w = word.trim().let { if (language == Language.BANGLA) BanglaSpelling.normalize(it) else it }
         if (w.isEmpty()) return
         personal.getOrPut(language) { HashMap() }[key(w)] = w
         store?.savePersonal(PersonalWord(language, w), present = true)
@@ -319,7 +320,8 @@ class UserHistory(
 
     private fun HashMap<String, HashMap<String, Entry>>.sumSize(): Int = values.sumOf { it.size }
 
-    private fun key(word: String) = word.lowercase()
+    // Bangla keys in the word list's spelling: ো typed as ে + া (জাতীয়, like Ridmik) is the same word.
+    private fun key(word: String) = BanglaSpelling.normalize(word.lowercase())
     private fun pairKey(previous2: String, previous: String) = key(previous2) + " " + key(previous)
 
     companion object {

@@ -44,9 +44,13 @@ class ThemeRepository @Inject constructor(
         }
     }
 
-    /** A copy of any theme as a new custom theme (the starting point for editing a built-in one). */
+    /**
+     * A copy of any theme as a new custom theme (the starting point for editing a built-in one).
+     * It keeps how the theme changes by itself: wallpaper colours, app colour (Chameleon),
+     * time of day and drifting glows.
+     */
     suspend fun duplicate(theme: KeyboardTheme): String =
-        save(theme.copy(id = "", name = (theme.name + " copy").take(40), dynamic = false))
+        save(theme.copy(id = "", name = (theme.name + " copy").take(40)))
 
     suspend fun delete(theme: KeyboardTheme) = withContext(Dispatchers.IO) {
         val id = theme.id.removePrefix(KeyboardTheme.CUSTOM_PREFIX).toLongOrNull() ?: return@withContext

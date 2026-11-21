@@ -13,19 +13,25 @@ data class TextEdit(val deleteBefore: Int, val insert: String) {
  * Turns key presses on the National (জাতীয়, BDS 1738) layout into correct Unicode text.
  *
  * The National layout types text in Unicode (logical) order: consonant first, then the kar.
- * A few key sequences combine with the text before the cursor:
+ * By default every key is inserted exactly as typed, like Ridmik Keyboard (checked key by key
+ * on a phone, 2026-11-21): a kar at the start stays a kar, `ে` + `া` stays two characters.
+ * One sequence always combines, as in Ridmik:
+ *
+ * - `্` + `্` → `্` + ZWNJ (an explicit, visible hasanta that blocks a conjunct)
+ *
+ * With [autoVowels] (an option, off by default) vowel signs are also fixed up:
  *
  * - hasanta `্` followed by a kar → the independent vowel (`্` + `া` → `আ`, `্` + `ি` → `ই`, …)
- * - a kar with no consonant to attach to → the independent vowel ([standaloneKarToVowel])
+ * - a kar with no consonant to attach to → the independent vowel
  * - `ে` + `া` → `ো`, and `ে` + `ৗ` → `ৌ`
- * - `্` + `্` → `্` + ZWNJ (an explicit, visible hasanta that blocks a conjunct)
- * - reph `র্` typed after a consonant cluster can be moved in front of it ([reorderReph]).
- *   This is off by default: the layout the user confirmed inserts reph where it is typed.
+ *
+ * Reph `র্` typed after a consonant cluster can be moved in front of it ([reorderReph]).
+ * This is off by default: Ridmik inserts reph where it is typed.
  *
  * This class is pure logic with no Android dependency; see `NationalComposerTest`.
  */
 class NationalComposer(
-    private val standaloneKarToVowel: Boolean = true,
+    private val autoVowels: Boolean = false,
     private val reorderReph: Boolean = false,
 ) {
 
@@ -33,7 +39,7 @@ class NationalComposer(
     fun compose(before: CharSequence, input: String): TextEdit {
         if (input.length == 1) {
             val c = input[0]
-            if (BanglaChars.isKar(c)) return composeKar(before.lastOrNull(), c)
+            if (autoVowels && BanglaChars.isKar(c)) return composeKar(before.lastOrNull(), c)
             if (c == BanglaChars.HASANTA && before.lastOrNull() == BanglaChars.HASANTA) {
                 return TextEdit(1, "${BanglaChars.HASANTA}${BanglaChars.ZWNJ}")
             }
@@ -50,7 +56,7 @@ class NationalComposer(
             if (kar == AA_KAR) return TextEdit(1, O_KAR.toString())
             if (kar == AU_LENGTH_MARK) return TextEdit(1, AU_KAR.toString())
         }
-        if (standaloneKarToVowel && !canCarryKar(prev)) {
+        if (!canCarryKar(prev)) {
             KAR_TO_VOWEL[kar]?.let { return TextEdit.insert(it.toString()) }
         }
         return TextEdit.insert(kar.toString())

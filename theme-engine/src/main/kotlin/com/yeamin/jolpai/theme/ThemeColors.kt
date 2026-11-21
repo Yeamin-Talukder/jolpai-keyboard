@@ -16,6 +16,51 @@ object ThemeColors {
         return (0xFF shl 24) or (ch(16) shl 16) or (ch(8) shl 8) or ch(0)
     }
 
+    /** Blends [a] towards [b] by [t] (0 = a, 1 = b), alpha included, for colours that may be see-through. */
+    fun lerp(a: Int, b: Int, t: Float): Int {
+        fun ch(shift: Int) = Math.round(((a ushr shift) and 0xFF) * (1 - t) + ((b ushr shift) and 0xFF) * t).coerceIn(0, 255)
+        return (ch(24) shl 24) or (ch(16) shl 16) or (ch(8) shl 8) or ch(0)
+    }
+
+    /** Hue (0–360), saturation and lightness (0–1) of a colour; alpha is ignored. */
+    fun toHsl(c: Int): FloatArray {
+        val r = ((c shr 16) and 0xFF) / 255f
+        val g = ((c shr 8) and 0xFF) / 255f
+        val b = (c and 0xFF) / 255f
+        val max = maxOf(r, g, b)
+        val min = minOf(r, g, b)
+        val l = (max + min) / 2
+        val d = max - min
+        if (d == 0f) return floatArrayOf(0f, 0f, l)
+        val s = d / (1 - Math.abs(2 * l - 1))
+        val h = when (max) {
+            r -> 60 * (((g - b) / d) % 6)
+            g -> 60 * ((b - r) / d + 2)
+            else -> 60 * ((r - g) / d + 4)
+        }
+        return floatArrayOf((h + 360) % 360, s.coerceIn(0f, 1f), l)
+    }
+
+    /** An opaque colour from hue (any degrees), saturation and lightness (0–1). */
+    fun fromHsl(h: Float, s: Float, l: Float, alpha: Int = 0xFF): Int {
+        val hue = ((h % 360) + 360) % 360
+        val sat = s.coerceIn(0f, 1f)
+        val light = l.coerceIn(0f, 1f)
+        val c = (1 - Math.abs(2 * light - 1)) * sat
+        val x = c * (1 - Math.abs((hue / 60) % 2 - 1))
+        val m = light - c / 2
+        val (r, g, b) = when {
+            hue < 60 -> Triple(c, x, 0f)
+            hue < 120 -> Triple(x, c, 0f)
+            hue < 180 -> Triple(0f, c, x)
+            hue < 240 -> Triple(0f, x, c)
+            hue < 300 -> Triple(x, 0f, c)
+            else -> Triple(c, 0f, x)
+        }
+        fun ch(v: Float) = Math.round((v + m) * 255).coerceIn(0, 255)
+        return (alpha.coerceIn(0, 255) shl 24) or (ch(r) shl 16) or (ch(g) shl 8) or ch(b)
+    }
+
     /** WCAG relative luminance of an opaque colour. */
     fun luminance(c: Int): Double {
         fun lin(v: Int): Double = (v / 255.0).let { if (it <= 0.03928) it / 12.92 else Math.pow((it + 0.055) / 1.055, 2.4) }

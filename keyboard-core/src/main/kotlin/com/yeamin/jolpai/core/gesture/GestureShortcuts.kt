@@ -88,8 +88,8 @@ enum class GestureAction(val id: String, val title: String, val description: Str
     COPY("copy", "Copy", "Copy the selection"),
     CUT("cut", "Cut", "Cut the selection"),
     PASTE("paste", "Paste", "Paste the clipboard"),
-    UNDO("undo", "Undo", "Where the app supports it"),
-    REDO("redo", "Redo", "Where the app supports it"),
+    UNDO("undo", "Undo", "Takes back your last word, delete or paste, in any app"),
+    REDO("redo", "Redo", "Puts back what Undo took away"),
     ;
 
     /**
@@ -279,7 +279,7 @@ object GestureConflicts {
             "Replaces moving the cursor in that direction"
         zone == GestureZone.COMMA && type == GestureType.LONG_PRESS -> "Replaces the comma's punctuation menu"
         zone == GestureZone.PERIOD && type == GestureType.LONG_PRESS -> "Replaces the full stop's punctuation menu"
-        zone == GestureZone.TOOLBAR -> "Works while the tools are showing (not over scrolling suggestions)"
+        zone == GestureZone.TOOLBAR -> "Slide along the top bar until the pill fills, then let go; slide back to cancel. Not over suggestions that scroll"
         type == GestureType.DOUBLE_TAP -> "A single tap on this key waits a moment to see if a second tap follows"
         else -> null
     }

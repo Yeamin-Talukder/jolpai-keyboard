@@ -124,12 +124,19 @@ class KeyboardControllerTest {
     }
 
     @Test fun `probhat composes like the national layout`() {
-        controller.updateSettings(KeyboardSettings(enabledLayouts = listOf(LayoutId.ENGLISH, LayoutId.PROBHAT)))
+        controller.updateSettings(KeyboardSettings(enabledLayouts = listOf(LayoutId.ENGLISH, LayoutId.PROBHAT), banglaAutoVowels = true))
         key(KeyAction.SelectLayout(LayoutId.PROBHAT))
-        // ক ি → কি, ে then া → ো, a kar with nothing before it → the full vowel
+        // With "fix vowel signs": ক ি → কি, ে then া → ো, a kar with nothing before it → the full vowel
         listOf("ক", "ি", " ", "ক", "ে", "া", " ", "ি").forEach { key(if (it == " ") KeyAction.Space else KeyAction.Text(it)) }
         assertEquals("কি কো ই", editor.text.toString())
         assertEquals(ShiftState.OFF, shift)
+    }
+
+    @Test fun `bangla keys go in as typed by default, like Ridmik`() {
+        controller.updateSettings(KeyboardSettings(enabledLayouts = listOf(LayoutId.ENGLISH, LayoutId.NATIONAL)))
+        key(KeyAction.SelectLayout(LayoutId.NATIONAL))
+        listOf("ক", "ে", "া", " ", "ি").forEach { key(if (it == " ") KeyAction.Space else KeyAction.Text(it)) }
+        assertEquals("কো ি", editor.text.toString())
     }
 
     @Test fun `disabling the active layout switches away from it`() {
@@ -255,7 +262,8 @@ class KeyboardControllerTest {
         listOf("ক", "ে", "া", "থ", "া", "য়").forEach { key(KeyAction.Text(it)) }
         key(KeyAction.Space)
         key(KeyAction.Space)
-        assertEquals("কোথায়। ", editor.text.toString())
+        // ে + া stays two characters by default, exactly as Ridmik types it.
+        assertEquals("ক\u09C7\u09BEথায়। ", editor.text.toString())
         assertEquals(ShiftState.OFF, shift) // no auto-caps in Bangla
     }
 

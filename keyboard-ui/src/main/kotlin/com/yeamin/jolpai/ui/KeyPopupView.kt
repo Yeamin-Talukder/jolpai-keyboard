@@ -36,10 +36,14 @@ class KeyPopupView(context: Context, private val palette: KeyboardPalette) : Vie
         textAlign = Paint.Align.CENTER
     }
 
-    /** The key font, so the preview bubble matches the keys. */
-    fun setKeyFont(fonts: Pair<android.graphics.Typeface, android.graphics.Typeface>?) {
-        fonts?.let { textPaint.typeface = it.first }
+    /** The key fonts (English, Bangla), so the preview bubble and choices match the keys. */
+    fun setKeyFont(fonts: Pair<android.graphics.Typeface, android.graphics.Typeface>?, bangla: Pair<android.graphics.Typeface, android.graphics.Typeface>? = fonts) {
+        englishTypeface = fonts?.first ?: android.graphics.Typeface.DEFAULT
+        banglaTypeface = bangla?.first ?: android.graphics.Typeface.DEFAULT
     }
+
+    private var englishTypeface: android.graphics.Typeface = android.graphics.Typeface.DEFAULT
+    private var banglaTypeface: android.graphics.Typeface = android.graphics.Typeface.DEFAULT
 
     private var previewRect: RectF? = null
     private var previewLabel = ""
@@ -213,6 +217,7 @@ class KeyPopupView(context: Context, private val palette: KeyboardPalette) : Vie
     }
 
     private fun drawCentered(canvas: Canvas, label: String, r: RectF) {
+        textPaint.typeface = if (DisplayLabel.isBangla(label)) banglaTypeface else englishTypeface
         // A sign on its own (à¦¿ à§ à§ â¦) is centred by its drawn shape, like on the key.
         if (DisplayLabel.isSign(label)) return DisplayLabel.drawSignCentered(canvas, label, r.centerX(), r.centerY(), textPaint)
         val fm = textPaint.fontMetrics

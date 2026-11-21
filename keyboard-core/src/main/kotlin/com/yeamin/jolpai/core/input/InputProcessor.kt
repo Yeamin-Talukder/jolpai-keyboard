@@ -106,13 +106,17 @@ class EnglishProcessor(doubleSpaceEnabled: () -> Boolean) : DirectInputProcessor
 
 class NationalProcessor(
     doubleSpaceEnabled: () -> Boolean,
-    private val composer: NationalComposer = NationalComposer(),
+    /** Fix vowel signs automatically (off: every key goes in as typed, like Ridmik). */
+    private val autoVowels: () -> Boolean = { false },
 ) : DirectInputProcessor("।", doubleSpaceEnabled) {
+
+    private val asTyped = NationalComposer(autoVowels = false)
+    private val fixing = NationalComposer(autoVowels = true)
 
     override fun insert(text: String, editor: TextEditor) {
         // When text is selected the new text replaces it, so nothing before the cursor combines.
         val before = if (editor.hasSelection()) "" else editor.textBeforeCursor(CONTEXT)
-        val edit = composer.compose(before, text)
+        val edit = (if (autoVowels()) fixing else asTyped).compose(before, text)
         if (edit.deleteBefore > 0) editor.replaceBefore(edit.deleteBefore, edit.insert) else editor.commit(edit.insert)
     }
 

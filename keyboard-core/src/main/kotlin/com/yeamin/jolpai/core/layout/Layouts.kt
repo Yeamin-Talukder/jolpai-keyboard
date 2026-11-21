@@ -26,6 +26,8 @@ class LayoutFactory(
     private val available: List<LayoutId> = LayoutId.entries,
     /** Show a row of digits above the letters (then digits leave the top row's long-press). */
     private val numberRow: Boolean = false,
+    /** Bottom row, space bar and letter hints like Jolpai, Ridmik or Gboard. */
+    private val look: com.yeamin.jolpai.core.settings.KeyLook = com.yeamin.jolpai.core.settings.KeyLook.JOLPAI,
 ) {
 
     private data class CacheKey(val id: LayoutId, val page: KeyboardPage, val shifted: Boolean, val bottom: BottomVariant)
@@ -66,8 +68,11 @@ class LayoutFactory(
         val accents = id == LayoutId.ENGLISH
         fun letter(c: Char, digit: Char? = null): Key {
             val label = if (shifted) c.uppercase() else c.toString()
+            // Ridmik shows a symbol in the corner of the lower letters; holding types it.
+            val symbol = if (look == com.yeamin.jolpai.core.settings.KeyLook.RIDMIK) RIDMIK_SYMBOL_HINTS[c] else null
             val extras = buildList {
                 if (digit != null) add(digit.toString())
+                if (symbol != null) add(symbol)
                 if (accents) ACCENTS[c]?.forEach { add(if (shifted) it.uppercase() else it) }
             }
             // Editing shortcuts on long-press, like Ctrl+X / C / V: x cuts, c copies, v pastes.
@@ -78,9 +83,9 @@ class LayoutFactory(
                 else -> null
             }
             return Key(
-                label, KeyAction.Text(label), hint = digit?.toString(),
+                label, KeyAction.Text(label), hint = digit?.toString() ?: symbol,
                 popup = if (shortcut != null) emptyList() else extras.map { PopupItem(it, KeyAction.Text(it)) },
-                longPress = shortcut,
+                longPress = if (symbol != null) null else shortcut,
             )
         }
         val row1 = "qwertyuiop".mapIndexed { i, c -> letter(c, if (numberRow) null else DIGITS[i]) }
@@ -297,7 +302,12 @@ class LayoutFactory(
         return KeyRow(
             listOf(
                 pageKey(pageLabel, pageTarget),
-                *(if (field.isPassword) arrayOf(comma.copy(zone = GestureZone.COMMA), spaceKey(id, 5f + extraSpace)) else arrayOf(emojiKey(), comma.copy(zone = GestureZone.COMMA), spaceKey(id, 4f + extraSpace))),
+                *when {
+                    field.isPassword -> arrayOf(comma.copy(zone = GestureZone.COMMA), spaceKey(id, 5f + extraSpace))
+                    // Gboard puts the comma before the emoji key.
+                    look == com.yeamin.jolpai.core.settings.KeyLook.GBOARD -> arrayOf(comma.copy(zone = GestureZone.COMMA), emojiKey(), spaceKey(id, 4f + extraSpace))
+                    else -> arrayOf(emojiKey(), comma.copy(zone = GestureZone.COMMA), spaceKey(id, 4f + extraSpace))
+                },
                 period.copy(zone = GestureZone.PERIOD),
                 enter,
             ),
@@ -325,7 +335,11 @@ class LayoutFactory(
     private fun deleteKey(width: Float = 1.5f) = Key("⌫", KeyAction.Delete, width = width, style = KeyStyle.DELETE, icon = KeyIcon.DELETE, zone = GestureZone.BACKSPACE)
 
     /** Space shows the language. Swipe it to move the cursor; hold it for trackpad mode. */
-    private fun spaceKey(id: LayoutId, width: Float): Key = Key(id.spaceLabel, KeyAction.Space, width = width, style = KeyStyle.SPACE, zone = GestureZone.SPACE)
+    private fun spaceKey(id: LayoutId, width: Float): Key {
+        // Ridmik: arrows on the space bar say "slide me to change language".
+        val label = if (look == com.yeamin.jolpai.core.settings.KeyLook.RIDMIK && available.size > 1) "◂  ${id.spaceLabel}  ▸" else id.spaceLabel
+        return Key(label, KeyAction.Space, width = width, style = KeyStyle.SPACE, zone = GestureZone.SPACE)
+    }
 
     private fun spaceKey(label: String, width: Float) = Key(label, KeyAction.Space, width = width, style = KeyStyle.SPACE, zone = GestureZone.SPACE)
 
@@ -344,6 +358,11 @@ class LayoutFactory(
     }
 
     private companion object {
+        /** Ridmik's corner symbols on the English letters (rows two and three). */
+        val RIDMIK_SYMBOL_HINTS = mapOf(
+            'a' to "@", 's' to "#", 'd' to "&", 'f' to "*", 'g' to "-", 'h' to "!", 'j' to "?", 'k' to "(", 'l' to ")",
+            'z' to "\"", 'b' to "'", 'n' to ":", 'm' to "/",
+        )
         val DIGITS = "1234567890".toList()
         const val DIGIT_WIDTH = 1.5f
         val BANGLA_DIGITS = "১২৩৪৫৬৭৮৯০".toList()

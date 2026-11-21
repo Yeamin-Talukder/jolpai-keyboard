@@ -31,6 +31,11 @@ import kotlinx.coroutines.flow.map
 data class KeyboardSettings(
     val autoCapitalize: Boolean = true,
     val doubleSpacePeriod: Boolean = true,
+    /**
+     * জাতীয় and প্রভাত: fix vowel signs automatically (`্` + `া` → `আ`, a kar with nothing before
+     * it → its vowel, `ে` + `া` → `ো`). Off by default: every key goes in as typed, like Ridmik.
+     */
+    val banglaAutoVowels: Boolean = false,
     /** Start with the layout used last; otherwise always start with [defaultLayout]. */
     val rememberLastLayout: Boolean = true,
     val defaultLayout: LayoutId = LayoutId.ENGLISH,
@@ -70,6 +75,8 @@ data class KeyboardSettings(
     val toolbar: List<ToolbarItem> = ToolbarItem.DEFAULT,
     /** Where emoji and clipboard open: above the keyboard (the keys stay) or in place of the keys. */
     val panelPlacement: PanelPlacement = PanelPlacement.ABOVE,
+    /** Which keyboard the bottom row, space bar and key hints follow (Jolpai, Ridmik or Gboard). */
+    val keyLook: KeyLook = KeyLook.JOLPAI,
     /** Default emoji skin tone: 0 = yellow, 1–5 = light to dark. */
     val emojiSkinTone: Int = 0,
     /** Suggest emoji for the word being typed (English and Bangla keywords). */
@@ -90,6 +97,18 @@ data class KeyboardSettings(
     val numberRow: Boolean = false,
     val oneHanded: OneHanded = OneHanded.OFF,
     val keyFont: KeyFont = KeyFont.SYSTEM,
+    /**
+     * A separate font for Bangla letters ("Mix fonts"), or null to use [keyFont] for both
+     * (see [banglaLettersFont]). Always a font with Bangla letters.
+     */
+    val banglaKeyFont: KeyFont? = null,
+    /**
+     * The font file the user picked for [KeyFont.CUSTOM] (its name as shown in settings), or null.
+     * The file itself is kept in the app's storage, not in backups; [customKeyFontVersion]
+     * changes each time a file is picked or removed, so the keyboard reloads it.
+     */
+    val customKeyFontName: String? = null,
+    val customKeyFontVersion: Long = 0,
     val soundPack: SoundPack = SoundPack.SYSTEM,
     val splitKeys: SplitKeys = SplitKeys.OFF,
     /** Floating keyboard (a movable, smaller keyboard over the app), with its position. */
@@ -126,14 +145,109 @@ enum class PanelPlacement(val storageKey: String, val label: String, val summary
     }
 }
 
-/** The typeface on the keys (bundled Bangla fonts, SIL Open Font License). */
-enum class KeyFont(val storageKey: String, val label: String) {
-    SYSTEM("system", "Phone default"),
-    HIND_SILIGURI("hind", "Hind Siliguri"),
-    TIRO_BANGLA("tiro", "Tiro Bangla"),
-    GALADA("galada", "Galada"),
-    ATMA("atma", "Atma"),
+/**
+ * How the bottom row, the space bar and the letter hints look, copied from the keyboards
+ * people switch from (checked against Ridmik and Gboard on a Pixel 7 Pro, 2026-11-21).
+ *
+ * - [JOLPAI]: `?123 😊 , space . ↵`; the language button is in the top bar.
+ * - [RIDMIK]: the same keys, but the space bar shows `◂ English ▸` and sliding along it
+ *   changes the language (holding it still moves the cursor); English letters show Ridmik's
+ *   symbol hints (a @, s #, … m /).
+ * - [GBOARD]: `?123 , 😊 space . ↵` (comma before emoji).
+ */
+enum class KeyLook(val storageKey: String) {
+    JOLPAI("jolpai"),
+    RIDMIK("ridmik"),
+    GBOARD("gboard"),
+    ;
+
+    companion object {
+        fun fromStorageKey(key: String?): KeyLook = entries.firstOrNull { it.storageKey == key } ?: JOLPAI
+    }
 }
+
+
+/**
+ * The typeface on the keys: the phone's, one of the bundled fonts (Google Fonts and other open
+ * fonts, SIL Open Font License or Apache 2.0), or a font file the user picked ([CUSTOM]).
+ * [bangla] / [english] say which letters a font has; keys whose letters a font lacks use the
+ * phone's font. With [KeyboardSettings.banglaKeyFont] set, Bangla letters use a second font.
+ */
+enum class KeyFont(val storageKey: String, val label: String, val group: Group, val english: Boolean = true) {
+    SYSTEM("system", "Phone default", Group.OTHER),
+
+    // Bangla and English letters, for everyday typing.
+    HIND_SILIGURI("hind", "Hind Siliguri", Group.BANGLA),
+    TIRO_BANGLA("tiro", "Tiro Bangla", Group.BANGLA),
+    KALPURUSH("kalpurush", "Kalpurush", Group.BANGLA),
+    BALOO_DA("balooda", "Baloo Da 2", Group.BANGLA),
+    MINA("mina", "Mina", Group.BANGLA),
+    KALAA("kalaa", "Kalaa", Group.BANGLA),
+    NOTO_SERIF_BENGALI("notoserifbn", "Noto Serif Bengali", Group.BANGLA, english = false),
+
+    // Stylish Bangla (with English letters too).
+    GALADA("galada", "Galada", Group.BANGLA_STYLISH),
+    ATMA("atma", "Atma", Group.BANGLA_STYLISH),
+    ALKATRA("alkatra", "Alkatra", Group.BANGLA_STYLISH),
+    TIRO_BANGLA_ITALIC("tiroitalic", "Tiro Bangla Italic", Group.BANGLA_STYLISH),
+    BALOO_DA_HEAVY("baloodaheavy", "Baloo Da 2 Heavy", Group.BANGLA_STYLISH),
+
+    // English letters only.
+    POPPINS("poppins", "Poppins", Group.ENGLISH),
+    QUICKSAND("quicksand", "Quicksand", Group.ENGLISH),
+    SPACE_MONO("spacemono", "Space Mono", Group.ENGLISH),
+
+    // Stylish English.
+    PACIFICO("pacifico", "Pacifico", Group.STYLISH),
+    DANCING_SCRIPT("dancing", "Dancing Script", Group.STYLISH),
+    LOBSTER("lobster", "Lobster", Group.STYLISH),
+    SATISFY("satisfy", "Satisfy", Group.STYLISH),
+    COURGETTE("courgette", "Courgette", Group.STYLISH),
+    KAUSHAN_SCRIPT("kaushan", "Kaushan Script", Group.STYLISH),
+    PERMANENT_MARKER("marker", "Permanent Marker", Group.STYLISH),
+    INDIE_FLOWER("indieflower", "Indie Flower", Group.STYLISH),
+    SHADOWS_INTO_LIGHT("shadows", "Shadows Into Light", Group.STYLISH),
+    FREDOKA("fredoka", "Fredoka", Group.STYLISH),
+    BANGERS("bangers", "Bangers", Group.STYLISH),
+    ABRIL_FATFACE("abril", "Abril Fatface", Group.STYLISH),
+    RIGHTEOUS("righteous", "Righteous", Group.STYLISH),
+    ORBITRON("orbitron", "Orbitron", Group.STYLISH),
+    CREEPSTER("creepster", "Creepster", Group.STYLISH),
+    PRESS_START("pressstart", "Press Start 2P", Group.STYLISH),
+
+    CUSTOM("custom", "Your own font", Group.OTHER),
+    ;
+
+    enum class Group(val title: String) {
+        BANGLA("Bangla and English"),
+        BANGLA_STYLISH("Stylish Bangla"),
+        ENGLISH("English"),
+        STYLISH("Stylish English"),
+        OTHER(""),
+    }
+
+    /** Has Bangla letters (the phone's font, a custom font, or a Bangla font). */
+    val bangla: Boolean get() = group == Group.BANGLA || group == Group.BANGLA_STYLISH || group == Group.OTHER
+
+    companion object {
+        fun fromStorageKey(key: String?): KeyFont = entries.firstOrNull { it.storageKey == key } ?: SYSTEM
+
+        /** The bundled fonts of [group] (never SYSTEM or CUSTOM). */
+        fun bundled(group: Group): List<KeyFont> = if (group == Group.OTHER) emptyList() else entries.filter { it.group == group }
+
+        /** Groups listed for English letters / for Bangla letters when the two use different fonts. */
+        val ENGLISH_GROUPS = listOf(Group.BANGLA, Group.BANGLA_STYLISH, Group.ENGLISH, Group.STYLISH)
+        val BANGLA_GROUPS = listOf(Group.BANGLA, Group.BANGLA_STYLISH)
+    }
+}
+
+/**
+ * The font for Bangla letters: the separate Bangla font if one is set, else the main font when
+ * it has Bangla letters, else the phone's font.
+ */
+val KeyboardSettings.banglaLettersFont: KeyFont get() = banglaLettersFont(keyFont, banglaKeyFont)
+
+fun banglaLettersFont(main: KeyFont, bangla: KeyFont?): KeyFont = bangla ?: if (main.bangla) main else KeyFont.SYSTEM
 
 /** How key presses sound: the phone's click, or one of Jolpai's own sounds (made in code, no files). */
 enum class SoundPack(val storageKey: String, val label: String) {
@@ -187,6 +301,7 @@ class KeyboardSettingsRepository @Inject constructor(
             KeyboardSettings(
                 autoCapitalize = p[AUTO_CAPITALIZE] ?: true,
                 doubleSpacePeriod = p[DOUBLE_SPACE_PERIOD] ?: true,
+                banglaAutoVowels = p[BANGLA_AUTO_VOWELS] ?: false,
                 rememberLastLayout = p[REMEMBER_LAST_LAYOUT] ?: true,
                 defaultLayout = LayoutId.fromStorageKey(p[DEFAULT_LAYOUT]) ?: LayoutId.ENGLISH,
                 lastLayout = LayoutId.fromStorageKey(p[LAST_LAYOUT]) ?: LayoutId.ENGLISH,
@@ -220,6 +335,7 @@ class KeyboardSettingsRepository @Inject constructor(
                 }
                     ?: ToolbarItem.DEFAULT,
                 panelPlacement = PanelPlacement.fromStorageKey(p[PANEL_PLACEMENT]),
+                keyLook = KeyLook.fromStorageKey(p[KEY_LOOK]),
                 emojiSkinTone = (p[EMOJI_TONE] ?: 0).coerceIn(0, 5),
                 emojiSuggestions = p[EMOJI_SUGGESTIONS] ?: true,
                 smartPredictions = p[SMART_PREDICTIONS] ?: true,
@@ -231,7 +347,8 @@ class KeyboardSettingsRepository @Inject constructor(
                 heightLandscape = (p[HEIGHT_LANDSCAPE] ?: 100).coerceIn(70, 140),
                 numberRow = p[NUMBER_ROW] ?: false,
                 oneHanded = OneHanded.entries.firstOrNull { it.storageKey == p[ONE_HANDED] } ?: OneHanded.OFF,
-                keyFont = KeyFont.entries.firstOrNull { it.storageKey == p[KEY_FONT] } ?: KeyFont.SYSTEM,
+                keyFont = KeyFont.fromStorageKey(p[KEY_FONT]),
+                banglaKeyFont = p[BANGLA_KEY_FONT]?.let(KeyFont::fromStorageKey)?.takeIf { it.bangla },
                 soundPack = SoundPack.entries.firstOrNull { it.storageKey == p[SOUND_PACK] } ?: SoundPack.SYSTEM,
                 splitKeys = SplitKeys.entries.firstOrNull { it.storageKey == p[SPLIT_KEYS] } ?: SplitKeys.OFF,
                 floating = p[FLOATING] ?: false,
@@ -240,6 +357,8 @@ class KeyboardSettingsRepository @Inject constructor(
                 haptics = HapticLevel.entries.firstOrNull { it.storageKey == p[HAPTICS] } ?: HapticLevel.SYSTEM,
                 keySound = p[KEY_SOUND] ?: true,
                 soundVolume = (p[SOUND_VOLUME] ?: 0.4f).coerceIn(0f, 1f),
+                customKeyFontName = p[CUSTOM_FONT_NAME],
+                customKeyFontVersion = p[CUSTOM_FONT_VERSION] ?: 0L,
             )
         }
         .distinctUntilChanged()
@@ -255,6 +374,7 @@ class KeyboardSettingsRepository @Inject constructor(
 
     suspend fun setAutoCapitalize(value: Boolean) = dataStore.edit { it[AUTO_CAPITALIZE] = value }
     suspend fun setDoubleSpacePeriod(value: Boolean) = dataStore.edit { it[DOUBLE_SPACE_PERIOD] = value }
+    suspend fun setBanglaAutoVowels(value: Boolean) = dataStore.edit { it[BANGLA_AUTO_VOWELS] = value }
     suspend fun setRememberLastLayout(value: Boolean) = dataStore.edit { it[REMEMBER_LAST_LAYOUT] = value }
     suspend fun setDefaultLayout(value: LayoutId) = dataStore.edit { it[DEFAULT_LAYOUT] = value.storageKey }
     suspend fun setLastLayout(value: LayoutId) = dataStore.edit { it[LAST_LAYOUT] = value.storageKey }
@@ -305,6 +425,60 @@ class KeyboardSettingsRepository @Inject constructor(
     suspend fun setKeySound(value: Boolean) = dataStore.edit { it[KEY_SOUND] = value }
     suspend fun setSoundVolume(value: Float) = dataStore.edit { it[SOUND_VOLUME] = value.coerceIn(0f, 1f) }
 
+    /** A separate font for Bangla letters, or null to use the main key font for both. */
+    suspend fun setBanglaKeyFont(value: KeyFont?) = dataStore.edit {
+        if (value == null) it.remove(BANGLA_KEY_FONT) else it[BANGLA_KEY_FONT] = value.storageKey
+    }
+
+    /**
+     * A newly picked custom key font: remembers its name, selects it (for Bangla letters when
+     * [forBangla], else as the main font), and makes the keyboard reload it.
+     */
+    suspend fun setCustomKeyFont(name: String, forBangla: Boolean = false) = dataStore.edit {
+        it[CUSTOM_FONT_NAME] = name
+        it[CUSTOM_FONT_VERSION] = (it[CUSTOM_FONT_VERSION] ?: 0L) + 1
+        if (forBangla) it[BANGLA_KEY_FONT] = KeyFont.CUSTOM.storageKey else it[KEY_FONT] = KeyFont.CUSTOM.storageKey
+    }
+
+    /** The custom key font was removed: back to the phone's font wherever it was in use. */
+    suspend fun clearCustomKeyFont() = dataStore.edit {
+        it.remove(CUSTOM_FONT_NAME)
+        it[CUSTOM_FONT_VERSION] = (it[CUSTOM_FONT_VERSION] ?: 0L) + 1
+        if (it[KEY_FONT] == KeyFont.CUSTOM.storageKey) it[KEY_FONT] = KeyFont.SYSTEM.storageKey
+        if (it[BANGLA_KEY_FONT] == KeyFont.CUSTOM.storageKey) it[BANGLA_KEY_FONT] = KeyFont.SYSTEM.storageKey
+    }
+
+    /**
+     * Whether the welcome flow has been finished or skipped: null until a choice was saved
+     * (a fresh install, or an install from before the welcome flow existed).
+     */
+    val welcomeDone: Flow<Boolean?> = dataStore.data.map { it[WELCOME_DONE] }.distinctUntilChanged()
+
+    suspend fun setWelcomeDone(value: Boolean) = dataStore.edit { it[WELCOME_DONE] = value }
+
+    /** Saves the welcome flow's answers in one step, so the keyboard sees them all at once. */
+    suspend fun applyWelcome(choices: WelcomeChoices) = dataStore.edit { p ->
+        p[ENABLED_LAYOUTS] = choices.layouts.map { it.storageKey }.toSet()
+        p[LAST_LAYOUT] = choices.startLayout.storageKey
+        p[DEFAULT_LAYOUT] = choices.startLayout.storageKey
+        p[AUTO_CORRECT] = choices.autoCorrect
+        p[NUMBER_ROW] = choices.numberRow
+        p[KEY_SOUND] = choices.keySound
+        p[HAPTICS] = (if (choices.vibrate) HapticLevel.SYSTEM else HapticLevel.OFF).storageKey
+        p[TOOLBAR] = choices.style.toolbar.joinToString(",") { it.storageKey }
+        p[TOOLBAR_SEEN] = ToolbarItem.entries.map { it.storageKey }.toSet()
+        p[PANEL_PLACEMENT] = choices.style.panelPlacement.storageKey
+        p[KEY_LOOK] = choices.style.look.storageKey
+    }
+
+    /** Switches style: toolbar, where panels open, and the bottom row's look. */
+    suspend fun applyStyle(style: KeyboardStyle) = dataStore.edit { p ->
+        p[TOOLBAR] = style.toolbar.joinToString(",") { it.storageKey }
+        p[TOOLBAR_SEEN] = ToolbarItem.entries.map { it.storageKey }.toSet()
+        p[PANEL_PLACEMENT] = style.panelPlacement.storageKey
+        p[KEY_LOOK] = style.look.storageKey
+    }
+
     /**
      * Every setting as a plain value, for a backup file. The GIPHY API key is a secret and
      * is left out.
@@ -333,6 +507,7 @@ class KeyboardSettingsRepository @Inject constructor(
     private companion object {
         val AUTO_CAPITALIZE = booleanPreferencesKey("auto_capitalize")
         val DOUBLE_SPACE_PERIOD = booleanPreferencesKey("double_space_period")
+        val BANGLA_AUTO_VOWELS = booleanPreferencesKey("bangla_auto_vowels")
         val FESTIVAL_THEMES = booleanPreferencesKey("festival_themes")
         val REMEMBER_LAST_LAYOUT = booleanPreferencesKey("remember_last_layout")
         val DEFAULT_LAYOUT = stringPreferencesKey("default_layout")
@@ -357,6 +532,7 @@ class KeyboardSettingsRepository @Inject constructor(
         val GESTURES = stringPreferencesKey("gesture_config")
         val TOOLBAR = stringPreferencesKey("toolbar")
         val PANEL_PLACEMENT = stringPreferencesKey("panel_placement")
+        val KEY_LOOK = stringPreferencesKey("key_look")
 
         /** Every tool the user's saved toolbar order already knew about (newer ones get appended). */
         val TOOLBAR_SEEN = stringSetPreferencesKey("toolbar_seen")
@@ -374,6 +550,7 @@ class KeyboardSettingsRepository @Inject constructor(
         val NUMBER_ROW = booleanPreferencesKey("number_row")
         val ONE_HANDED = stringPreferencesKey("one_handed")
         val KEY_FONT = stringPreferencesKey("key_font")
+        val BANGLA_KEY_FONT = stringPreferencesKey("bangla_key_font")
         val SOUND_PACK = stringPreferencesKey("sound_pack")
         val SPLIT_KEYS = stringPreferencesKey("split_keys")
         val FLOATING = booleanPreferencesKey("floating")
@@ -383,13 +560,20 @@ class KeyboardSettingsRepository @Inject constructor(
         val KEY_SOUND = booleanPreferencesKey("key_sound")
         val SOUND_VOLUME = floatPreferencesKey("sound_volume")
 
+        /** Not in backups: the font file isn't backed up, so a restored "custom" falls back to the phone's font. */
+        val CUSTOM_FONT_NAME = stringPreferencesKey("custom_key_font_name")
+        val CUSTOM_FONT_VERSION = longPreferencesKey("custom_key_font_version")
+
+        /** Not in backups: a restored phone has already been through the welcome flow or skips it. */
+        val WELCOME_DONE = booleanPreferencesKey("welcome_done")
+
         /** Settings that go into a backup file (everything except the GIPHY key). */
         val BACKUP_KEYS: Set<String> = listOf(
-            AUTO_CAPITALIZE, DOUBLE_SPACE_PERIOD, REMEMBER_LAST_LAYOUT, DEFAULT_LAYOUT, LAST_LAYOUT, ENABLED_LAYOUTS,
+            AUTO_CAPITALIZE, DOUBLE_SPACE_PERIOD, BANGLA_AUTO_VOWELS, REMEMBER_LAST_LAYOUT, DEFAULT_LAYOUT, LAST_LAYOUT, ENABLED_LAYOUTS,
             SHOW_SUGGESTIONS, AUTO_CORRECT, NEXT_WORD, LEARNING, BLOCK_OFFENSIVE, CLIPBOARD_HISTORY, CLIPBOARD_IMAGES,
-            CLIPBOARD_RETENTION, CURSOR_SWIPE, TRACKPAD_VERTICAL, ENTER_HOLD_EMOJI, ENTER_HOLD_SELECT, LONG_PRESS, PREDICTIVE_TOUCH, TOUCH_CALIBRATION, GESTURES, TOOLBAR, TOOLBAR_SEEN, PANEL_PLACEMENT, EMOJI_TONE, EMOJI_SUGGESTIONS, SMART_PREDICTIONS, VOICE_LANGUAGE, THEME_ID,
+            CLIPBOARD_RETENTION, CURSOR_SWIPE, TRACKPAD_VERTICAL, ENTER_HOLD_EMOJI, ENTER_HOLD_SELECT, LONG_PRESS, PREDICTIVE_TOUCH, TOUCH_CALIBRATION, GESTURES, TOOLBAR, TOOLBAR_SEEN, PANEL_PLACEMENT, KEY_LOOK, EMOJI_TONE, EMOJI_SUGGESTIONS, SMART_PREDICTIONS, VOICE_LANGUAGE, THEME_ID,
             HEIGHT_PORTRAIT, HEIGHT_LANDSCAPE, NUMBER_ROW, ONE_HANDED, FLOATING, FLOAT_X, FLOAT_Y, HAPTICS, KEY_SOUND, SOUND_VOLUME,
-            KEY_FONT, SOUND_PACK, SPLIT_KEYS, FESTIVAL_THEMES,
+            KEY_FONT, BANGLA_KEY_FONT, SOUND_PACK, SPLIT_KEYS, FESTIVAL_THEMES,
         ).map { it.name }.toSet()
     }
 }

@@ -56,6 +56,9 @@ class AvroSuggester(
     /** How many dictionary words the Roman spelling [roman] can lead to (for predictive touch). */
     fun matchCount(roman: String): Int = if (roman.isEmpty()) 0 else search.search(roman).size
 
+    /** The dictionary words the Roman spelling [roman] can stand for (thread-safe: no cache). */
+    fun matches(roman: String): List<String> = if (roman.isEmpty()) emptyList() else search.search(roman)
+
     private val cache = object : LinkedHashMap<String, List<Ranked>>(64, 0.75f, true) {
         override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, List<Ranked>>?) = size > 256
     }

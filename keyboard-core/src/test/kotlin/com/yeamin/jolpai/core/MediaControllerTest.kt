@@ -43,6 +43,24 @@ class MediaControllerTest {
         assertEquals(listOf("😀"), used)
     }
 
+    @Test fun `the emoji key toggles the emoji panel`() {
+        key(KeyAction.ShowPanel(Panel.EMOJI))
+        assertEquals(Panel.EMOJI, state.panel)
+        key(KeyAction.ShowPanel(Panel.EMOJI))
+        assertEquals(Panel.NONE, state.panel)
+        key(KeyAction.ShowPanel(Panel.EMOJI))
+        assertEquals(Panel.EMOJI, state.panel)
+    }
+
+    @Test fun `opening clipboard twice closes it, and emoji switches straight to emoji`() {
+        key(KeyAction.ShowPanel(Panel.CLIPBOARD))
+        key(KeyAction.ShowPanel(Panel.EMOJI))
+        assertEquals(Panel.EMOJI, state.panel)
+        key(KeyAction.ShowPanel(Panel.CLIPBOARD))
+        key(KeyAction.ShowPanel(Panel.CLIPBOARD))
+        assertEquals(Panel.NONE, state.panel)
+    }
+
     @Test fun `emoji suggested for a word goes after it with a space`() {
         key(KeyAction.PasteText("pizza"))
         key(KeyAction.InsertEmoji("🍕", afterWord = true))

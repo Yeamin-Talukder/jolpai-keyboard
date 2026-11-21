@@ -22,9 +22,11 @@ import android.provider.Settings
 import android.view.inputmethod.InputMethodManager
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.yeamin.jolpai.core.fonts.message
 import com.yeamin.jolpai.core.model.LayoutId
 import com.yeamin.jolpai.core.settings.KeyboardSettings
 import com.yeamin.jolpai.core.settings.KeyboardSettingsRepository
+import com.yeamin.jolpai.core.settings.WelcomeChoices
 import com.yeamin.jolpai.core.suggest.SuggestionResources
 import com.yeamin.jolpai.data.HistoryDao
 import com.yeamin.jolpai.data.PersonalWordEntity
@@ -35,6 +37,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
@@ -206,7 +209,7 @@ class MainViewModel @Inject constructor(
     fun duplicateTheme(theme: KeyboardTheme, onReady: (KeyboardTheme) -> Unit) {
         viewModelScope.launch {
             val id = themes.duplicate(theme)
-            onReady(theme.copy(id = id, name = (theme.name + " copy").take(40), dynamic = false))
+            onReady(theme.copy(id = id, name = (theme.name + " copy").take(40)))
         }
     }
 
@@ -244,6 +247,34 @@ class MainViewModel @Inject constructor(
 
     fun setKeyFont(v: com.yeamin.jolpai.core.settings.KeyFont) {
         viewModelScope.launch { repository.setKeyFont(v) }
+    }
+
+    /** A separate font for Bangla letters ("Mix fonts"), or null for one font for both. */
+    fun setBanglaKeyFont(v: com.yeamin.jolpai.core.settings.KeyFont?) {
+        viewModelScope.launch { repository.setBanglaKeyFont(v) }
+    }
+
+    /**
+     * Checks and saves a font file the user picked for the keys, and selects it (for Bangla
+     * letters when [forBangla]). [onResult] gets a note to show (a problem, or which letters the
+     * phone's font fills in), or null.
+     */
+    fun pickCustomKeyFont(uri: Uri, forBangla: Boolean, onResult: (String?) -> Unit) {
+        viewModelScope.launch {
+            val imported = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                com.yeamin.jolpai.ui.CustomKeyFont.import(app, uri)
+            }
+            if (imported.check is com.yeamin.jolpai.core.fonts.KeyFontCheck.Ok) repository.setCustomKeyFont(imported.name, forBangla)
+            onResult(imported.check.message())
+        }
+    }
+
+    /** Deletes the picked key font; the keys go back to the phone's font if it was in use. */
+    fun removeCustomKeyFont() {
+        viewModelScope.launch {
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { com.yeamin.jolpai.ui.CustomKeyFont.remove(app) }
+            repository.clearCustomKeyFont()
+        }
     }
 
     fun setSoundPack(v: com.yeamin.jolpai.core.settings.SoundPack) {
@@ -358,17 +389,72 @@ class MainViewModel @Inject constructor(
     private val _setup = MutableStateFlow(SetupStatus())
     val setup: StateFlow<SetupStatus> = _setup.asStateFlow()
 
+    /**
+     * Whether to show the welcome flow: null while loading. It shows on a fresh install, and
+     * on an install from before it existed only while Jolpai isn't the keyboard in use yet
+     * (someone already typing with Jolpai doesn't need to be welcomed).
+     */
+    val showWelcome: StateFlow<Boolean?> = repository.welcomeDone
+        .map { done ->
+            when (done) {
+                true -> false
+                false -> true
+                null -> {
+                    refreshSetup()
+                    if (_setup.value.selected) {
+                        repository.setWelcomeDone(true)
+                        false
+                    } else {
+                        true
+                    }
+                }
+            }
+        }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    /** Saves the welcome answers; the keyboard picks them up straight away. */
+    fun applyWelcome(choices: WelcomeChoices) {
+        viewModelScope.launch { repository.applyWelcome(choices) }
+    }
+
+    /** Switches between the Classic (Ridmik-like) and Modern toolbar and panels. */
+    fun applyStyle(style: com.yeamin.jolpai.core.settings.KeyboardStyle) {
+        viewModelScope.launch { repository.applyStyle(style) }
+    }
+
+    /** Ends the welcome flow (finished or skipped). */
+    fun finishWelcome() {
+        viewModelScope.launch { repository.setWelcomeDone(true) }
+    }
+
+    /** Shows the welcome flow again (from About). */
+    fun restartWelcome() {
+        viewModelScope.launch { repository.setWelcomeDone(false) }
+    }
+
     /** Re-reads the system state; called when the screen resumes or regains focus. */
     fun refreshSetup() {
         val imm = app.getSystemService(InputMethodManager::class.java)
         val enabled = imm.enabledInputMethodList.any { it.packageName == app.packageName }
-        val current = Settings.Secure.getString(app.contentResolver, Settings.Secure.DEFAULT_INPUT_METHOD).orEmpty()
-        _setup.value = SetupStatus(enabled = enabled, selected = current.startsWith(app.packageName + "/"))
+        // Android 14+ says which keyboard is in use directly. Reading the secure setting came back
+        // empty on a Pixel 7 Pro (Android 17), so the app thought Jolpai wasn't chosen.
+        val fromImm = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            runCatching { imm.currentInputMethodInfo?.packageName }.getOrNull()
+        } else {
+            null
+        }
+        val current = fromImm
+            ?: Settings.Secure.getString(app.contentResolver, Settings.Secure.DEFAULT_INPUT_METHOD).orEmpty().substringBefore('/')
+        _setup.value = SetupStatus(enabled = enabled, selected = current == app.packageName)
     }
 
     fun setAutoCapitalize(v: Boolean) {
         viewModelScope.launch { repository.setAutoCapitalize(v) }
     }
+    fun setBanglaAutoVowels(v: Boolean) {
+        viewModelScope.launch { repository.setBanglaAutoVowels(v) }
+    }
+
     fun setDoubleSpacePeriod(v: Boolean) {
         viewModelScope.launch { repository.setDoubleSpacePeriod(v) }
     }

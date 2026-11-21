@@ -37,6 +37,20 @@ object Changelog {
     /** Newest first. */
     val RELEASES: List<ChangelogRelease> = listOf(
         ChangelogRelease(
+            "0.14.0", "21 Nov 2026",
+            listOf(
+                "A friendly welcome on first start, and Typing → Quick setup: \"Set up like my old keyboard\" (Ridmik or Gboard)",
+                "Three styles: Classic (like Ridmik: slide the space bar to change language, symbol hints), Simple (like Gboard) and Modern",
+                "জাতীয় types exactly like Ridmik; turn on \"Fix vowel signs automatically\" in Typing & gestures if you liked the old tidying",
+                "Spelling check: Bangla in English letters is left alone, জাতীয় typed key by key is understood, fixes in the জাতীয় strip, more English mix-ups caught",
+                "143 themes in groups: Chameleon (the colour of the app you're in), cool dark, ambient glows, time of day, key-press effects and bouncy keys",
+                "30 key fonts, a different one for Bangla and English, or your own font file; no dotted circle on vowel-sign keys",
+                "Tap 😊 or 📋 again to close it; Undo and Redo work in every app (swipe the top bar)",
+                "Translate and Check stay readable on every theme, and an edited Chameleon or time-of-day theme keeps changing by itself",
+                "🐞 Report a bug from the home screen: opens a GitHub issue filled in with your phone's details",
+            ),
+        ),
+        ChangelogRelease(
             "0.13.3", "17 Nov 2026",
             listOf(
                 "The keyboard chooser lists your keyboards on vivo (OriginOS 6) instead of opening empty",
