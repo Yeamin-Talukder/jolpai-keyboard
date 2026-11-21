@@ -23,7 +23,7 @@ and nothing you type leaves your phone.**
 [![Last commit](https://img.shields.io/github/last-commit/Yeamin-Talukder/jolpai-keyboard?color=4E6120)](https://github.com/Yeamin-Talukder/jolpai-keyboard/commits/main)
 [![Made in Bangladesh](https://img.shields.io/badge/Made%20in-Bangladesh-006A4E)](#)
 
-**[🌐 Website](https://yeamin-talukder.github.io/jolpai-keyboard/)** · [What's new](#-whats-new-in-0101) · [Demo](#-see-it-in-action) · [Features](#-features) · [Screenshots](#-screenshots) · [Download](#-download--install) · [Architecture](#-architecture) · [Build](#-build-from-source) · [FAQ](#-faq) · [বাংলা](#-বাংলায়-জলপাই-কিবোর্ড)
+**[🌐 Website](https://yeamin-talukder.github.io/jolpai-keyboard/)** · [Coming next](#-coming-in-the-next-version) · [What's new](#-whats-new-in-0133) · [Demo](#-see-it-in-action) · [Features](#-features) · [Screenshots](#-screenshots) · [Download](#-download--install) · [Architecture](#-architecture) · [Build](#-build-from-source) · [FAQ](#-faq) · [বাংলা](#-বাংলায়-জলপাই-কিবোর্ড)
 
 </div>
 
@@ -43,6 +43,40 @@ English↔Bangla translation run **offline**.
 
 > **Also known as:** Jolpai Bangla Keyboard · Jalpai Keyboard · জলপাই বাংলা কিবোর্ড · Jolpai Avro Keyboard
 > (package `com.yeamin.jolpai`; the project was first called *Lipi Keyboard*, package `com.yeamin.lipi` up to v0.8.0).
+
+## 🔜 Coming in the next version
+
+Already built and being tested on a phone; not released yet. It will arrive as a normal update (About → **Update**), and your words and settings stay.
+
+**Switching from Ridmik or Gboard gets easy**
+- 👋 **A friendly first start**: a short welcome, in Bangla and English, asks which keyboard you used before, your style and Bangla layouts, and helps you turn Jolpai on. Change your answers any time in **Typing → Quick setup** ("Set up like my old keyboard": Ridmik or Gboard).
+- 🎛️ **Three keyboard styles**:
+  - **Classic** (like Ridmik): slide the space bar (`◂ English ▸`) to change language, symbol hints on the letters (hold `a` for @), emoji and clipboard open in place of the keys.
+  - **Simple** (like Gboard): translate, clipboard and voice in the top bar, and the comma before the emoji key.
+  - **Modern** (Jolpai's own): every tool in the top bar; emoji and clipboard open above the keys, so the keys stay put.
+- ⌨️ **জাতীয় types exactly like Ridmik**: every key types what is on it. Checked key by key against Ridmik on a phone, 34 tricky cases (ক্ষ, জ্ঞ, reph, কো typed two ways, a vowel sign before its letter …), all the same. If you liked Jolpai tidying vowel signs for you, turn on **Typing & gestures → Fix vowel signs automatically**.
+- 😊 **One tap opens, one tap closes** emoji and the clipboard, from the 😊 key, the top bar or a gesture.
+
+**A smarter spelling check**
+- Bangla written in English letters (`kemon acho? ami valo achi`) is left alone instead of being "corrected" to English (kemon → lemon), in Check and in autocorrect.
+- জাতীয় words typed key by key are understood: ো typed as ে + া, or a vowel sign typed before its letter the Bijoy way (ি then ক).
+- The জাতীয় suggestion strip now offers spelling fixes too (পরিক্ষা → পরীক্ষা, মুহুর্ত → মুহূর্ত).
+- Catches more English mix-ups with the on-device AI: to/too, by/buy, here/hear, no/know, were/where.
+- Opens quickly even on long messages: the words near the cursor are checked first.
+
+**Themes and fonts**
+- 🎨 **140+ themes**, grouped by kind with filter chips (Basics, Chameleon, Dark, Light, Ambient, Dynamic):
+  - **Cool dark** and **ambient** themes: soft glows and spotlights behind see-through keys.
+  - **Chameleon** themes take the colour of the app you're typing in (green in a green app, blue in a blue one), read from the app's icon on your phone. Nothing is saved or sent.
+  - **Dynamic** themes: colours that follow the time of day, glows that drift slowly, gentle key-press effects (a soft ink wash, a backlight, the letter floating up, sparkles …) and **bouncy keys** that squish like rubber or jelly.
+  - Customise any of them and your copy keeps changing by itself.
+- 🔤 **30 key fonts, or your own**: Bangla (Kalpurush, Baloo Da 2, Noto Serif Bengali …), stylish Bangla (Galada, Alkatra …), English and stylish English (Poppins, Dancing Script, Lobster …), a different font for Bangla and English if you like, or any font file from your phone. Key fonts now have their own page under **Look & feel**.
+- ◌ **No dotted circle** on vowel-sign keys (ি া ে) in any font.
+- **Translate and Check stay readable** on every theme, including glass and glow ones.
+
+**Also**
+- ↩️ **Undo and Redo that work in every app**: swipe the top bar left or right; a pill fills to show the action is ready, and you can slide back to cancel.
+- 🐞 **Report a bug** from the home screen (or About → Report a problem): write what happened and Jolpai opens a GitHub issue filled in with your phone and app details. You see exactly what is included and can leave it out; never your typing, words or clipboard. Needs a GitHub account.
 
 ## 🆕 What's new in 0.13.3
 
@@ -205,14 +239,16 @@ Or [build it from source](#-build-from-source) (about 5 minutes with Android Stu
 
 Releases are built and signed by GitHub Actions from the tagged source, with SHA-256 checksums in
 `SHA256SUMS.txt`. Every release uses the same signing key, so a new version **installs as an update**
-and keeps your words and settings. The next release adds **About → Check for updates**, which asks
-GitHub for a newer version only when you tap it.
+and keeps your words and settings. After that, Jolpai updates itself: **About → Update** asks GitHub
+for a newer version only when you tap it, and checks the download before it installs.
 
 **Turn it on after installing:**
 1. Open **Jolpai Keyboard**.
 2. Step 1: switch on **Jolpai Keyboard** in Android's keyboard list. Android warns that keyboards can see what you type; Jolpai keeps everything on your phone.
 3. Step 2: choose **Jolpai Keyboard** as your current keyboard.
 4. Try it in the app's test fields (text, email, password, number, phone, multi-line).
+
+From the next version, a short welcome walks you through these steps on first start and sets the keyboard up like the one you used before.
 
 ## 🏗️ Architecture
 
@@ -496,6 +532,13 @@ Jolpai combines Avro phonetic, the National layout and English in one open-sourc
 everything on your device, with an offline Bangla and English writing check, offline translation, a
 full clipboard manager and 64 themes.
 
+**I use Ridmik Keyboard. Will Jolpai feel familiar?**
+Yes. The জাতীয় layout is arranged like Ridmik's. In the next version, জাতীয় types exactly like
+Ridmik (checked key by key on a phone), and a **Classic** style works like Ridmik: slide the space bar to
+change language, symbol hints on the letters, and emoji and clipboard in place of the keys. A short
+welcome on first start, or **Typing → Quick setup** later, sets this up in one tap ("Set up like my old
+keyboard"). There is a Gboard-like **Simple** style too.
+
 ## 🇧🇩 বাংলায়: জলপাই কিবোর্ড
 
 **জলপাই কিবোর্ড** অ্যান্ড্রয়েডের জন্য একটি ফ্রি, ওপেন-সোর্স ও এআই-চালিত **বাংলা কিবোর্ড**।
@@ -508,6 +551,7 @@ full clipboard manager and 64 themes.
 - ✓ **বানান চেক:** বাংলা ও ইংরেজি লেখার বানান, যতিচিহ্ন ও ব্যাকরণের ভুল দেখায়, এক ট্যাপে ঠিক করা যায়।
 - 📊 **টাইপিং পরিসংখ্যান:** প্রতিদিন কত শব্দ লিখলেন, টাইপিং স্পিড (WPM) ও নির্ভুলতা।
 - 🎨 **Material You:** আপনার ওয়ালপেপারের রঙে কিবোর্ড সাজে, সাথে সফট ডার্ক থিম।
+- 🔜 **শীঘ্রই আসছে:** রিদমিকের মতো ক্লাসিক আর জিবোর্ডের মতো সহজ স্টাইল, হুবহু রিদমিকের মতো জাতীয় লেআউট, ১৪০টির বেশি থিম, ৩০টি কী-ফন্ট (নিজের ফন্টও চলবে), আরও ভালো বানান চেক আর এক ট্যাপে বাগ রিপোর্ট।
 
 ## 🤝 Contributing
 
@@ -530,7 +574,7 @@ Each folder holds the licence text and a NOTICE with the exact source and commit
 - **Bangla word frequencies**: same folder, `bangla-frequency.tsv`, from [hermitdave/FrequencyWords](https://github.com/hermitdave/FrequencyWords) (code MIT; counts from OpenSubtitles 2018, CC BY-SA 4.0; this file is shared under CC BY-SA 4.0).
 - **Bangla next-word lists**: `suggestion-engine/src/main/resources/bn/bangla-nextwords.tsv` (CC BY-SA 4.0) and `bangla-trigrams.tsv` (CC BY 4.0), counted by `tools/prepare-bangla-nextwords.pl` from [Bangla Wikipedia](https://bn.wikipedia.org) (pairs only, CC BY-SA 4.0), the [Leipzig Corpora Collection](https://wortschatz.uni-leipzig.de/en/download/ben) (ben-bd_web_2017_1M, ben_newscrawl_2017_1M; CC BY) and [Tatoeba](https://tatoeba.org) (CC BY 2.0 FR). Details in `bn/NOTICE.txt`.
 - **English next-word model**: `suggestion-engine/src/main/resources/lm/en.nwp.bin`, [youcoded/next-word-english](https://huggingface.co/youcoded/next-word-english), models trained and released by Destin Moss via youcoded.ai, 2026 (ODC-By 1.0 and CC BY 2.0 FR; built from FineWeb by Hugging Face and [Tatoeba](https://tatoeba.org) sentences). Notices in the same folder.
-- **Key fonts**: `keyboard-ui/src/main/res/font/` (Hind Siliguri, Tiro Bangla, Galada, Atma) from Google Fonts, SIL Open Font License 1.1; notice in `keyboard-ui/src/main/resources/fonts/`.
+- **Key fonts**: `keyboard-ui/src/main/res/font/`, unmodified: Hind Siliguri, Tiro Bangla, Galada, Atma, Baloo Da 2, Alkatra, Noto Serif Bengali, Poppins, Dancing Script and the other key fonts from Google Fonts, plus [Kalpurush](https://github.com/potasiyam/Kalpurush) and [Kalaa](https://github.com/danhhong/Kalaa); SIL Open Font License 1.1, except Satisfy and Permanent Marker (Apache-2.0). Full list, sources and notices in `keyboard-ui/src/main/resources/fonts/`.
 - **Avro suffixes and Roman autocorrections**: same folder, from [OpenBangla/riti](https://github.com/OpenBangla/riti) (MPL-2.0, unmodified).
 - **Emoji data**: `emoji-engine/src/main/resources/emoji/`, Unicode Emoji 17.0 and CLDR 49 annotations (Unicode License V3).
 - **Icons**: Material Symbols (Apache-2.0).
