@@ -299,9 +299,13 @@ class LayoutFactory(
         } else {
             textKey(".", listOf(",", "?", "!", "'", "\"", "-", ":", ";", "@", "#", "/"), KeyStyle.FUNCTION)
         }
+        // Hold ?123 for the number pad (in any field; the top bar's 123 button does the same).
+        val pageSwitch = pageKey(pageLabel, pageTarget).let {
+            if (pageTarget == KeyboardPage.SYMBOLS) it.copy(longPress = KeyAction.ToggleNumberPad) else it
+        }
         return KeyRow(
             listOf(
-                pageKey(pageLabel, pageTarget),
+                pageSwitch,
                 *when {
                     field.isPassword -> arrayOf(comma.copy(zone = GestureZone.COMMA), spaceKey(id, 5f + extraSpace))
                     // Gboard puts the comma before the emoji key.

@@ -37,6 +37,13 @@ object Changelog {
     /** Newest first. */
     val RELEASES: List<ChangelogRelease> = listOf(
         ChangelogRelease(
+            "0.14.1", "21 Nov 2026",
+            listOf(
+                "Number pad in any text box: tap 123 in the top bar (or hold ?123); tap again or ABC for the letters",
+                "\"Number pad\" is also a gesture action, and the 123 button stays in password fields for PINs",
+            ),
+        ),
+        ChangelogRelease(
             "0.14.0", "21 Nov 2026",
             listOf(
                 "A friendly welcome on first start, and Typing → Quick setup: \"Set up like my old keyboard\" (Ridmik or Gboard)",

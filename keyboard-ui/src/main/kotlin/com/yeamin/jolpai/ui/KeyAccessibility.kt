@@ -41,6 +41,7 @@ object KeyAccessibility {
             key.longPress == KeyAction.Edit(com.yeamin.jolpai.core.model.EditCommand.CUT) -> "$base. Hold to cut"
             key.longPress == KeyAction.Edit(com.yeamin.jolpai.core.model.EditCommand.COPY) -> "$base. Hold to copy"
             key.longPress == KeyAction.Edit(com.yeamin.jolpai.core.model.EditCommand.PASTE) -> "$base. Hold to paste"
+            key.longPress == KeyAction.ToggleNumberPad -> "$base. Hold for the number pad"
             key.popup.isNotEmpty() && key.style == KeyStyle.CHARACTER -> "$base. More options on long press"
             else -> base
         }

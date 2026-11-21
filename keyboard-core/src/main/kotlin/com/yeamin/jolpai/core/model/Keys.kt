@@ -8,6 +8,9 @@ sealed interface KeyAction {
     data object Space : KeyAction
     data object Shift : KeyAction
     data class SwitchPage(val page: KeyboardPage) : KeyAction
+
+    /** Open the number pad in any field (closing a panel), or go back to the letters if it is open. */
+    data object ToggleNumberPad : KeyAction
     data object NextLayout : KeyAction
     data object PreviousLayout : KeyAction
 
@@ -162,10 +165,14 @@ enum class ToolbarItem(val storageKey: String, val icon: String, val title: Stri
     TRANSLATE("translate", "🌐", "Translate English ⇄ Bangla", Panel.NONE),
 
     /** Check spelling, punctuation and grammar offline in a card above the keys. */
-    CHECK("check", "✓", "Check spelling and grammar", Panel.NONE);
+    CHECK("check", "✓", "Check spelling and grammar", Panel.NONE),
+
+    /** The number pad in any field (it opens by itself only in number and phone fields). */
+    NUMBER_PAD("numpad", "123", "Number pad", Panel.NONE);
 
     companion object {
-        val DEFAULT = listOf(EMOJI, CLIPBOARD, VOICE, EDIT, TRANSLATE, CHECK)
+        // Saved toolbars that never had the number pad get it appended once (see TOOLBAR_SEEN).
+        val DEFAULT = listOf(EMOJI, CLIPBOARD, VOICE, EDIT, TRANSLATE, CHECK, NUMBER_PAD)
         fun fromStorageKey(key: String): ToolbarItem? = entries.firstOrNull { it.storageKey == key }
     }
 }

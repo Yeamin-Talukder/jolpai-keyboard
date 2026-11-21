@@ -90,6 +90,7 @@ enum class GestureAction(val id: String, val title: String, val description: Str
     PASTE("paste", "Paste", "Paste the clipboard"),
     UNDO("undo", "Undo", "Takes back your last word, delete or paste, in any app"),
     REDO("redo", "Redo", "Puts back what Undo took away"),
+    NUMBER_PAD("numpad", "Number pad", "Open the number pad, or go back to the letters"),
     ;
 
     /**
@@ -119,6 +120,7 @@ enum class GestureAction(val id: String, val title: String, val description: Str
         PASTE -> listOf(KeyAction.Edit(EditCommand.PASTE))
         UNDO -> listOf(KeyAction.Edit(EditCommand.UNDO))
         REDO -> listOf(KeyAction.Edit(EditCommand.REDO))
+        NUMBER_PAD -> listOf(KeyAction.ToggleNumberPad)
     }
 
     companion object {

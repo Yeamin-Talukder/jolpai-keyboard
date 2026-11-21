@@ -52,6 +52,7 @@ enum class KeyboardIcon(@DrawableRes val res: Int) {
     RESTART(R.drawable.ms_restart_alt),
     CHECK_CIRCLE(R.drawable.ms_check_circle_fill),
     UNDO(R.drawable.ms_undo),
+    NUMBERS(R.drawable.ms_123),
     REDO(R.drawable.ms_redo),
     ARROW_BACK(R.drawable.ms_arrow_back),
     ARROW_FORWARD(R.drawable.ms_arrow_forward),

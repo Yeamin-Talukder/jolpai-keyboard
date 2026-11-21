@@ -12,7 +12,7 @@ and nothing you type leaves your phone.**
 [![Downloads](https://img.shields.io/github/downloads/Yeamin-Talukder/jolpai-keyboard/total?label=downloads&color=6E8A2C&logo=android&logoColor=white)](https://github.com/Yeamin-Talukder/jolpai-keyboard/releases)
 [![Views](https://hits.sh/github.com/Yeamin-Talukder/jolpai-keyboard.svg?label=views&color=6E8A2C)](https://hits.sh/github.com/Yeamin-Talukder/jolpai-keyboard/)
 [![Stars](https://img.shields.io/github/stars/Yeamin-Talukder/jolpai-keyboard?style=flat&color=B5C94A&logo=github)](https://github.com/Yeamin-Talukder/jolpai-keyboard/stargazers)
-[![Version](https://img.shields.io/badge/version-0.14.0--beta-B5C94A)](docs/ROADMAP.md)
+[![Version](https://img.shields.io/badge/version-0.14.1--beta-B5C94A)](docs/ROADMAP.md)
 [![License: Apache-2.0](https://img.shields.io/github/license/Yeamin-Talukder/jolpai-keyboard?color=4E6120)](LICENSE)
 <br>
 [![Android 8.0+](https://img.shields.io/badge/Android-8.0%2B%20(API%2026)-3DDC84?logo=android&logoColor=white)](#requirements)
@@ -44,7 +44,14 @@ English↔Bangla translation run **offline**.
 > **Also known as:** Jolpai Bangla Keyboard · Jalpai Keyboard · জলপাই বাংলা কিবোর্ড · Jolpai Avro Keyboard
 > (package `com.yeamin.jolpai`; the project was first called *Lipi Keyboard*, package `com.yeamin.lipi` up to v0.8.0).
 
-## 🆕 What's new in 0.14.0
+## 🆕 What's new in 0.14.1
+
+- 🔢 **A number pad in any text box** (asked for by a Jolpai user): tap **123** in the top bar, or hold **?123**, to type numbers on a big calculator-style pad in chats, notes, search or forms; tap it again or **ABC** for the letters. Hold a digit for its Bangla form. Also a gesture action, and it stays in password fields for PINs.
+- ✏️ The **text editing tools** have a clearer layout: a cursor pad around a big **Select** button, and a clipboard column where **Paste** shows a peek of what it will paste.
+
+[0.14.1 release notes](docs/release-notes/v0.14.1.md)
+
+### In 0.14.0
 
 A big one: Jolpai now feels like the keyboard you already know, with a smarter spelling check, Chameleon themes and your own fonts. Update from About → **Update**; your words and settings stay.
 
@@ -210,7 +217,7 @@ Earlier, in 0.13.1–0.13.3: the keyboard chooser and settings buttons work on v
 
 ## 📥 Download & install
 
-> **Status: beta (v0.14.0).** All seven development phases are built and 350+ unit tests pass. The app runs
+> **Status: beta (v0.14.1).** All seven development phases are built and 350+ unit tests pass. The app runs
 > daily on a Pixel 7 Pro (Android 17); testing on more phones is ongoing. See the [roadmap](docs/ROADMAP.md)
 > for exactly what works and what is pending.
 

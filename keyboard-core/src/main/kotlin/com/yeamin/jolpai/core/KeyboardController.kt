@@ -526,6 +526,15 @@ class KeyboardController(
                 shift = ShiftState.OFF
                 shiftIsAutomatic = false
             }
+            KeyAction.ToggleNumberPad -> {
+                // From any field and any page: the number pad, over any open panel; again: the letters.
+                if (searchPanel != null) endSearch(keepQuery = false)
+                val open = page == KeyboardPage.NUMBER && panel == Panel.NONE
+                panel = Panel.NONE
+                page = if (open) KeyboardPage.LETTERS else KeyboardPage.NUMBER
+                shift = ShiftState.OFF
+                shiftIsAutomatic = false
+            }
             KeyAction.NextLayout -> {
                 val enabled = settings.enabledLayouts
                 val next = enabled[(enabled.indexOf(activeLayout) + 1).mod(enabled.size)]

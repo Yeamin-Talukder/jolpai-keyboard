@@ -116,6 +116,7 @@ class KeyboardContainer(
     private var shownToolbar: List<ToolbarItem>? = null
     private var shownPanel: Panel? = null
     private var shownTranslating = false
+    private var shownNumberPad = false
 
     // ------------------------------------------------------------------ translate card
 
@@ -889,15 +890,18 @@ class KeyboardContainer(
             hideUpper()
         }
         // Password fields hide the clipboard, voice and emoji shortcuts.
-        val items = if (state.field.isPassword) state.toolbar.filter { it == ToolbarItem.EDIT } else state.toolbar
+        // (The number pad stays: PIN fields are often plain password fields.)
+        val items = if (state.field.isPassword) state.toolbar.filter { it == ToolbarItem.EDIT || it == ToolbarItem.NUMBER_PAD } else state.toolbar
         val translating = state.translate != null
         val checking = state.check != null
-        if (items != shownToolbar || state.panel != shownPanel || translating != shownTranslating || checking != shownChecking) {
+        val numberPad = state.page == com.yeamin.jolpai.core.model.KeyboardPage.NUMBER
+        if (items != shownToolbar || state.panel != shownPanel || translating != shownTranslating || checking != shownChecking || numberPad != shownNumberPad) {
             shownToolbar = items
             shownPanel = state.panel
             shownTranslating = translating
             shownChecking = checking
-            renderToolbar(items, state.panel, translating, checking)
+            shownNumberPad = numberPad
+            renderToolbar(items, state.panel, translating, checking, numberPad)
         }
         if (state.check != checkUi) {
             checkUi = state.check
@@ -938,7 +942,7 @@ class KeyboardContainer(
      * voice typing (always second from the right, next to the language button). Each tool
      * toggles: tap to open its panel, tap again to go back to the keys; the open one is highlighted.
      */
-    private fun renderToolbar(items: List<ToolbarItem>, open: Panel, translating: Boolean, checking: Boolean) {
+    private fun renderToolbar(items: List<ToolbarItem>, open: Panel, translating: Boolean, checking: Boolean, numberPad: Boolean = false) {
         toolbarButtons.removeAllViews()
         toolbarButtons.addView(
             toolbarButton(KeyboardIcon.SETTINGS, "Keyboard settings", false) { onAction(KeyAction.Host(HostCommand.OPEN_SETTINGS)) },
@@ -948,6 +952,7 @@ class KeyboardContainer(
             val active = when (item) {
                 ToolbarItem.TRANSLATE -> translating
                 ToolbarItem.CHECK -> checking
+                ToolbarItem.NUMBER_PAD -> numberPad && open == Panel.NONE
                 else -> item.panel == open
             }
             val description = if (active) "${item.title}. Tap to go back to the keys" else item.title
@@ -962,6 +967,9 @@ class KeyboardContainer(
                     toolbarButton(iconFor(item), description, active) {
                         onAction(if (active) KeyAction.EndCheck else KeyAction.StartCheck)
                     }
+                } else if (item == ToolbarItem.NUMBER_PAD) {
+                    // The number pad in any field; tap again (or its ABC key) for the letters.
+                    toolbarButton(iconFor(item), description, active) { onAction(KeyAction.ToggleNumberPad) }
                 } else if (item == ToolbarItem.TRANSLATE) {
                     // Opens the translate box above the toolbar; the keys stay for typing into it.
                     toolbarButton(iconFor(item), description, active) {
@@ -986,6 +994,7 @@ class KeyboardContainer(
         ToolbarItem.EDIT -> KeyboardIcon.EDIT
         ToolbarItem.TRANSLATE -> KeyboardIcon.TRANSLATE
         ToolbarItem.CHECK -> KeyboardIcon.SPELLCHECK
+        ToolbarItem.NUMBER_PAD -> KeyboardIcon.NUMBERS
     }
 
     /**

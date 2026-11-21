@@ -375,6 +375,7 @@ fun toolbarName(item: ToolbarItem): String = when (item) {
     ToolbarItem.EDIT -> "Editing"
     ToolbarItem.TRANSLATE -> "Translate"
     ToolbarItem.CHECK -> "Check"
+    ToolbarItem.NUMBER_PAD -> "Number pad"
 }
 
 private fun toolbarIcon(item: ToolbarItem): Int = when (item) {
@@ -384,6 +385,7 @@ private fun toolbarIcon(item: ToolbarItem): Int = when (item) {
     ToolbarItem.EDIT -> UiR.drawable.ms_edit_note
     ToolbarItem.TRANSLATE -> UiR.drawable.ms_translate
     ToolbarItem.CHECK -> UiR.drawable.ms_spellcheck
+    ToolbarItem.NUMBER_PAD -> UiR.drawable.ms_123
 }
 
 /** Which tools appear above the keys, and in what order. */
