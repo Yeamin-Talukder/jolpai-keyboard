@@ -179,6 +179,14 @@
   .also { font-size: 15px; color: var(--dim); }
   footer { border-top: 1px solid var(--line); margin-top: 72px; padding: 28px 0 40px; font-size: 15px; color: var(--dim); }
   footer a { color: var(--muted); }
+  .cmp-scroll { overflow-x: auto; margin: 18px 0; border-radius: 16px; }
+  .cmp-scroll .facts { margin: 0; min-width: 620px; }
+  .cmp th, .cmp td { width: auto; font-size: 15px; }
+  .cmp thead th { width: auto; color: var(--dim); font-size: 13px; letter-spacing: .08em; text-transform: uppercase; }
+  .cmp tbody th { color: var(--text); width: 28%; }
+  .cmp td { color: var(--muted); }
+  .cmp .me { background: rgba(181, 201, 74, .07); color: var(--text); }
+  .cmp thead .me { color: var(--olive); }
   @media (max-width: 640px) { .cards { grid-template-columns: 1fr; } header nav a.hide-sm { display: none; } .facts th { width: 40%; } }
 </style>
 </head>
@@ -299,6 +307,29 @@
   </div>
   <p>A short <b>welcome</b> sets the keyboard up like the one you used before (also later in <i>Typing → Quick setup</i>), and a
     <b>🐞 Report a bug</b> button opens a ready-filled GitHub issue with your phone's details, never your typing.</p>
+
+  <h2 id="compare">Jolpai vs Ridmik Keyboard vs Gboard</h2>
+  <p>Where Jolpai goes further than the two keyboards most Bangla writers use:</p>
+  <div class="cmp-scroll">
+    <table class="facts cmp">
+      <thead><tr><th scope="col">Feature</th><th scope="col" class="me">Jolpai</th><th scope="col">Ridmik</th><th scope="col">Gboard</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Open source</th><td class="me">✓ Apache 2.0</td><td>✕ Closed source</td><td>✕ Closed source</td></tr>
+        <tr><th scope="row">No ads, nothing to buy</th><td class="me">✓ Free, no ads</td><td>✕ Ads and in-app purchases</td><td>✓ No ads</td></tr>
+        <tr><th scope="row">Collects none of your data</th><td class="me">✓ Nothing leaves your phone</td><td>May collect personal info and device IDs</td><td>May collect audio, app activity and more</td></tr>
+        <tr><th scope="row">Bangla spelling and grammar check, offline</th><td class="me">✓ Bangla and English</td><td>Not listed</td><td>Not listed</td></tr>
+        <tr><th scope="row">Translate inside the keyboard</th><td class="me">✓ Offline</td><td>Not listed</td><td>Online (Google Translate)</td></tr>
+        <tr><th scope="row">Keyboard takes the colour of your app</th><td class="me">✓ Chameleon themes (next version)</td><td>Not listed</td><td>Not listed</td></tr>
+        <tr><th scope="row">Themes</th><td class="me">✓ 140+ free (next version; 64 today)</td><td>Theme store, some paid</td><td>Colours and your photo</td></tr>
+        <tr><th scope="row">Your own font on the keys</th><td class="me">✓ 30 fonts or your own file (next version)</td><td>Not listed</td><td>Not listed</td></tr>
+        <tr><th scope="row">Clipboard that sorts OTP codes, links and numbers</th><td class="me">✓ Automatic categories</td><td>Recently copied texts</td><td>Recent copies and pins</td></tr>
+        <tr><th scope="row">Learned words and clipboard encrypted</th><td class="me">✓ Encrypted on the phone</td><td>Not listed</td><td>Not listed</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="also">Ridmik and Gboard details come from their Google Play listings and Data safety sections (checked November 2026) and may change;
+    "Not listed" means the listing doesn't mention it. To be fair: Gboard has glide typing, handwriting and excellent voice typing, and both
+    are on Google Play. Jolpai doesn't have those yet.</p>
 
   <h2 id="install">How to install Jolpai Keyboard</h2>
   <ol>
