@@ -23,7 +23,19 @@ and nothing you type leaves your phone.**
 [![Last commit](https://img.shields.io/github/last-commit/Yeamin-Talukder/jolpai-keyboard?color=4E6120)](https://github.com/Yeamin-Talukder/jolpai-keyboard/commits/main)
 [![Made in Bangladesh](https://img.shields.io/badge/Made%20in-Bangladesh-006A4E)](#)
 
-**[🌐 Website](https://yeamin-talukder.github.io/jolpai-keyboard/)** · [What's new](#-whats-new-in-0140) · [Demo](#-see-it-in-action) · [Features](#-features) · [Screenshots](#-screenshots) · [Download](#-download--install) · [Architecture](#-architecture) · [Build](#-build-from-source) · [FAQ](#-faq) · [বাংলা](#-বাংলায়-জলপাই-কিবোর্ড)
+**[🌐 Website](https://yeamin-talukder.github.io/jolpai-keyboard/)** · [What's new](#-whats-new-in-0141) · [Demo](#-see-it-in-action) · [Features](#-features) · [Screenshots](#-screenshots) · [Download](#-download--install) · [Architecture](#-architecture) · [Build](#-build-from-source) · [FAQ](#-faq) · [বাংলা](#-বাংলায়-জলপাই-কিবোর্ড)
+
+### ⬇️ Download Jolpai 0.14.1 (ডাউনলোড)
+
+[![Most Android phones: arm64-v8a, 30 MB](https://img.shields.io/badge/Most%20Android%20phones-arm64--v8a%20·%2030%20MB-6E8A2C?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Yeamin-Talukder/jolpai-keyboard/releases/download/v0.14.1/jolpai-keyboard-0.14.1-arm64-v8a.apk)
+[![Older or budget phones: armeabi-v7a, 25 MB](https://img.shields.io/badge/Older%20%2F%20budget%20phones-armeabi--v7a%20·%2025%20MB-4E6120?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Yeamin-Talukder/jolpai-keyboard/releases/download/v0.14.1/jolpai-keyboard-0.14.1-armeabi-v7a.apk)
+<br>
+[![Chromebooks, emulators, Intel 64-bit: x86_64, 31 MB](https://img.shields.io/badge/Chromebook%20%2F%20emulator-x86__64%20·%2031%20MB-55701F?style=for-the-badge&logo=googlechrome&logoColor=white)](https://github.com/Yeamin-Talukder/jolpai-keyboard/releases/download/v0.14.1/jolpai-keyboard-0.14.1-x86_64.apk)
+[![Old Intel 32-bit tablets: x86, 31 MB](https://img.shields.io/badge/Old%20Intel%2032--bit-x86%20·%2031%20MB-3B4F10?style=for-the-badge&logo=intel&logoColor=white)](https://github.com/Yeamin-Talukder/jolpai-keyboard/releases/download/v0.14.1/jolpai-keyboard-0.14.1-x86.apk)
+
+**Not sure which one?** Almost every phone from 2017 onwards (Samsung, Xiaomi, Realme, vivo, OPPO, Pixel…) needs
+**arm64-v8a**. If Android says *"App not installed"* or *"not compatible"*, use **armeabi-v7a** instead.
+Android 8.0 or newer · free, no ads · [all versions](https://github.com/Yeamin-Talukder/jolpai-keyboard/releases) · [checksums](https://github.com/Yeamin-Talukder/jolpai-keyboard/releases/download/v0.14.1/SHA256SUMS.txt) · [how to install](#-download--install)
 
 </div>
 
