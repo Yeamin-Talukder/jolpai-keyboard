@@ -294,8 +294,9 @@ class Suggester(
      */
     fun avro(term: String, options: SuggestOptions = SuggestOptions()): AvroCandidates? {
         val a = avro() ?: return null
-        val p = if (options.useModel) lmBangla.predict(options.context) else null
-        return a.suggest(term, history::selection, context = p?.let { pr -> { w: String -> pr.logProb(w) } })
+        // Words as the model reads them (য় ড় ঢ় as single characters, no ZWNJ/ZWJ), as for জাতীয়.
+        val p = if (options.useModel) lmBangla.predict(options.context.map(BanglaNextWords::normalize)) else null
+        return a.suggest(term, history::selection, context = p?.let { pr -> { w: String -> pr.logProb(BanglaNextWords.normalize(w)) } })
     }
 
     /** Remembers the user's pick for an Avro word, so it is chosen first next time. */

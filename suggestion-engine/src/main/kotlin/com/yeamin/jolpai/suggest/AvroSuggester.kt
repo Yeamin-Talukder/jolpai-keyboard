@@ -59,6 +59,12 @@ class AvroSuggester(
     /** The dictionary words the Roman spelling [roman] can stand for (thread-safe: no cache). */
     fun matches(roman: String): List<String> = if (roman.isEmpty()) emptyList() else search.search(roman)
 
+    /** See [suggest]: points per natural-log unit of in-context probability (against 10 per letter). */
+    internal var contextPoints = CONTEXT_POINTS
+
+    /** Points per step of the frequency list (0–255; 12 steps per doubling of a word's count). */
+    internal var frequencyPoints = FREQUENCY_POINTS
+
     private val cache = object : LinkedHashMap<String, List<Ranked>>(64, 0.75f, true) {
         override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, List<Ranked>>?) = size > 256
     }
@@ -94,8 +100,14 @@ class AvroSuggester(
         if (includeEnglish && term != split.preceding) wrapped += Ranked.Last(term, 3)
 
         // Equally close candidates: the more common word first (from the frequency list).
-        val sorted = if (context == null) {
+        val sorted = if (context == null && frequencyPoints == 0f) {
             wrapped.sortedWith(compareBy<Ranked> { it.order }.thenBy { it.value }.thenByDescending { frequency(it.text) })
+        } else if (context == null) {
+            wrapped.sortedWith(
+                compareBy<Ranked> { it.order }
+                    .thenBy { if (it is Ranked.Other) it.distance - frequencyPoints * frequency(it.text) else it.value.toFloat() }
+                    .thenByDescending { frequency(it.text) },
+            )
         } else {
             val fit = HashMap<String, Float>()
             fun fit(r: Ranked): Float = fit.getOrPut(r.text) {
@@ -104,7 +116,7 @@ class AvroSuggester(
             }
             wrapped.sortedWith(
                 compareBy<Ranked> { it.order }
-                    .thenBy { if (it is Ranked.Other) it.distance - CONTEXT_POINTS * fit(it) else it.value.toFloat() }
+                    .thenBy { if (it is Ranked.Other) it.distance - contextPoints * fit(it) - frequencyPoints * frequency(it.text) else it.value.toFloat() }
                     .thenByDescending { frequency(it.text) },
             )
         }
@@ -168,8 +180,18 @@ class AvroSuggester(
     }
 
     companion object {
-        /** See [suggest]: points per natural-log unit of in-context probability. */
-        const val CONTEXT_POINTS = 3f
+        /**
+         * See [suggest]: points per natural-log unit of in-context probability. Measured on
+         * BanglaTLit's val sentences (AvroBanglaTLitEvalTest): 3 → 52.3 % of words right on space,
+         * 10–25 all within 0.3 points of 54.6 %; 15 keeps rare words (unknown to the model) closer.
+         */
+        const val CONTEXT_POINTS = 15f
+
+        /**
+         * See [frequencyPoints] (0 would leave frequency only to break ties). Val sentences: without
+         * the model 49.2 % → 53.3 % at 0.5; with it, a little more on top of the model.
+         */
+        const val FREQUENCY_POINTS = 0.5f
 
         /** Log-probability given to a dictionary word the model does not know. */
         private const val UNKNOWN_FIT = -12f
