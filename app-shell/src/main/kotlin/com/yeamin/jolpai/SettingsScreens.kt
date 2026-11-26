@@ -72,17 +72,17 @@ fun TextBadge(text: String) {
 }
 
 private fun layoutHint(id: LayoutId): String = when (id) {
-    LayoutId.ENGLISH -> "QWERTY, accents on long-press"
-    LayoutId.AVRO -> "Type how it sounds: ami → আমি · reph: rr"
-    LayoutId.NATIONAL -> "Ridmik-style জাতীয় · hold a key for its corner letter"
-    LayoutId.PROBHAT -> "Probhat (প্রভাত) as on a computer · corners show the shifted letter"
+    LayoutId.ENGLISH -> tr("QWERTY · hold a letter for é, ñ", "QWERTY · অক্ষর চেপে ধরলে é, ñ")
+    LayoutId.AVRO -> tr("Type how it sounds: ami → আমি · reph: rr", "উচ্চারণ মতো লিখুন: ami → আমি · রেফ: rr")
+    LayoutId.NATIONAL -> tr("Same as Ridmik · hold a key for its corner letter", "রিদমিকের মতো · কোণের অক্ষর পেতে কী চেপে ধরুন")
+    LayoutId.PROBHAT -> tr("As on a computer · corners show the Shift letter", "কম্পিউটারের মতো · কোণে শিফটের অক্ষর")
 }
 
 /** Which layouts are on, which one to start with, and how to switch. */
 @Composable
 fun LanguagesScreen(vm: MainViewModel, settings: KeyboardSettings, onBack: () -> Unit) {
-    SettingsScaffold("Languages & layouts", onBack) {
-        SettingsGroup("Layouts") {
+    SettingsScaffold(tr("Languages & layouts", "ভাষা ও লেআউট"), onBack) {
+        SettingsGroup(tr("Layouts", "লেআউট")) {
             LayoutId.entries.forEach { id ->
                 val on = id in settings.enabledLayouts
                 val isLast = on && settings.enabledLayouts.size == 1
@@ -98,36 +98,47 @@ fun LanguagesScreen(vm: MainViewModel, settings: KeyboardSettings, onBack: () ->
                     TextBadge(layoutBadge(id))
                     Spacer(Modifier.width(16.dp))
                     Column(Modifier.weight(1f)) {
-                        Text(id.displayName, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Normal))
+                        Text(id.uiName, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Normal))
                         Text(layoutHint(id), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     androidx.compose.material3.Switch(checked = on, onCheckedChange = null, enabled = !isLast)
                 }
             }
         }
-        SettingsNote("At least one layout stays on.")
+        SettingsNote(
+            tr(
+                "At least one layout stays on. Tap 🌐 to switch layout; hold it for the list and other keyboards.",
+                "অন্তত একটি লেআউট চালু থাকবে। লেআউট বদলাতে 🌐 চাপুন; তালিকা ও অন্য কীবোর্ড পেতে চেপে ধরুন।",
+            ),
+        )
 
-        SettingsNote("Tap 🌐 to switch layouts; hold it for the list and Android's keyboard chooser.")
-        SettingsGroup {
+        SettingsGroup(tr("Starting layout", "শুরুর লেআউট")) {
             SettingsSwitch(
-                "Remember last layout",
-                "Start with the layout you used last",
+                tr("Remember last layout", "শেষ লেআউট মনে রাখুন"),
+                tr("Start with the layout you used last", "শেষবার যে লেআউটে ছিলেন, সেটিতেই শুরু"),
                 settings.rememberLastLayout,
                 vm::setRememberLastLayout,
                 UiR.drawable.ms_history,
             )
+            SettingsChoice(
+                if (settings.rememberLastLayout) tr("Default layout", "ডিফল্ট লেআউট") else tr("Always start with", "সবসময় এই লেআউটে শুরু"),
+                null,
+                settings.enabledLayouts.map { it to it.uiName },
+                settings.defaultLayout,
+                vm::setDefaultLayout,
+                UiR.drawable.ms_keyboard,
+            )
         }
 
-        SettingsGroup(if (settings.rememberLastLayout) "Default layout" else "Start every time with") {
-            settings.enabledLayouts.forEach { id ->
-                SettingsRadio(id.displayName, selected = settings.defaultLayout == id) { vm.setDefaultLayout(id) }
-            }
-        }
-
-        SettingsGroup("Offline translation", tone = GroupTone.TERTIARY) {
+        SettingsGroup(tr("Offline translation", "অফলাইন অনুবাদ"), tone = GroupTone.TERTIARY) {
             OfflineTranslationSetting()
         }
-        SettingsNote("Tap 🌐 Translate in the keyboard's top bar: a box opens above the keys, you type in English (or Bangla) and insert the translation. Translation runs on your phone; only the language pack is downloaded, from Google, when you ask.")
+        SettingsNote(
+            tr(
+                "Tap Translate in the top bar, type, and insert the translation. It runs on your phone; only the pack is downloaded from Google.",
+                "ওপরের বারে অনুবাদ চাপুন, লিখুন, তারপর অনুবাদটি বসান। অনুবাদ ফোনেই হয়; শুধু প্যাকটি Google থেকে ডাউনলোড হয়।",
+            ),
+        )
     }
 }
 
@@ -142,24 +153,24 @@ private fun OfflineTranslationSetting() {
     val status by translator.status.collectAsState()
     val size = com.yeamin.jolpai.ui.OfflineTranslator.PACK_SIZE_MB
     val summary = when (status) {
-        com.yeamin.jolpai.ui.TranslateStatus.CHECKING -> "Checking…"
-        com.yeamin.jolpai.ui.TranslateStatus.NOT_DOWNLOADED -> "English ⇄ বাংলা · download once (about $size MB), then it works offline"
-        com.yeamin.jolpai.ui.TranslateStatus.DOWNLOADING -> "Downloading the Bangla pack…"
-        com.yeamin.jolpai.ui.TranslateStatus.READY -> "Ready offline · English ⇄ বাংলা"
-        com.yeamin.jolpai.ui.TranslateStatus.FAILED -> "Download failed. Check the internet and try again."
+        com.yeamin.jolpai.ui.TranslateStatus.CHECKING -> tr("Checking…", "দেখা হচ্ছে…")
+        com.yeamin.jolpai.ui.TranslateStatus.NOT_DOWNLOADED -> tr("Download once (about $size MB), then it works offline", "একবার ডাউনলোড করুন (প্রায় ${num(size)} MB), তারপর ইন্টারনেট ছাড়াই চলবে")
+        com.yeamin.jolpai.ui.TranslateStatus.DOWNLOADING -> tr("Downloading…", "ডাউনলোড হচ্ছে…")
+        com.yeamin.jolpai.ui.TranslateStatus.READY -> tr("Ready · works offline", "তৈরি · ইন্টারনেট ছাড়াই চলে")
+        com.yeamin.jolpai.ui.TranslateStatus.FAILED -> tr("Download failed. Check the internet and try again.", "ডাউনলোড হয়নি। ইন্টারনেট দেখে আবার চেষ্টা করুন।")
     }
     SettingsItem(
-        "English ⇄ Bangla pack",
+        tr("English ⇄ Bangla pack", "ইংরেজি ⇄ বাংলা প্যাক"),
         summary,
         UiR.drawable.ms_translate,
         showChevron = false,
         enabled = status != com.yeamin.jolpai.ui.TranslateStatus.CHECKING && status != com.yeamin.jolpai.ui.TranslateStatus.DOWNLOADING,
         trailing = {
             when (status) {
-                com.yeamin.jolpai.ui.TranslateStatus.READY -> TextButton(onClick = { translator.delete() }) { Text("Delete") }
+                com.yeamin.jolpai.ui.TranslateStatus.READY -> TextButton(onClick = { translator.delete() }) { Text(tr("Delete", "মুছুন")) }
                 com.yeamin.jolpai.ui.TranslateStatus.DOWNLOADING -> androidx.compose.material3.CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 2.5.dp)
                 com.yeamin.jolpai.ui.TranslateStatus.CHECKING -> Unit
-                else -> androidx.compose.material3.FilledTonalButton(onClick = { translator.download() }) { Text("Download") }
+                else -> androidx.compose.material3.FilledTonalButton(onClick = { translator.download() }) { Text(tr("Download", "ডাউনলোড")) }
             }
         },
         onClick = {
@@ -171,72 +182,90 @@ private fun OfflineTranslationSetting() {
 /** Capitals, full stops and gestures. */
 @Composable
 fun TypingScreen(vm: MainViewModel, settings: KeyboardSettings, onBack: () -> Unit) {
-    SettingsScaffold("Typing & gestures", onBack) {
-        SettingsGroup("Typing") {
-            SettingsSwitch("Auto-capitalisation", "Capital letter at the start of each English sentence", settings.autoCapitalize, vm::setAutoCapitalize, UiR.drawable.ms_text_fields)
-            SettingsSwitch("Double-space full stop", "Two spaces type “. ” in English and “। ” in Bangla", settings.doubleSpacePeriod, vm::setDoubleSpacePeriod, UiR.drawable.ms_space_bar)
+    SettingsScaffold(tr("Typing & gestures", "টাইপিং ও জেসচার"), onBack) {
+        SettingsGroup(tr("Typing", "টাইপিং")) {
+            SettingsSwitch(tr("Automatic capitals", "নিজে থেকে বড় হাতের অক্ষর"), tr("Capital letter at the start of each English sentence", "ইংরেজি বাক্যের শুরুতে বড় হাতের অক্ষর"), settings.autoCapitalize, vm::setAutoCapitalize, UiR.drawable.ms_text_fields)
+            SettingsSwitch(tr("Double-space full stop", "দুই স্পেসে দাঁড়ি"), tr("Two spaces type “. ” in English and “। ” in Bangla", "দুবার স্পেস দিলে বাংলায় “। ”, ইংরেজিতে “. ”"), settings.doubleSpacePeriod, vm::setDoubleSpacePeriod, UiR.drawable.ms_space_bar)
             SettingsSwitch(
-                "Fix vowel signs automatically",
-                "জাতীয় and প্রভাত: ্ + া types আ, a vowel sign with nothing before it becomes its vowel (ি → ই), ে + া joins into ো. Off: every key goes in exactly as typed, like Ridmik.",
+                tr("Fix vowel signs", "কার নিজে থেকে ঠিক হবে"),
+                tr(
+                    "জাতীয় and প্রভাত: ি alone becomes ই, ে + া becomes ো. Off: exactly as typed, like Ridmik.",
+                    "জাতীয় ও প্রভাত: একা ি হয় ই, ে + া হয় ো। বন্ধ থাকলে রিদমিকের মতো যা চাপবেন তা-ই বসবে।",
+                ),
                 settings.banglaAutoVowels, vm::setBanglaAutoVowels, UiR.drawable.ms_auto_awesome,
             )
         }
-        SettingsGroup("Hold for more characters") {
+        SettingsGroup(tr("Hold for more characters", "চেপে ধরলে আরও অক্ষর")) {
             LongPressSetting(settings.longPressMs, vm::setLongPressMs)
         }
-        SettingsGroup("Gestures") {
+        SettingsGroup(tr("Gestures", "জেসচার")) {
             SettingsSwitch(
-                "Swipe gestures",
-                "Slide along the space bar to move the cursor. Slide left from backspace to select words, back right to select fewer; let go to delete them.",
+                tr("Swipe gestures", "সোয়াইপ জেসচার"),
+                tr(
+                    "Slide on the space bar to move the cursor; slide left from backspace to delete words.",
+                    "স্পেস বারে সোয়াইপ করে কার্সর সরান; ব্যাকস্পেস থেকে বাঁয়ে সোয়াইপ করে শব্দ মুছুন।",
+                ),
                 settings.cursorSwipe,
                 vm::setCursorSwipe,
                 UiR.drawable.ms_swipe,
             )
             SettingsSwitch(
-                "Trackpad: move between lines",
-                "Hold the space bar and the keyboard becomes a trackpad for the cursor. With this on, moving up and down changes line too.",
+                tr("Trackpad: change lines", "ট্র্যাকপ্যাডে লাইন বদল"),
+                tr(
+                    "Hold the space bar to move the cursor; up and down change lines too.",
+                    "স্পেস বার চেপে ধরে কার্সর সরান; ওপর-নিচে সরালে লাইনও বদলাবে।",
+                ),
                 settings.trackpadVertical,
                 vm::setTrackpadVertical,
                 UiR.drawable.ms_drag_pan,
             )
             SettingsSwitch(
-                "Hold Enter for emoji",
+                tr("Hold Enter for emoji", "এন্টার চেপে ধরলে ইমোজি"),
                 if (settings.enterHoldSelect) {
-                    "Hold Enter and let go without sliding to open the emoji panel (sliding selects text). A tap still sends or starts a new line."
+                    tr("Hold Enter and let go without sliding to open emoji.", "এন্টার চেপে ধরে না সরিয়ে ছেড়ে দিলে ইমোজি খুলবে।")
                 } else {
-                    "Hold Enter to open the emoji panel. A tap still sends, searches or starts a new line."
+                    tr("Hold Enter to open emoji. A tap works as usual.", "ইমোজি খুলতে এন্টার চেপে ধরুন। সাধারণ চাপ আগের মতোই কাজ করবে।")
                 },
                 settings.enterHoldEmoji,
                 vm::setEnterHoldEmoji,
                 UiR.drawable.ms_mood,
             )
             SettingsSwitch(
-                "Hold Enter and slide to select",
-                "Hold Enter, then slide left or right to select text from the cursor a letter at a time, up or down for whole lines. Let go and the text stays selected, ready to copy or cut. Not in password fields.",
+                tr("Hold Enter to select", "এন্টার চেপে ধরে সিলেক্ট"),
+                tr(
+                    "Hold Enter and slide to select text. Not in password fields.",
+                    "এন্টার চেপে ধরে সরিয়ে লেখা সিলেক্ট করুন। পাসওয়ার্ডের ঘরে নয়।",
+                ),
                 settings.enterHoldSelect,
                 vm::setEnterHoldSelect,
                 UiR.drawable.ms_keyboard_return,
             )
         }
-        SettingsGroup("Typing accuracy") {
+        SettingsGroup(tr("Typing accuracy", "নির্ভুল টাইপিং")) {
             SettingsSwitch(
-                "Predictive touch",
-                "Jolpai guesses the next letter (lik → e) and quietly gives likely keys a little more room near their edges. The keys look the same; a tap in the middle of a key always types it.",
+                tr("Predictive touch", "স্মার্ট টাচ"),
+                tr(
+                    "Guesses the next letter (lik → e) and makes it easier to hit.",
+                    "পরের অক্ষর আন্দাজ করে (lik → e) সেটি চাপা সহজ করে।",
+                ),
                 settings.predictiveTouch,
                 vm::setPredictiveTouch,
                 UiR.drawable.ms_auto_awesome,
             )
             SettingsSwitch(
-                "Learn my touch",
-                "Learns where you tap each key, faster from corrections (a letter, backspace, then its neighbour). Never in password or private fields.",
+                tr("Learn my touch", "আমার টাচ শেখা"),
+                tr(
+                    "Learns where you tap each key. Never in password or private fields.",
+                    "আপনি কী-এর কোথায় চাপেন তা শেখে। পাসওয়ার্ড বা প্রাইভেট ঘরে কখনো নয়।",
+                ),
                 settings.touchCalibration,
                 vm::setTouchCalibration,
                 UiR.drawable.ms_tune,
                 enabled = settings.predictiveTouch,
             )
             SettingsItem(
-                "Reset learned touch",
-                "Forget the learned tap positions",
+                tr("Reset learned touch", "শেখা টাচ রিসেট"),
+                tr("Forget where you tap", "শেখা চাপার জায়গা ভুলে যাবে"),
                 UiR.drawable.ms_restart_alt,
                 enabled = settings.predictiveTouch,
                 showChevron = false,
@@ -262,9 +291,9 @@ private fun LongPressSetting(current: Int, onChange: (Int) -> Unit) {
             IconBadge(UiR.drawable.ms_touch_long)
             Spacer(Modifier.width(16.dp))
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text("Hold time", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Normal))
+                Text(tr("Hold time", "চেপে ধরার সময়"), style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Normal))
                 Text(
-                    "Hold a key this long for its corner letter (like ঋ or ৎ) or more characters",
+                    tr("How long to hold a key for its corner letter, like ঋ or ৎ", "কোণের অক্ষর (যেমন ঋ বা ৎ) পেতে কতক্ষণ চেপে ধরবেন"),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -272,7 +301,7 @@ private fun LongPressSetting(current: Int, onChange: (Int) -> Unit) {
             Spacer(Modifier.width(12.dp))
             Surface(shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.primaryContainer) {
                 Text(
-                    "$shown ms",
+                    tr("$shown ms", "${num(shown)} মি.সে."),
                     Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                     style = MaterialTheme.typography.labelLarge.copy(fontFeatureSettings = "tnum"),
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -290,12 +319,12 @@ private fun LongPressSetting(current: Int, onChange: (Int) -> Unit) {
             modifier = indent,
         )
         Row(indent.fillMaxWidth()) {
-            Text("Faster", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(tr("Faster", "দ্রুত"), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(Modifier.weight(1f))
-            Text("Slower", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(tr("Slower", "ধীরে"), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Spacer(Modifier.height(14.dp))
-        val presets = listOf("Quick" to DEFAULT_LONG_PRESS_MS, "Normal" to 350, "Relaxed" to 500)
+        val presets = listOf(tr("Quick", "দ্রুত") to DEFAULT_LONG_PRESS_MS, tr("Normal", "স্বাভাবিক") to 350, tr("Relaxed", "আরামে") to 500)
         SingleChoiceSegmentedButtonRow(indent.fillMaxWidth()) {
             presets.forEachIndexed { i, (label, ms) ->
                 SegmentedButton(
@@ -306,7 +335,7 @@ private fun LongPressSetting(current: Int, onChange: (Int) -> Unit) {
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(label, style = MaterialTheme.typography.labelLarge, maxLines = 1)
-                        Text("$ms ms", style = MaterialTheme.typography.labelSmall, maxLines = 1)
+                        Text(tr("$ms ms", "${num(ms)} মি.সে."), style = MaterialTheme.typography.labelSmall, maxLines = 1)
                     }
                 }
             }
@@ -319,28 +348,39 @@ private fun snap(v: Float): Int = ((v / 25f).roundToInt() * 25).coerceIn(LONG_PR
 /** Word suggestions, autocorrect and the personal dictionary. */
 @Composable
 fun SuggestionsScreen(vm: MainViewModel, settings: KeyboardSettings, personalWordCount: Int, onOpenDictionary: () -> Unit, onBack: () -> Unit) {
-    SettingsScaffold("Suggestions", onBack) {
-        SettingsGroup {
-            SettingsSwitch("Show suggestions", "Words above the keys, and Avro dictionary candidates", settings.showSuggestions, vm::setShowSuggestions, UiR.drawable.ms_lightbulb)
-            SettingsSwitch("Autocorrect", "Fix obvious English typos when you press space. Backspace undoes it.", settings.autoCorrect, vm::setAutoCorrect, UiR.drawable.ms_spellcheck, enabled = settings.showSuggestions)
-            SettingsSwitch("Next-word suggestions", "Suggest the word you usually type next, and with on-device AI the word that fits the sentence", settings.nextWordPrediction, vm::setNextWordPrediction, UiR.drawable.ms_auto_awesome, enabled = settings.showSuggestions)
-            SettingsSwitch("Emoji suggestions", "pizza → 🍕, হাসি → 😄", settings.emojiSuggestions, vm::setEmojiSuggestions, UiR.drawable.ms_mood, enabled = settings.showSuggestions)
+    SettingsScaffold(tr("Suggestions & spelling", "সাজেশন ও বানান"), onBack) {
+        SettingsGroup(tr("Basics", "মূল")) {
+            SettingsSwitch(tr("Show suggestions", "সাজেশন দেখান"), tr("Word choices above the keys", "কী-গুলোর ওপরে শব্দের সাজেশন"), settings.showSuggestions, vm::setShowSuggestions, UiR.drawable.ms_lightbulb)
+            SettingsSwitch(tr("Autocorrect", "অটোকারেক্ট"), tr("Fixes English typos when you press space. Backspace undoes it.", "স্পেস চাপলে ইংরেজি ভুল বানান ঠিক করে। ব্যাকস্পেস চাপলে আগের মতো হয়।"), settings.autoCorrect, vm::setAutoCorrect, UiR.drawable.ms_spellcheck, enabled = settings.showSuggestions)
+            SettingsSwitch(tr("Next-word suggestions", "পরের শব্দের সাজেশন"), tr("Suggests the word you'll likely type next", "পরে যে শব্দ লিখতে পারেন, তার সাজেশন"), settings.nextWordPrediction, vm::setNextWordPrediction, UiR.drawable.ms_auto_awesome, enabled = settings.showSuggestions)
+        }
+        SettingsGroup(tr("Extras", "আরও")) {
+            SettingsSwitch(tr("Emoji suggestions", "ইমোজি সাজেশন"), "pizza → 🍕, হাসি → 😄", settings.emojiSuggestions, vm::setEmojiSuggestions, UiR.drawable.ms_mood, enabled = settings.showSuggestions)
             SettingsSwitch(
-                "On-device AI predictions",
-                "Small neural models read your sentence to rank words and predict the next one, in English and in Bangla (Avro, জাতীয়, প্রভাত); in English they also pick emoji by meaning (so tired → 😴) and catch their/there in Check. Runs only on this phone.",
+                tr("On-device AI predictions", "ফোনেই এআই সাজেশন"),
+                tr(
+                    "Smarter suggestions in English and Bangla. Runs only on this phone.",
+                    "ইংরেজি ও বাংলায় আরও ভালো সাজেশন। শুধু এই ফোনেই চলে।",
+                ),
                 settings.smartPredictions, vm::setSmartPredictions, UiR.drawable.ms_auto_awesome, enabled = settings.showSuggestions,
             )
             SettingsSwitch(
-                "Banglish suggestions",
-                "Bangla in English letters on the English keyboard: valob → valobashi, in the spelling you use (valo or bhalo). Banglish words such as kmn and tmr aren't autocorrected into English.",
+                tr("Banglish suggestions", "বাংলিশ সাজেশন"),
+                tr(
+                    "Bangla in English letters: valob → valobashi. Words like kmn aren't autocorrected.",
+                    "ইংরেজি অক্ষরে বাংলা: valob → valobashi। kmn-এর মতো শব্দ অটোকারেক্ট হয় না।",
+                ),
                 settings.banglishSuggestions, vm::setBanglishSuggestions, UiR.drawable.ms_spellcheck, enabled = settings.showSuggestions,
             )
-            SettingsSwitch("Block offensive words", "Never suggested (you can still type them)", settings.blockOffensiveWords, vm::setBlockOffensiveWords, UiR.drawable.ms_block, enabled = settings.showSuggestions)
+            SettingsSwitch(tr("Block offensive words", "খারাপ শব্দ বাদ দিন"), tr("Never suggested, but you can still type them", "সাজেশনে আসবে না, তবে নিজে লিখতে পারবেন"), settings.blockOffensiveWords, vm::setBlockOffensiveWords, UiR.drawable.ms_block, enabled = settings.showSuggestions)
         }
         SettingsGroup {
             SettingsItem(
-                "Personal dictionary",
-                "$personalWordCount word${if (personalWordCount == 1) "" else "s"} — always suggested, never autocorrected",
+                tr("Personal dictionary", "নিজের অভিধান"),
+                tr(
+                    "$personalWordCount word${if (personalWordCount == 1) "" else "s"} · always suggested, never autocorrected",
+                    "${num(personalWordCount)}টি শব্দ · সবসময় সাজেশনে আসে, অটোকারেক্ট হয় না",
+                ),
                 UiR.drawable.ms_menu_book,
                 onClick = onOpenDictionary,
             )
@@ -351,36 +391,41 @@ fun SuggestionsScreen(vm: MainViewModel, settings: KeyboardSettings, personalWor
 /** Clipboard history settings, with the history and snippets one tap away. */
 @Composable
 fun ClipboardSettingsScreen(vm: MainViewModel, settings: KeyboardSettings, onOpenClipboard: () -> Unit, onOpenSnippets: () -> Unit, onBack: () -> Unit) {
-    SettingsScaffold("Clipboard & snippets", onBack) {
+    SettingsScaffold(tr("Clipboard & snippets", "ক্লিপবোর্ড ও স্নিপেট"), onBack) {
         SettingsGroup {
-            SettingsItem("Clipboard history", "Search, pin and organise what you copied", UiR.drawable.ms_content_paste, onClick = onOpenClipboard)
-            SettingsItem("Snippets", "Saved text you can insert with a shortcut", UiR.drawable.ms_short_text, onClick = onOpenSnippets)
+            SettingsItem(tr("Clipboard history", "ক্লিপবোর্ডের ইতিহাস"), tr("Search and pin what you copied", "কপি করা লেখা খুঁজুন ও পিন করুন"), UiR.drawable.ms_content_paste, onClick = onOpenClipboard)
+            SettingsItem(tr("Snippets", "স্নিপেট"), tr("Saved text you insert with a shortcut", "শর্টকাট দিয়ে বসানোর জন্য সেভ করা লেখা"), UiR.drawable.ms_short_text, onClick = onOpenSnippets)
         }
-        SettingsGroup("History") {
-            SettingsSwitch("Save clipboard history", "Keep copied text on this phone", settings.clipboardHistory, vm::setClipboardHistory, UiR.drawable.ms_history)
-            SettingsSwitch("Save copied images", "A private copy of copied pictures (up to 10 MB each)", settings.clipboardImages, vm::setClipboardImages, UiR.drawable.ms_image, enabled = settings.clipboardHistory)
-        }
-        SettingsGroup("Keep items that aren't pinned for") {
-            ClipRetention.entries.forEach { r ->
-                SettingsRadio(r.label, selected = settings.clipboardRetention == r, enabled = settings.clipboardHistory) { vm.setClipboardRetention(r) }
-            }
+        SettingsGroup(tr("History", "ইতিহাস")) {
+            SettingsSwitch(tr("Save clipboard history", "ক্লিপবোর্ডের ইতিহাস রাখুন"), tr("Keep copied text on this phone", "কপি করা লেখা এই ফোনে রাখুন"), settings.clipboardHistory, vm::setClipboardHistory, UiR.drawable.ms_history)
+            SettingsSwitch(tr("Save copied images", "কপি করা ছবি রাখুন"), tr("A private copy, up to 10 MB each", "নিজস্ব কপি, প্রতিটি ১০ MB পর্যন্ত"), settings.clipboardImages, vm::setClipboardImages, UiR.drawable.ms_image, enabled = settings.clipboardHistory)
+            SettingsChoice(
+                tr("Keep unpinned copies for", "পিন না করা কপি কতদিন থাকবে"),
+                tr("Pinned copies stay until you delete them", "পিন করা কপি আপনি না মোছা পর্যন্ত থাকে"),
+                ClipRetention.entries.map { it to it.uiLabel },
+                settings.clipboardRetention,
+                vm::setClipboardRetention,
+                UiR.drawable.ms_schedule,
+                enabled = settings.clipboardHistory,
+            )
         }
         SettingsNote(
-            "Android only lets the active keyboard see copies, so things copied while another keyboard " +
-                "was in use aren't saved. Copies from password fields and from apps that mark them " +
-                "sensitive (password managers, banking apps) are never saved.",
+            tr(
+                "Copies made while another keyboard was on aren't saved. Copies from password fields, banking or password apps are never saved.",
+                "অন্য কীবোর্ড চালু থাকার সময়ের কপি সেভ হয় না। পাসওয়ার্ডের ঘর, ব্যাংকিং বা পাসওয়ার্ড অ্যাপের কপি কখনো সেভ হয় না।",
+            ),
         )
     }
 }
 
 fun toolbarName(item: ToolbarItem): String = when (item) {
-    ToolbarItem.EMOJI -> "Emoji"
-    ToolbarItem.CLIPBOARD -> "Clipboard"
-    ToolbarItem.VOICE -> "Voice"
-    ToolbarItem.EDIT -> "Editing"
-    ToolbarItem.TRANSLATE -> "Translate"
-    ToolbarItem.CHECK -> "Check"
-    ToolbarItem.NUMBER_PAD -> "Number pad"
+    ToolbarItem.EMOJI -> tr("Emoji", "ইমোজি")
+    ToolbarItem.CLIPBOARD -> tr("Clipboard", "ক্লিপবোর্ড")
+    ToolbarItem.VOICE -> tr("Voice", "ভয়েস")
+    ToolbarItem.EDIT -> tr("Editing", "এডিট")
+    ToolbarItem.TRANSLATE -> tr("Translate", "অনুবাদ")
+    ToolbarItem.CHECK -> tr("Check", "যাচাই")
+    ToolbarItem.NUMBER_PAD -> tr("Number pad", "নম্বর প্যাড")
 }
 
 private fun toolbarIcon(item: ToolbarItem): Int = when (item) {
@@ -402,14 +447,19 @@ fun ToolbarScreen(
     placement: com.yeamin.jolpai.core.settings.PanelPlacement,
     onPlacement: (com.yeamin.jolpai.core.settings.PanelPlacement) -> Unit,
 ) {
-    SettingsScaffold("Toolbar & panels", onBack) {
-        SettingsNote("Classic (like Ridmik), Simple (like Gboard) and Modern set these in one tap: Home → Quick setup.")
-        SettingsGroup("Emoji and clipboard open") {
-            com.yeamin.jolpai.core.settings.PanelPlacement.entries.forEach { p ->
-                SettingsRadio(p.label, p.summary, selected = placement == p) { onPlacement(p) }
-            }
+    SettingsScaffold(tr("Top bar & panels", "ওপরের বার ও প্যানেল"), onBack) {
+        SettingsNote(tr("Easy setup on Home sets all of this in one tap.", "হোম পাতার “সহজ সেটআপ” থেকে এক ট্যাপে সব ঠিক করা যায়।"))
+        SettingsGroup {
+            SettingsChoice(
+                tr("Emoji and clipboard open", "ইমোজি ও ক্লিপবোর্ড খুলবে"),
+                placement.uiSummary,
+                com.yeamin.jolpai.core.settings.PanelPlacement.entries.map { it to it.uiLabel },
+                placement,
+                onPlacement,
+                UiR.drawable.ms_dock_to_bottom,
+            )
         }
-        SettingsNote("Tools shown above the keys when you're not typing a word. While suggestions show, the grid button brings them back.")
+        SettingsNote(tr("Tools above the keys. While suggestions show, tap the grid button to see them.", "কী-গুলোর ওপরের টুল। সাজেশন দেখালে গ্রিড বোতাম চেপে টুলগুলো দেখুন।"))
         SettingsGroup {
             val ordered = items + ToolbarItem.entries.filter { it !in items }
             ordered.forEach { item ->
@@ -426,13 +476,13 @@ fun ToolbarScreen(
                     Spacer(Modifier.width(16.dp))
                     Column(Modifier.weight(1f).alpha(if (on) 1f else 0.6f)) {
                         Text(toolbarName(item), style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Normal))
-                        Text(item.title, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(item.uiTitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     IconButton(onClick = { onChange(items.toMutableList().apply { add(index - 1, removeAt(index)) }) }, enabled = on && index > 0) {
-                        MsIcon(UiR.drawable.ms_arrow_upward, "Move ${toolbarName(item)} up")
+                        MsIcon(UiR.drawable.ms_arrow_upward, tr("Move ${toolbarName(item)} up", "${toolbarName(item)} ওপরে সরান"))
                     }
                     IconButton(onClick = { onChange(items.toMutableList().apply { add(index + 1, removeAt(index)) }) }, enabled = on && index < items.lastIndex) {
-                        MsIcon(UiR.drawable.ms_arrow_downward, "Move ${toolbarName(item)} down")
+                        MsIcon(UiR.drawable.ms_arrow_downward, tr("Move ${toolbarName(item)} down", "${toolbarName(item)} নিচে সরান"))
                     }
                     Checkbox(checked = on, onCheckedChange = { checked -> onChange(if (checked) items + item else items - item) })
                 }
@@ -445,17 +495,20 @@ fun ToolbarScreen(
 @Composable
 fun PrivacyScreen(vm: MainViewModel, settings: KeyboardSettings, learnedWordCount: Int, onBack: () -> Unit) {
     var confirm by rememberSaveable { mutableStateOf(false) }
-    SettingsScaffold("Privacy", onBack) {
+    SettingsScaffold(tr("Privacy", "গোপনীয়তা"), onBack) {
         SettingsNote(
-            "Jolpai works offline and never sends what you type anywhere. To improve suggestions it " +
-                "remembers words you type, on this phone only. In password and private (incognito) " +
-                "fields it learns nothing.",
+            tr(
+                "Jolpai works offline and never sends what you type anywhere. It learns your words on this phone only, " +
+                    "and nothing in password or private (incognito) fields.",
+                "জলপাই অফলাইনে চলে, আপনার লেখা কোথাও পাঠায় না। আপনার শব্দ শুধু এই ফোনেই শেখে; " +
+                    "পাসওয়ার্ড বা প্রাইভেট (ইনকগনিটো) ঘরে কিছুই শেখে না।",
+            ),
         )
         SettingsGroup {
-            SettingsSwitch("Learn from my typing", "Remember words and word pairs to improve suggestions", settings.personalizedLearning, vm::setPersonalizedLearning, UiR.drawable.ms_auto_awesome)
+            SettingsSwitch(tr("Learn from my typing", "আমার টাইপিং থেকে শেখা"), tr("Remembers your words for better suggestions", "ভালো সাজেশনের জন্য আপনার শব্দ মনে রাখে"), settings.personalizedLearning, vm::setPersonalizedLearning, UiR.drawable.ms_auto_awesome)
             SettingsItem(
-                "Clear learned data",
-                "$learnedWordCount learned word${if (learnedWordCount == 1) "" else "s"}",
+                tr("Clear learned data", "শেখা তথ্য মুছে ফেলুন"),
+                tr("$learnedWordCount learned word${if (learnedWordCount == 1) "" else "s"}", "${num(learnedWordCount)}টি শেখা শব্দ"),
                 UiR.drawable.ms_delete,
                 enabled = learnedWordCount > 0,
                 showChevron = false,
@@ -466,15 +519,22 @@ fun PrivacyScreen(vm: MainViewModel, settings: KeyboardSettings, learnedWordCoun
         AlertDialog(
             onDismissRequest = { confirm = false },
             icon = { MsIcon(UiR.drawable.ms_delete, null) },
-            title = { Text("Clear learned data?") },
-            text = { Text("Jolpai will forget the words, word pairs and Avro choices it learned from your typing. Your personal dictionary is kept.") },
+            title = { Text(tr("Clear learned data?", "শেখা তথ্য মুছে ফেলবেন?")) },
+            text = {
+                Text(
+                    tr(
+                        "Jolpai will forget the words and Avro choices it learned from your typing. Your personal dictionary stays.",
+                        "আপনার টাইপিং থেকে শেখা শব্দ ও অভ্রের পছন্দগুলো জলপাই ভুলে যাবে। নিজের অভিধান থেকে যাবে।",
+                    ),
+                )
+            },
             confirmButton = {
                 TextButton(onClick = {
                     vm.clearLearnedData()
                     confirm = false
-                }) { Text("Clear") }
+                }) { Text(tr("Clear", "মুছে ফেলুন")) }
             },
-            dismissButton = { TextButton(onClick = { confirm = false }) { Text("Cancel") } },
+            dismissButton = { TextButton(onClick = { confirm = false }) { Text(tr("Cancel", "বাতিল")) } },
         )
     }
 }
@@ -482,17 +542,17 @@ fun PrivacyScreen(vm: MainViewModel, settings: KeyboardSettings, learnedWordCoun
 /** Real fields of each input type, so every keyboard mode can be tried. */
 @Composable
 fun TestFieldsScreen(onBack: () -> Unit) {
-    SettingsScaffold("Try the keyboard", onBack) {
-        SettingsNote("Each field asks for a different keyboard: Enter changes to Send, Search, Next or Done, and number fields get a number pad.")
+    SettingsScaffold(tr("Try the keyboard", "কীবোর্ড চালিয়ে দেখুন"), onBack) {
+        SettingsNote(tr("Each box gets its own keyboard: Enter changes, and number boxes get a number pad.", "প্রতিটি ঘরে আলাদা কীবোর্ড আসে: এন্টার বদলায়, আর নম্বরের ঘরে নম্বর প্যাড আসে।"))
         Column(verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.padding(top = 8.dp)) {
-            TestField("Message", KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Send))
-            TestField("Search", KeyboardOptions(imeAction = ImeAction.Search))
-            TestField("Email", KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next))
-            TestField("Website", KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Go))
-            TestField("Password", KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done), password = true)
-            TestField("Number", KeyboardOptions(keyboardType = KeyboardType.Number))
-            TestField("Phone", KeyboardOptions(keyboardType = KeyboardType.Phone))
-            TestField("Note (several lines)", KeyboardOptions(capitalization = KeyboardCapitalization.Sentences), singleLine = false)
+            TestField(tr("Message", "মেসেজ"), KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Send))
+            TestField(tr("Search", "খুঁজুন"), KeyboardOptions(imeAction = ImeAction.Search))
+            TestField(tr("Email", "ইমেইল"), KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next))
+            TestField(tr("Website", "ওয়েবসাইট"), KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Go))
+            TestField(tr("Password", "পাসওয়ার্ড"), KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done), password = true)
+            TestField(tr("Number", "নম্বর"), KeyboardOptions(keyboardType = KeyboardType.Number))
+            TestField(tr("Phone", "ফোন"), KeyboardOptions(keyboardType = KeyboardType.Phone))
+            TestField(tr("Note (several lines)", "নোট (কয়েক লাইন)"), KeyboardOptions(capitalization = KeyboardCapitalization.Sentences), singleLine = false)
         }
     }
 }

@@ -81,7 +81,8 @@ private enum class WelcomeStep { HELLO, PREVIOUS, STYLE, BANGLA, COMFORT, TURN_O
  *
  * Someone coming from Ridmik who only taps Next gets the Classic style, which behaves like
  * Ridmik: English ⇄ one Bangla layout, no autocorrect, a short toolbar, emoji in place of the
- * keys. Modern is Jolpai as its defaults set it up. Headings are in Bangla with English underneath, since the rest of the app is English.
+ * keys. Modern is Jolpai as its defaults set it up. Every line follows the app's language; the
+ * first page has the English | বাংলা switch, so someone who reads Bangla can pick it before anything else.
  */
 @Composable
 fun WelcomeFlow(
@@ -126,7 +127,7 @@ fun WelcomeFlow(
             if (step != WelcomeStep.HELLO) ProgressDots(stepIndex - 1, WelcomeStep.entries.size - 1)
             Spacer(Modifier.weight(1f))
             if (step != WelcomeStep.TRY) {
-                TextButton(onClick = onFinish) { Text("Skip") }
+                TextButton(onClick = onFinish) { Text(tr("Skip", "বাদ দিন")) }
             }
         }
 
@@ -184,10 +185,10 @@ fun WelcomeFlow(
             ) {
                 Text(
                     when (step) {
-                        WelcomeStep.HELLO -> "শুরু করি · Let's start"
-                        WelcomeStep.TURN_ON -> if (ready) "Next" else "I'll do this later"
-                        WelcomeStep.TRY -> "শেষ · Done"
-                        else -> "Next"
+                        WelcomeStep.HELLO -> tr("Let's start", "চলুন শুরু করি")
+                        WelcomeStep.TURN_ON -> if (ready) tr("Next", "পরের ধাপ") else tr("I'll do this later", "পরে করব")
+                        WelcomeStep.TRY -> tr("Done", "হয়ে গেছে")
+                        else -> tr("Next", "পরের ধাপ")
                     },
                     style = MaterialTheme.typography.titleMedium,
                 )
@@ -201,7 +202,9 @@ fun WelcomeFlow(
 
 @Composable
 private fun ColumnScope.HelloPage() {
-    Spacer(Modifier.height(24.dp))
+    // The app's language comes first, so a Bangla reader can switch before reading anything else.
+    LanguageSwitch(Modifier.align(Alignment.CenterHorizontally).padding(top = 4.dp))
+    Spacer(Modifier.height(8.dp))
     // The app icon: the animated mark on its olive tile, as on the About page.
     Box(
         Modifier.size(120.dp).clip(RoundedCornerShape(34.dp)).background(LogoTile).align(Alignment.CenterHorizontally),
@@ -211,66 +214,119 @@ private fun ColumnScope.HelloPage() {
     }
     Spacer(Modifier.height(8.dp))
     Text(
-        "জলপাই কীবোর্ডে স্বাগতম",
+        tr("Welcome to Jolpai Keyboard", "জলপাই কীবোর্ডে স্বাগতম"),
         style = MaterialTheme.typography.headlineMedium,
         fontWeight = FontWeight.SemiBold,
         textAlign = TextAlign.Center,
         modifier = Modifier.fillMaxWidth(),
     )
     Text(
-        "Welcome to Jolpai Keyboard. A calm, private Bangla keyboard. A few taps and it's set up the way you like.",
+        tr(
+            "A calm, private Bangla keyboard. Set it up your way in a few taps.",
+            "ঝামেলাহীন, নিরাপদ একটি বাংলা কীবোর্ড। কয়েকটা ট্যাপেই নিজের মতো সাজিয়ে নিন।",
+        ),
         style = MaterialTheme.typography.bodyLarge,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         textAlign = TextAlign.Center,
         modifier = Modifier.fillMaxWidth(),
     )
     Spacer(Modifier.height(12.dp))
-    Promise(UiR.drawable.ms_lock, "আপনার লেখা আপনার ফোনেই থাকে", "What you type stays on your phone")
-    Promise(UiR.drawable.ms_block, "বিজ্ঞাপন নেই, অ্যাকাউন্ট লাগে না", "No ads and no account")
-    Promise(UiR.drawable.ms_keyboard, "ইন্টারনেট ছাড়াই লেখা যায়", "Typing and suggestions work offline")
+    Promise(UiR.drawable.ms_lock, tr("What you type stays on your phone", "আপনার লেখা আপনার ফোনেই থাকে"))
+    Promise(UiR.drawable.ms_block, tr("No ads, no account", "বিজ্ঞাপন নেই, অ্যাকাউন্ট লাগে না"))
+    Promise(UiR.drawable.ms_keyboard, tr("Typing and suggestions work offline", "ইন্টারনেট ছাড়াই লেখা ও সাজেশন চলে"))
 }
 
 @Composable
 private fun PreviousPage(selected: PreviousKeyboard?, onSelect: (PreviousKeyboard) -> Unit) {
-    Heading("আগে কোন কীবোর্ড ব্যবহার করতেন?", "Which keyboard did you use before? Jolpai will start out feeling familiar.")
-    Option("Ridmik Keyboard", "Same জাতীয় layout and bottom row; starts on the Classic style", UiR.drawable.ms_keyboard_keys, selected == PreviousKeyboard.RIDMIK) { onSelect(PreviousKeyboard.RIDMIK) }
-    Option("Gboard", "Autocorrect on; starts on the Simple style, laid out like Gboard", UiR.drawable.ms_keyboard, selected == PreviousKeyboard.GBOARD) { onSelect(PreviousKeyboard.GBOARD) }
-    Option("This is my first Bangla keyboard", "We'll keep it simple and show you around", UiR.drawable.ms_auto_awesome, selected == PreviousKeyboard.NONE) { onSelect(PreviousKeyboard.NONE) }
+    Heading(
+        tr("Which keyboard did you use before?", "আগে কোন কীবোর্ড ব্যবহার করতেন?"),
+        tr("Jolpai will feel familiar from the start.", "জলপাই শুরু থেকেই চেনা চেনা লাগবে।"),
+    )
+    Option(
+        tr("Ridmik Keyboard", "রিদমিক কীবোর্ড"),
+        tr("Same জাতীয় layout and bottom row, in the Classic style", "একই জাতীয় লেআউট ও নিচের সারি, ক্লাসিক ধরনে"),
+        UiR.drawable.ms_keyboard_keys, selected == PreviousKeyboard.RIDMIK,
+    ) { onSelect(PreviousKeyboard.RIDMIK) }
+    Option(
+        tr("Gboard", "জিবোর্ড"),
+        tr("Autocorrect on, in the Simple style like Gboard", "অটোকারেক্ট চালু, জিবোর্ডের মতো সহজ ধরনে"),
+        UiR.drawable.ms_keyboard, selected == PreviousKeyboard.GBOARD,
+    ) { onSelect(PreviousKeyboard.GBOARD) }
+    Option(
+        tr("This is my first Bangla keyboard", "এটাই আমার প্রথম বাংলা কীবোর্ড"),
+        tr("We'll keep it simple and show you around", "সহজ রাখব, সবকিছু দেখিয়ে দেব"),
+        UiR.drawable.ms_auto_awesome, selected == PreviousKeyboard.NONE,
+    ) { onSelect(PreviousKeyboard.NONE) }
 }
 
 @Composable
 private fun BanglaPage(choices: WelcomeChoices, onChange: (WelcomeChoices) -> Unit) {
-    Heading("বাংলা কীভাবে লেখেন?", "How do you type Bangla? Pick one or more. The language key switches between them and English.")
+    Heading(
+        tr("How do you type Bangla?", "বাংলা কীভাবে লেখেন?"),
+        tr("Pick one or more. The language key switches between them and English.", "এক বা একাধিক বেছে নিন। ভাষার কী চেপে এগুলো আর ইংরেজির মধ্যে বদলাবেন।"),
+    )
     fun toggle(layout: LayoutId) = onChange(
         choices.copy(bangla = if (layout in choices.bangla) choices.bangla - layout else choices.bangla + layout),
     )
-    Check("অভ্র · Phonetic", "Type with English letters: ami → আমি, bhalo → ভালো", LayoutId.AVRO in choices.bangla) { toggle(LayoutId.AVRO) }
-    Check("জাতীয় · National", "Bangla letters on the keys, the same layout as Ridmik's National", LayoutId.NATIONAL in choices.bangla) { toggle(LayoutId.NATIONAL) }
-    Check("প্রভাত · Probhat", "The fixed Bangla layout used on Linux computers", LayoutId.PROBHAT in choices.bangla) { toggle(LayoutId.PROBHAT) }
+    Check(
+        tr("অভ্র · Phonetic", "অভ্র · ফোনেটিক"),
+        tr("Type with English letters: ami → আমি, bhalo → ভালো", "ইংরেজি অক্ষরে লিখুন: ami → আমি, bhalo → ভালো"),
+        LayoutId.AVRO in choices.bangla,
+    ) { toggle(LayoutId.AVRO) }
+    Check(
+        tr("জাতীয় · National", "জাতীয়"),
+        tr("Bangla letters on the keys, same as Ridmik's National", "কী-তে বাংলা অক্ষর, রিদমিকের জাতীয় লেআউটের মতোই"),
+        LayoutId.NATIONAL in choices.bangla,
+    ) { toggle(LayoutId.NATIONAL) }
+    Check(
+        tr("প্রভাত · Probhat", "প্রভাত"),
+        tr("The Bangla layout used on Linux computers", "Linux কম্পিউটারে যে বাংলা লেআউট চলে"),
+        LayoutId.PROBHAT in choices.bangla,
+    ) { toggle(LayoutId.PROBHAT) }
     SettingsNote(
-        if (choices.bangla.isEmpty()) "Nothing picked: Jolpai will type English only. You can add Bangla any time in Languages & layouts."
-        else "You can change this any time in Languages & layouts.",
+        if (choices.bangla.isEmpty()) {
+            tr(
+                "None picked: Jolpai will type English only. You can add Bangla later in settings.",
+                "কিছুই বাছেননি: জলপাই শুধু ইংরেজি লিখবে। পরে সেটিংসে বাংলা যোগ করতে পারবেন।",
+            )
+        } else {
+            tr("You can change this any time in settings.", "পরে যেকোনো সময় সেটিংসে বদলাতে পারবেন।")
+        },
     )
 }
 
 @Composable
 private fun StylePage(selected: KeyboardStyle, theme: KeyboardTheme, settings: KeyboardSettings, onSelect: (KeyboardStyle) -> Unit) {
-    Heading("কোন ধরনটা পছন্দ?", "Which style do you like? You can switch any time in Quick setup.")
+    Heading(
+        tr("Which style do you like?", "কোন ধরনটা পছন্দ?"),
+        tr("Try the keyboard below. You can switch any time.", "নিচের কীবোর্ডটি চালিয়ে দেখুন। পরে যেকোনো সময় বদলানো যায়।"),
+    )
     // The real keyboard, already in the picked style: try its buttons.
     KeyboardPreview(theme, settings)
-    for (style in KeyboardStyle.entries) StyleCard(style, selected == style, style.summary, onSelect)
+    for (style in KeyboardStyle.entries) StyleCard(style, selected == style, style.uiSummary, onSelect)
 }
 
 @Composable
 private fun ComfortPage(choices: WelcomeChoices, theme: KeyboardTheme, settings: KeyboardSettings, onChange: (WelcomeChoices) -> Unit) {
-    Heading("নিজের মতো করে নিন", "Make it feel like yours. We picked these from your last keyboard; change anything you like.")
+    Heading(
+        tr("Make it yours", "নিজের মতো করে নিন"),
+        tr("We picked these from your last keyboard. Change anything you like.", "আগের কীবোর্ড দেখে এগুলো বেছে রেখেছি। যা খুশি বদলে নিন।"),
+    )
     KeyboardPreview(theme, settings)
     Surface(shape = RoundedCornerShape(24.dp), color = MaterialTheme.colorScheme.surfaceContainer) {
         Column(Modifier.padding(vertical = 6.dp)) {
-            SettingsSwitch("Autocorrect English words", "Fixes typos when you press space. Bangla is never changed by itself.", choices.autoCorrect, { onChange(choices.copy(autoCorrect = it)) }, UiR.drawable.ms_spellcheck)
-            SettingsSwitch("Number row", "A row of digits above the letters", choices.numberRow, { onChange(choices.copy(numberRow = it)) }, UiR.drawable.ms_123)
-            SettingsSwitch("Key sound", null, choices.keySound, { onChange(choices.copy(keySound = it)) }, UiR.drawable.ms_volume_up)
-            SettingsSwitch("Vibrate on key press", null, choices.vibrate, { onChange(choices.copy(vibrate = it)) }, UiR.drawable.ms_vibration)
+            SettingsSwitch(
+                tr("Autocorrect English", "ইংরেজি অটোকারেক্ট"),
+                tr("Fixes typos when you press space. Bangla is never changed on its own.", "স্পেস চাপলে ভুল বানান ঠিক করে। বাংলা নিজে থেকে কখনো বদলায় না।"),
+                choices.autoCorrect, { onChange(choices.copy(autoCorrect = it)) }, UiR.drawable.ms_spellcheck,
+            )
+            SettingsSwitch(
+                tr("Number row", "সংখ্যার সারি"),
+                tr("Digits above the letters", "অক্ষরের ওপরে সংখ্যা"),
+                choices.numberRow, { onChange(choices.copy(numberRow = it)) }, UiR.drawable.ms_123,
+            )
+            SettingsSwitch(tr("Key sound", "কী চাপার শব্দ"), null, choices.keySound, { onChange(choices.copy(keySound = it)) }, UiR.drawable.ms_volume_up)
+            SettingsSwitch(tr("Vibrate on key press", "কী চাপলে ভাইব্রেশন"), null, choices.vibrate, { onChange(choices.copy(vibrate = it)) }, UiR.drawable.ms_vibration)
         }
     }
 }
@@ -279,76 +335,117 @@ private fun ComfortPage(choices: WelcomeChoices, theme: KeyboardTheme, settings:
 private fun TurnOnPage(setup: SetupStatus, onOpenKeyboardSettings: () -> Unit, onPickKeyboard: () -> Unit) {
     val ready = setup.enabled && setup.selected
     Heading(
-        if (ready) "জলপাই চালু হয়েছে" else "জলপাই চালু করুন",
-        if (ready) "Jolpai is your keyboard. One more page: a quick try." else "Turn Jolpai on. Android asks for this once, for every keyboard.",
+        if (ready) tr("Jolpai is on", "জলপাই চালু হয়েছে") else tr("Turn on Jolpai", "জলপাই চালু করুন"),
+        if (ready) {
+            tr("Jolpai is your keyboard. One more page: a quick try.", "জলপাই এখন আপনার কীবোর্ড। শেষ পাতায় একবার লিখে দেখুন।")
+        } else {
+            tr("Android asks for this once, for every keyboard.", "যেকোনো কীবোর্ডের জন্য Android এটা একবারই চায়।")
+        },
     )
     Surface(shape = RoundedCornerShape(24.dp), color = MaterialTheme.colorScheme.surfaceContainer) {
         Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
             SetupStep(
-                1, "Turn on Jolpai Keyboard",
-                "Switch on “Jolpai Keyboard” in the list. Android warns that keyboards can see what you type. Jolpai keeps everything on your phone and sends nothing.",
-                setup.enabled, "Open keyboard list", onOpenKeyboardSettings, enabled = true,
+                1, tr("Turn on Jolpai Keyboard", "জলপাই কীবোর্ড চালু করুন"),
+                tr(
+                    "Switch on “Jolpai Keyboard” in the list. Android warns that keyboards can see what you type; Jolpai keeps it all on your phone and sends nothing.",
+                    "তালিকায় “Jolpai Keyboard” চালু করুন। Android সতর্ক করবে যে কীবোর্ড আপনার লেখা দেখতে পায়; জলপাই সব আপনার ফোনেই রাখে, কোথাও কিছু পাঠায় না।",
+                ),
+                setup.enabled, tr("Open keyboard list", "কীবোর্ডের তালিকা খুলুন"), onOpenKeyboardSettings, enabled = true,
             )
             SetupStep(
-                2, "Choose Jolpai", "Pick “Jolpai Keyboard” in the keyboard chooser.",
-                setup.selected, "Choose keyboard", onPickKeyboard, enabled = setup.enabled,
-                help = "List empty? Set it in keyboard settings" to onOpenKeyboardSettings,
+                2, tr("Choose Jolpai", "জলপাই বেছে নিন"),
+                tr("Pick “Jolpai Keyboard” in the keyboard chooser.", "কীবোর্ড বাছাইয়ের তালিকায় “Jolpai Keyboard” বেছে নিন।"),
+                setup.selected, tr("Choose keyboard", "কীবোর্ড বেছে নিন"), onPickKeyboard, enabled = setup.enabled,
+                help = tr("List empty? Set it in keyboard settings", "তালিকা খালি? কীবোর্ড সেটিংসে ঠিক করুন") to onOpenKeyboardSettings,
             )
         }
     }
-    SettingsNote("Want to go back to your old keyboard later? Use “Switch keyboard” on the home screen. Nothing is lost.")
+    SettingsNote(
+        tr(
+            "You can switch back to your old keyboard any time from the app's home page. Nothing is lost.",
+            "চাইলে যেকোনো সময় অ্যাপের মূল পাতা থেকে আগের কীবোর্ডে ফিরতে পারবেন। কিছুই হারাবে না।",
+        ),
+    )
 }
 
 @Composable
 private fun TryPage(choices: WelcomeChoices, previous: PreviousKeyboard?) {
-    Heading("একবার লিখে দেখুন", "Give it a try. A few things worth knowing:")
+    Heading(tr("Give it a try", "একবার লিখে দেখুন"), tr("A few things worth knowing:", "কয়েকটা কাজের কথা:"))
     var text by rememberSaveable { mutableStateOf("") }
     OutlinedTextField(
         value = text,
         onValueChange = { text = it },
-        placeholder = { Text(if (LayoutId.AVRO in choices.bangla) "Try: ami bhalo achi" else "Type something here") },
+        placeholder = { Text(if (LayoutId.AVRO in choices.bangla) tr("Try: ami bhalo achi", "লিখে দেখুন: ami bhalo achi") else tr("Type something here", "এখানে কিছু লিখুন")) },
         keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Done),
         shape = RoundedCornerShape(20.dp),
         minLines = 2,
         modifier = Modifier.fillMaxWidth(),
     )
     if (choices.bangla.isNotEmpty()) {
-        Tip(UiR.drawable.ms_language, "Tap the language key next to space to switch between English and ${choices.bangla.joinToString(" / ") { it.shortLabel }}.")
+        val names = choices.bangla.joinToString(" / ") { it.shortLabel }
+        Tip(
+            UiR.drawable.ms_language,
+            tr("Tap the language key next to space to switch between English and $names.", "স্পেসের পাশের ভাষার কী চেপে ইংরেজি আর $names-এর মধ্যে বদলান।"),
+        )
     }
     if (LayoutId.AVRO in choices.bangla) {
-        Tip(UiR.drawable.ms_quickreply, "অভ্র: write in English letters (ami → আমি). The bar above the keys shows other spellings; tap one to use it.")
+        Tip(
+            UiR.drawable.ms_quickreply,
+            tr(
+                "অভ্র: type in English letters (ami → আমি). Other spellings show in the bar above the keys; tap one.",
+                "অভ্র: ইংরেজি অক্ষরে লিখুন (ami → আমি)। অন্য বানানগুলো কী-গুলোর ওপরের বারে দেখাবে; পছন্দেরটায় ট্যাপ করুন।",
+            ),
+        )
     }
     if (LayoutId.NATIONAL in choices.bangla) {
         Tip(
             UiR.drawable.ms_touch_long,
-            if (previous == PreviousKeyboard.RIDMIK) "জাতীয়: the keys are where Ridmik has them. Hold a key for the letter in its corner."
-            else "জাতীয়: hold a key for the letter in its corner. ্ joins two letters (ক ্ ষ → ক্ষ).",
+            if (previous == PreviousKeyboard.RIDMIK) {
+                tr(
+                    "জাতীয়: the keys are where Ridmik has them. Hold a key for the letter in its corner.",
+                    "জাতীয়: কী-গুলো রিদমিকের মতো একই জায়গায়। কোণের অক্ষরটির জন্য কী চেপে ধরুন।",
+                )
+            } else {
+                tr(
+                    "জাতীয়: hold a key for the letter in its corner. ্ joins two letters (ক ্ ষ → ক্ষ).",
+                    "জাতীয়: কোণের অক্ষরটির জন্য কী চেপে ধরুন। ্ দিয়ে দুটি অক্ষর জোড়া লাগে (ক ্ ষ → ক্ষ)।",
+                )
+            },
         )
     }
-    Tip(UiR.drawable.ms_swipe, "Slide your thumb along the space bar to move the cursor. Slide left from ⌫ to delete whole words.")
-    Tip(UiR.drawable.ms_settings, "Everything here can be changed later on the home screen: themes, size, sounds, layouts.")
+    Tip(
+        UiR.drawable.ms_swipe,
+        tr(
+            "Slide your thumb along the space bar to move the cursor. Slide left from ⌫ to delete whole words.",
+            "স্পেস বারে আঙুল টেনে কার্সর সরান। ⌫ থেকে বাঁয়ে টানলে পুরো শব্দ মুছে যায়।",
+        ),
+    )
+    Tip(
+        UiR.drawable.ms_settings,
+        tr(
+            "Change anything later from the app's home page: themes, size, sounds, layouts.",
+            "থিম, সাইজ, শব্দ, লেআউট: সবকিছু পরে অ্যাপের মূল পাতা থেকে বদলাতে পারবেন।",
+        ),
+    )
 }
 
 // ---------------------------------------------------------------------------------- parts
 
-/** A Bangla heading with its English line under it. */
+/** A page heading with a short line under it. */
 @Composable
-private fun Heading(bangla: String, english: String) {
+private fun Heading(title: String, body: String) {
     Spacer(Modifier.height(8.dp))
-    Text(bangla, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
-    Text(english, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Text(title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
+    Text(body, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
     Spacer(Modifier.height(4.dp))
 }
 
 @Composable
-private fun Promise(@DrawableRes icon: Int, bangla: String, english: String) {
+private fun Promise(@DrawableRes icon: Int, text: String) {
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
         IconBadge(icon, container = MaterialTheme.colorScheme.primaryContainer, tint = MaterialTheme.colorScheme.onPrimaryContainer)
         Spacer(Modifier.width(16.dp))
-        Column {
-            Text(bangla, style = MaterialTheme.typography.titleMedium)
-            Text(english, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
+        Text(text, style = MaterialTheme.typography.titleMedium)
     }
 }
 
@@ -412,11 +509,21 @@ private fun StyleCard(style: KeyboardStyle, selected: Boolean, summary: String, 
     ChoiceCard(selected, Modifier.selectable(selected = selected, role = Role.RadioButton, onClick = { onSelect(style) })) {
         Column(Modifier.weight(1f).padding(end = 8.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("${style.banglaLabel} · ${style.label}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Medium)
-                if (style.like != null) {
+                Text(style.uiLabel, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Medium)
+                val like = style.like?.let { name ->
+                    tr(
+                        "like $name",
+                        when (name) {
+                            "Ridmik" -> "রিদমিকের মতো"
+                            "Gboard" -> "জিবোর্ডের মতো"
+                            else -> "$name-এর মতো"
+                        },
+                    )
+                }
+                if (like != null) {
                     Spacer(Modifier.width(8.dp))
                     Surface(shape = RoundedCornerShape(8.dp), color = MaterialTheme.colorScheme.tertiaryContainer) {
-                        Text("like ${style.like}", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp))
+                        Text(like, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp))
                     }
                 }
             }

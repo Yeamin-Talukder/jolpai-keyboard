@@ -31,9 +31,13 @@ readable. The key never leaves the phone and is not backed up; uninstalling Jolp
 minute after it was copied, unless you pin it.
 
 ## What Jolpai sends over the internet
-- **Nothing by default.** Jolpai has no account, no analytics, no crash reporting service and no ads.
-- **GIF search**, only if you add your own GIPHY API key: the words you type into the GIF
-  search box are sent to GIPHY to find GIFs, and the GIFs you pick are downloaded. GIPHY's
+- **Nothing while you type.** Jolpai has no account, no analytics, no crash reporting service and no ads.
+- **GIFs**, only when you open the GIF tab in the emoji panel (you can turn GIF search off in
+  Emoji, GIFs & stickers): the app asks KLIPY (built in) for trending GIFs or for the words you
+  type into the GIF search box, with your phone's country and a random id made once on this
+  phone (not linked to you, your accounts or the device), and downloads the GIF previews and
+  the GIFs you pick. When you send a GIF, KLIPY is told which one, so it can rank GIFs better.
+  If you add your own GIPHY API key, GIPHY is used instead in the same way. KLIPY's or GIPHY's
   privacy policy applies to those requests. Nothing you type in other apps is sent.
 - **Voice typing** uses your phone's speech recognition service (usually Google's). While the
   🎤 panel is listening, your voice goes to that service, which may process it online
@@ -74,7 +78,7 @@ minute after it was copied, unless you pin it.
 
 ## Permissions
 - **Microphone:** only for voice typing; asked for in the app with an explanation.
-- **Internet:** only for GIF search with your own key, downloading the offline translation pack, and checking for and downloading updates, each only when you ask.
+- **Internet:** only for GIFs (when the GIF tab is open), downloading the offline translation pack, and checking for and downloading updates, each only when you ask.
 - **Install apps** (`REQUEST_INSTALL_PACKAGES`): only to install Jolpai's own update when you tap Update. Android asks you once to allow it for Jolpai, and asks you to confirm every install.
 - **Vibration:** for the key-press vibration strength setting.
 

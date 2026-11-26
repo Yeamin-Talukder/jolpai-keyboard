@@ -1,3 +1,4 @@
+import java.util.Properties
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -7,15 +8,34 @@ plugins {
     alias(libs.plugins.hilt)
 }
 
+/**
+ * The built-in GIF service's key (KLIPY, https://partner.klipy.com). Never in the repository: it comes
+ * from `klipy.apiKey=` in the git-ignored local.properties, or `-PklipyApiKey=`, or the
+ * KLIPY_API_KEY environment variable (the release workflow's secret). Without it, GIF search
+ * offers only the user's own GIPHY key.
+ */
+val klipyApiKey: String = providers.gradleProperty("klipyApiKey").orNull
+    ?: providers.environmentVariable("KLIPY_API_KEY").orNull
+    ?: rootProject.file("local.properties").takeIf { it.exists() }?.let { f ->
+        Properties().apply { f.inputStream().use { load(it) } }.getProperty("klipy.apiKey")
+    }
+    ?: ""
+
 android {
     namespace = "com.yeamin.jolpai.ui"
     compileSdk = 37
-    defaultConfig { minSdk = 26 }
+    defaultConfig {
+        minSdk = 26
+        buildConfigField("String", "KLIPY_API_KEY", "\"${klipyApiKey.trim()}\"")
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    buildFeatures { compose = true }
+    buildFeatures {
+        compose = true
+        buildConfig = true
+    }
 }
 
 kotlin {

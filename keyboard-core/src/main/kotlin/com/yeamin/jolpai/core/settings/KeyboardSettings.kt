@@ -86,7 +86,9 @@ data class KeyboardSettings(
     /** Offer Banglish words (Bangla in English letters: valo, kmn, achi) on the English layout. */
     val banglishSuggestions: Boolean = true,
     val voiceLanguage: VoiceLanguage = VoiceLanguage.AUTO,
-    /** The user's own GIPHY API key; GIF search is off until one is set. Stored only on the device. */
+    /** GIF search in the emoji panel (KLIPY, built in). Only the search words go to the GIF service. */
+    val gifSearch: Boolean = true,
+    /** Optional: the user's own GIPHY API key, used instead of the built-in KLIPY. Stored only on the device. */
     val giphyApiKey: String = "",
     /** "system" (Material You, light/dark with the phone), a built-in id ("builtin:ocean") or "custom:<n>". Default: Olive night. */
     val themeId: String = KeyboardTheme.DEFAULT_ID,
@@ -343,6 +345,7 @@ class KeyboardSettingsRepository @Inject constructor(
                 smartPredictions = p[SMART_PREDICTIONS] ?: true,
                 banglishSuggestions = p[BANGLISH_SUGGESTIONS] ?: true,
                 voiceLanguage = VoiceLanguage.fromStorageKey(p[VOICE_LANGUAGE]),
+                gifSearch = p[GIF_SEARCH] ?: true,
                 giphyApiKey = p[GIPHY_KEY].orEmpty(),
                 themeId = p[THEME_ID] ?: KeyboardTheme.DEFAULT_ID,
                 festivalThemes = p[FESTIVAL_THEMES] ?: true,
@@ -409,6 +412,7 @@ class KeyboardSettingsRepository @Inject constructor(
     suspend fun setSmartPredictions(value: Boolean) = dataStore.edit { it[SMART_PREDICTIONS] = value }
     suspend fun setBanglishSuggestions(value: Boolean) = dataStore.edit { it[BANGLISH_SUGGESTIONS] = value }
     suspend fun setVoiceLanguage(value: VoiceLanguage) = dataStore.edit { it[VOICE_LANGUAGE] = value.storageKey }
+    suspend fun setGifSearch(value: Boolean) = dataStore.edit { it[GIF_SEARCH] = value }
     suspend fun setGiphyApiKey(value: String) = dataStore.edit { it[GIPHY_KEY] = value.trim() }
     suspend fun setThemeId(value: String) = dataStore.edit { it[THEME_ID] = value }
     suspend fun setFestivalThemes(value: Boolean) = dataStore.edit { it[FESTIVAL_THEMES] = value }
@@ -513,6 +517,7 @@ class KeyboardSettingsRepository @Inject constructor(
         val DOUBLE_SPACE_PERIOD = booleanPreferencesKey("double_space_period")
         val BANGLA_AUTO_VOWELS = booleanPreferencesKey("bangla_auto_vowels")
         val FESTIVAL_THEMES = booleanPreferencesKey("festival_themes")
+        val GIF_SEARCH = booleanPreferencesKey("gif_search")
         val REMEMBER_LAST_LAYOUT = booleanPreferencesKey("remember_last_layout")
         val DEFAULT_LAYOUT = stringPreferencesKey("default_layout")
         val LAST_LAYOUT = stringPreferencesKey("last_layout")
@@ -578,7 +583,7 @@ class KeyboardSettingsRepository @Inject constructor(
             SHOW_SUGGESTIONS, AUTO_CORRECT, NEXT_WORD, LEARNING, BLOCK_OFFENSIVE, CLIPBOARD_HISTORY, CLIPBOARD_IMAGES,
             CLIPBOARD_RETENTION, CURSOR_SWIPE, TRACKPAD_VERTICAL, ENTER_HOLD_EMOJI, ENTER_HOLD_SELECT, LONG_PRESS, PREDICTIVE_TOUCH, TOUCH_CALIBRATION, GESTURES, TOOLBAR, TOOLBAR_SEEN, PANEL_PLACEMENT, KEY_LOOK, EMOJI_TONE, EMOJI_SUGGESTIONS, SMART_PREDICTIONS, BANGLISH_SUGGESTIONS, VOICE_LANGUAGE, THEME_ID,
             HEIGHT_PORTRAIT, HEIGHT_LANDSCAPE, NUMBER_ROW, ONE_HANDED, FLOATING, FLOAT_X, FLOAT_Y, HAPTICS, KEY_SOUND, SOUND_VOLUME,
-            KEY_FONT, BANGLA_KEY_FONT, SOUND_PACK, SPLIT_KEYS, FESTIVAL_THEMES,
+            KEY_FONT, BANGLA_KEY_FONT, SOUND_PACK, SPLIT_KEYS, FESTIVAL_THEMES, GIF_SEARCH,
         ).map { it.name }.toSet()
     }
 }

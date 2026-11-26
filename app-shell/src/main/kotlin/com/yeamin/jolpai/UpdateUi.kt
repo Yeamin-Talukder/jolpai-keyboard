@@ -66,23 +66,29 @@ fun UpdateSection(state: UpdateState, version: String) {
 private fun UpdateRow(state: UpdateState, version: String) {
     val context = LocalContext.current
     SettingsItem(
-        if (state is UpdateState.Available) "Update available: ${state.release.version}" else "Check for updates",
+        if (state is UpdateState.Available) {
+            tr("Update available: ${state.release.version}", "আপডেট আছে: ${state.release.version.digits()}")
+        } else {
+            tr("Check for updates", "আপডেট আছে কি না দেখুন")
+        },
         when (state) {
-            UpdateState.Checking -> "Checking GitHub…"
-            is UpdateState.UpToDate -> "You have the latest version ($version)"
+            UpdateState.Checking -> tr("Checking GitHub…", "GitHub-এ দেখা হচ্ছে…")
+            is UpdateState.UpToDate -> tr("You have the latest version ($version)", "সর্বশেষ ভার্সনই আছে (${version.digits()})")
             is UpdateState.Available -> listOfNotNull(
                 state.release.apkSize.takeIf { it > 0 }?.let(::megabytes),
-                "downloads and installs right here",
+                tr("downloads and installs here", "এখানেই ডাউনলোড ও ইনস্টল হবে"),
             ).joinToString(" · ")
-            is UpdateState.Failed -> state.message
-            else -> "You have $version · checks GitHub only when you tap"
+            is UpdateState.Failed -> failureText(state)
+            else -> tr("Version $version · asks GitHub only when you tap", "ভার্সন ${version.digits()} · ট্যাপ করলে তবেই GitHub-এ দেখে")
         },
         UiR.drawable.ms_system_update,
         showChevron = false,
         trailing = {
             when (state) {
                 UpdateState.Checking -> CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 2.5.dp)
-                is UpdateState.Available -> FilledTonalButton(onClick = { AppUpdater.download(context, state.release) }) { Text("Update") }
+                is UpdateState.Available -> FilledTonalButton(onClick = { AppUpdater.download(context, state.release) }) {
+                    Text(tr("Update", "আপডেট"))
+                }
                 else -> Unit
             }
         },
@@ -184,7 +190,7 @@ private fun ProgressRing(state: UpdateState) {
         ) { center ->
             when (center) {
                 RingCenter.PERCENT -> Text(
-                    "${(progress * 100).toInt()}%",
+                    "${num((progress * 100).toInt())}%",
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
                     color = arcColor,
@@ -218,19 +224,24 @@ private fun ringCenterOf(state: UpdateState): RingCenter = when (state) {
 }
 
 private fun titleOf(state: UpdateState): String = when (state) {
-    is UpdateState.Downloading -> "Downloading Jolpai ${state.release.version}"
-    is UpdateState.Verifying -> "Checking the download"
-    is UpdateState.Installing -> "Installing Jolpai ${state.release.version}"
-    is UpdateState.NeedsPermission -> "Allow Jolpai to install updates"
-    is UpdateState.SignedDifferently -> "This copy can't be updated in place"
-    is UpdateState.Failed -> "The update didn't finish"
+    is UpdateState.Downloading -> tr("Downloading Jolpai ${state.release.version}", "জলপাই ${state.release.version.digits()} ডাউনলোড হচ্ছে")
+    is UpdateState.Verifying -> tr("Checking the download", "ডাউনলোড যাচাই হচ্ছে")
+    is UpdateState.Installing -> tr("Installing Jolpai ${state.release.version}", "জলপাই ${state.release.version.digits()} ইনস্টল হচ্ছে")
+    is UpdateState.NeedsPermission -> tr("Allow Jolpai to install updates", "জলপাইকে আপডেট ইনস্টলের অনুমতি দিন")
+    is UpdateState.SignedDifferently -> tr("This copy can't be updated here", "এই কপিটি এখান থেকে আপডেট হবে না")
+    is UpdateState.Failed -> tr("The update didn't finish", "আপডেট শেষ হয়নি")
     else -> ""
 }
 
 private fun detailOf(state: UpdateState): String = when (state) {
     is UpdateState.Downloading -> buildString {
-        if (state.total > 0) append("${megabytes(state.downloaded, short = true)} of ${megabytes(state.total)}")
-        else append(megabytes(state.downloaded))
+        if (state.total > 0) {
+            val done = megabytes(state.downloaded, short = true)
+            val total = megabytes(state.total)
+            append(tr("$done of $total", "$done / $total"))
+        } else {
+            append(megabytes(state.downloaded))
+        }
         if (state.bytesPerSecond > 0) {
             append(" · ").append(speed(state.bytesPerSecond))
             if (state.total > state.downloaded) {
@@ -238,46 +249,108 @@ private fun detailOf(state: UpdateState): String = when (state) {
             }
         }
     }
-    is UpdateState.Verifying -> "Making sure it's the real Jolpai and wasn't changed on the way."
-    is UpdateState.Installing -> "Tap Update in Android's prompt. Jolpai restarts as the new version."
-    is UpdateState.NeedsPermission -> "Android asks once: turn on “Allow from this source” for Jolpai, then come back here."
-    is UpdateState.SignedDifferently ->
-        "Your Jolpai was signed with a different key (a developer build), so Android won't update it with the " +
-            "official release. Back up in Backup & restore, uninstall Jolpai, then install the release and restore."
-    is UpdateState.Failed -> state.message
+    is UpdateState.Verifying -> tr(
+        "Making sure it's the real Jolpai and wasn't changed on the way.",
+        "দেখা হচ্ছে এটি আসল জলপাই কি না, আর পথে কিছু বদলেছে কি না।",
+    )
+    is UpdateState.Installing -> tr(
+        "Tap Update when Android asks. Jolpai restarts as the new version.",
+        "Android জিজ্ঞেস করলে আপডেট চাপুন। জলপাই নতুন ভার্সনে আবার চালু হবে।",
+    )
+    is UpdateState.NeedsPermission -> tr(
+        "Turn on “Allow from this source” for Jolpai, then come back here.",
+        "জলপাইয়ের জন্য “Allow from this source” (এই উৎস থেকে অনুমতি) চালু করে এখানে ফিরে আসুন।",
+    )
+    is UpdateState.SignedDifferently -> tr(
+        "This Jolpai was signed with a different key, so Android won't update it. Back up in Backup & restore, " +
+            "uninstall Jolpai, install the new version, then restore.",
+        "এই জলপাই অন্য কী দিয়ে সাইন করা, তাই Android এটি আপডেট করবে না। ‘ব্যাকআপ ও রিস্টোর’-এ ব্যাকআপ নিন, " +
+            "জলপাই আনইনস্টল করুন, নতুন ভার্সন ইনস্টল করে রিস্টোর করুন।",
+    )
+    is UpdateState.Failed -> failureText(state)
     else -> ""
 }
 
+/** What stopped the update, in the app's language. */
+private fun failureText(failed: UpdateState.Failed): String = when (failed.reason) {
+    UpdateFailure.OFFLINE -> tr(
+        "Couldn't reach GitHub. Check the internet and try again.",
+        "GitHub-এ পৌঁছানো গেল না। ইন্টারনেট দেখে আবার চেষ্টা করুন।",
+    )
+    UpdateFailure.GITHUB_BUSY -> tr(
+        "GitHub didn't answer. Try again in a few minutes.",
+        "GitHub সাড়া দেয়নি। কয়েক মিনিট পরে আবার চেষ্টা করুন।",
+    )
+    UpdateFailure.NO_APK -> tr(
+        "This release has no download for your phone's processor.",
+        "এই রিলিজে আপনার ফোনের প্রসেসরের জন্য কোনো ফাইল নেই।",
+    )
+    UpdateFailure.HTTP_ERROR -> tr(
+        "GitHub didn't send the file (error ${failed.detail}). Try again later, or use the release page.",
+        "GitHub ফাইলটি পাঠায়নি (এরর ${failed.detail})। পরে আবার চেষ্টা করুন, বা রিলিজ পেজ থেকে নিন।",
+    )
+    UpdateFailure.DOWNLOAD_STOPPED -> tr(
+        "The download stopped. Check the internet and try again.",
+        "ডাউনলোড থেমে গেছে। ইন্টারনেট দেখে আবার চেষ্টা করুন।",
+    )
+    UpdateFailure.CHECKSUM_MISMATCH -> tr(
+        "The file failed the safety check, so it wasn't installed. Try again.",
+        "ফাইলটি নিরাপত্তা যাচাইয়ে টেকেনি, তাই ইনস্টল হয়নি। আবার চেষ্টা করুন।",
+    )
+    UpdateFailure.NO_CHECKSUM -> tr(
+        "Couldn't check the file, so it wasn't installed. Try again.",
+        "ফাইলটি যাচাই করা গেল না, তাই ইনস্টল হয়নি। আবার চেষ্টা করুন।",
+    )
+    UpdateFailure.NOT_JOLPAI -> tr(
+        "The downloaded file isn't Jolpai, so it wasn't installed.",
+        "ডাউনলোড করা ফাইলটি জলপাই নয়, তাই ইনস্টল হয়নি।",
+    )
+    UpdateFailure.NOT_NEWER -> tr(
+        "The downloaded version isn't newer than yours.",
+        "ডাউনলোড করা ভার্সনটি আপনারটির চেয়ে নতুন নয়।",
+    )
+    UpdateFailure.NO_SPACE -> tr(
+        "Not enough free space to install the update.",
+        "ফোনে যথেষ্ট জায়গা নেই, তাই আপডেট ইনস্টল হলো না।",
+    )
+    UpdateFailure.INSTALL_FAILED -> failed.detail?.let { reason ->
+        tr("Android couldn't install the update: $reason", "Android আপডেটটি ইনস্টল করতে পারেনি: $reason")
+    } ?: tr("Android couldn't install the update.", "Android আপডেটটি ইনস্টল করতে পারেনি।")
+    UpdateFailure.UNEXPECTED -> failed.detail?.let { reason ->
+        tr("The update couldn't be installed ($reason).", "আপডেট ইনস্টল করা গেল না ($reason)।")
+    } ?: tr("The update couldn't be installed.", "আপডেট ইনস্টল করা গেল না।")
+}
+
 private fun buttonsOf(state: UpdateState, context: android.content.Context): List<Pair<String, () -> Unit>> = when (state) {
-    is UpdateState.Downloading -> listOf("Cancel" to { AppUpdater.cancel() })
+    is UpdateState.Downloading -> listOf(tr("Cancel", "বাতিল") to { AppUpdater.cancel() })
     is UpdateState.NeedsPermission -> listOf(
-        "Not now" to { AppUpdater.reset() },
-        "Open settings" to { AppUpdater.openInstallPermission(context) },
+        tr("Not now", "এখন না") to { AppUpdater.reset() },
+        tr("Open settings", "সেটিংস খুলুন") to { AppUpdater.openInstallPermission(context) },
     )
     is UpdateState.SignedDifferently -> listOf(
-        "Close" to { AppUpdater.reset() },
-        "Release page" to { openLink(context, state.release.pageUrl) },
+        tr("Close", "বন্ধ করুন") to { AppUpdater.reset() },
+        tr("Release page", "রিলিজ পেজ") to { openLink(context, state.release.pageUrl) },
     )
     is UpdateState.Failed -> listOfNotNull(
-        "Close" to { AppUpdater.reset() },
-        state.release?.let { r -> "Try again" to { AppUpdater.download(context, r) } },
+        tr("Close", "বন্ধ করুন") to { AppUpdater.reset() },
+        state.release?.let { r -> tr("Try again", "আবার চেষ্টা করুন") to { AppUpdater.download(context, r) } },
     )
     else -> emptyList()
 }
 
 private fun megabytes(bytes: Long, short: Boolean = false): String {
     val mb = bytes / 1_048_576.0
-    return if (short) String.format(Locale.US, "%.1f", mb) else String.format(Locale.US, "%.1f MB", mb)
+    return (if (short) String.format(Locale.US, "%.1f", mb) else String.format(Locale.US, "%.1f MB", mb)).digits()
 }
 
 private fun speed(bytesPerSecond: Long): String = if (bytesPerSecond >= 1_048_576) {
-    String.format(Locale.US, "%.1f MB/s", bytesPerSecond / 1_048_576.0)
+    String.format(Locale.US, "%.1f MB/s", bytesPerSecond / 1_048_576.0).digits()
 } else {
-    "${bytesPerSecond / 1024} KB/s"
+    "${num(bytesPerSecond / 1024)} KB/s"
 }
 
 private fun timeLeft(seconds: Long): String = when {
-    seconds < 1 -> "almost done"
-    seconds < 60 -> "$seconds s left"
-    else -> "${(seconds + 59) / 60} min left"
+    seconds < 1 -> tr("almost done", "প্রায় শেষ")
+    seconds < 60 -> tr("$seconds s left", "আর ${num(seconds)} সেকেন্ড")
+    else -> ((seconds + 59) / 60).let { minutes -> tr("$minutes min left", "আর ${num(minutes)} মিনিট") }
 }

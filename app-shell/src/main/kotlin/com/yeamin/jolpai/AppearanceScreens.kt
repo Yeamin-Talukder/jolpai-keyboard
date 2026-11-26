@@ -69,6 +69,7 @@ import com.yeamin.jolpai.theme.LiveStyle
 import com.yeamin.jolpai.theme.LiveThemes
 import com.yeamin.jolpai.theme.PressEffect
 import com.yeamin.jolpai.theme.ThemeFamily
+import com.yeamin.jolpai.theme.ThemeType
 import com.yeamin.jolpai.theme.ThemeTypes
 import androidx.compose.material3.FilterChip
 import com.yeamin.jolpai.theme.ThemeCodec
@@ -76,6 +77,22 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import com.yeamin.jolpai.ui.KeyboardContainer
 import com.yeamin.jolpai.ui.KeyboardPalette
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyGridItemSpanScope
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.text.style.TextOverflow
+import kotlinx.coroutines.launch
 import com.yeamin.jolpai.ui.R as UiR
 
 /**
@@ -118,7 +135,12 @@ fun KeyboardPreview(theme: KeyboardTheme, settings: KeyboardSettings) {
     }
 }
 
-/** Theme gallery: pick, customise, import and export themes. */
+/**
+ * Theme gallery: the keyboard as it looks now, then every built-in theme as a card in a grid,
+ * grouped by kind. The kind filters stay pinned under the title while the grid scrolls. Tap a
+ * card to use the theme; its pencil makes your own copy to customise. Your themes are rows with
+ * edit, copy, share and delete. The grid is lazy: only the cards on screen are drawn.
+ */
 @Composable
 fun ThemesScreen(
     vm: MainViewModel,
@@ -129,7 +151,9 @@ fun ThemesScreen(
     onBack: () -> Unit,
 ) {
     var importText by rememberSaveable { mutableStateOf("") }
-    var importMessage by remember { mutableStateOf<String?>(null) }
+    // The last import's result: worked, or the reader's (English) error. Worded when shown.
+    var imported by remember { mutableStateOf(false) }
+    var importError by remember { mutableStateOf<String?>(null) }
     var exported by remember { mutableStateOf<String?>(null) }
     val active = ThemeRepository.resolve(settings.themeId, customThemes, systemDark)
     // Which kind of theme to show: a ThemeFamily name, FESTIVALS, YOURS, or null for all.
@@ -142,236 +166,535 @@ fun ThemesScreen(
         val s = sample
         return if (s != null && t.live is LiveStyle.AppColour) AppTint.apply(t, s) else t
     }
+    val grid = rememberLazyGridState()
+    val scope = rememberCoroutineScope()
+    val full: LazyGridItemSpanScope.() -> GridItemSpan = { GridItemSpan(maxLineSpan) }
 
-    SettingsScaffold("Themes", onBack) {
-        KeyboardPreview(shown(active), settings)
-        Text(
-            "In use: ${active.name} · ${themeTypeLabel(active.id)}",
-            Modifier.padding(horizontal = 4.dp),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-
-        // Filter by kind: one tap shows only that kind of theme.
-        Row(
-            Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(vertical = 4.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+    SettingsScaffold(tr("Themes", "থিম"), onBack, scrollable = false) {
+        // Pinned: outside the grid, so it stays put while the themes scroll under it.
+        ThemeFilters(filter, customThemes.size) { picked ->
+            filter = picked
+            scope.launch { grid.scrollToItem(0) }
+        }
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(minSize = 104.dp),
+            state = grid,
+            modifier = Modifier.weight(1f),
+            contentPadding = PaddingValues(top = 4.dp, bottom = FabClearance),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            val chips = listOf<Pair<String?, String>>(null to "All") +
-                ThemeFamily.entries.map { it.name to it.label } +
-                listOf(FESTIVALS to "Festivals", YOURS to "Yours")
-            chips.forEach { (key, label) ->
-                FilterChip(selected = filter == key, onClick = { filter = key }, label = { Text(label) })
-            }
-        }
-
-        ThemeFamily.entries.filter { shows(it.name) }.forEach { family ->
-            if (family == ThemeFamily.CHAMELEON) {
-                SettingsNote(
-                    "Chameleon themes take the colour of the app you're typing in, read from its icon on this phone " +
-                        "(a keyboard can't see the screen itself; nothing leaves the phone). Here they show Jolpai's own " +
-                        "colour; tap a colour to see them as they'd look in an app of that colour.",
-                )
-                Row(
-                    Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(vertical = 4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    CHAMELEON_SAMPLES.forEach { (colour, label) ->
-                        FilterChip(
-                            selected = sample == colour,
-                            onClick = { sample = colour },
-                            label = { Text(label) },
-                            leadingIcon = {
-                                Box(
-                                    Modifier.size(14.dp).clip(CircleShape)
-                                        .background(colour?.let { Color(it) } ?: MaterialTheme.colorScheme.primary),
-                                )
-                            },
-                        )
-                    }
+            item(key = "preview", span = full) {
+                Column {
+                    KeyboardPreview(shown(active), settings)
+                    Text(
+                        tr("In use: ${active.name}", "এখন চালু: ${active.name}"),
+                        Modifier.padding(horizontal = 4.dp),
+                        style = MaterialTheme.typography.titleSmall,
+                    )
+                    Text(
+                        listOfNotNull(themeTypeLabel(active.id), if (active.dynamic) wallpaperSummary() else liveSummary(active)).joinToString(" · "),
+                        Modifier.padding(horizontal = 4.dp),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
             }
-            ThemeTypes.inFamily(family).forEach { type ->
-                SettingsGroup("${type.name} · ${type.themes.size + if (family == ThemeFamily.BASICS) 1 else 0}") {
+
+            ThemeFamily.entries.filter { shows(it.name) }.forEach { family ->
+                if (family == ThemeFamily.CHAMELEON) {
+                    item(key = "chameleon", span = full) {
+                        Column(Modifier.padding(top = 10.dp)) {
+                            SettingsNote(
+                                tr(
+                                    "Chameleon themes match the colour of the app you're typing in. Nothing leaves your phone. Tap a colour to preview.",
+                                    "ক্যামেলিয়ন থিম আপনি যে অ্যাপে লিখছেন তার রং নেয়। কিছুই ফোনের বাইরে যায় না। প্রিভিউ দেখতে একটি রং চাপুন।",
+                                ),
+                            )
+                            Row(
+                                Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(vertical = 4.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                CHAMELEON_SAMPLES.forEach { (colour, label) ->
+                                    FilterChip(
+                                        selected = sample == colour,
+                                        onClick = { sample = colour },
+                                        label = { Text(label) },
+                                        leadingIcon = {
+                                            Box(
+                                                Modifier.size(14.dp).clip(CircleShape)
+                                                    .background(colour?.let { Color(it) } ?: MaterialTheme.colorScheme.primary),
+                                            )
+                                        },
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+                ThemeTypes.inFamily(family).forEach { type ->
+                    val count = type.themes.size + if (family == ThemeFamily.BASICS) 1 else 0
+                    item(key = "type/${type.name}", span = full) { SectionHeader(type.galleryName, count, type.galleryNote) }
                     if (family == ThemeFamily.BASICS) {
-                        ThemeRow(
-                            "System",
-                            "Material You: your wallpaper colours, light or dark with the phone",
-                            BuiltInThemes.forSystem(systemDark),
-                            settings.themeId == KeyboardTheme.SYSTEM_ID,
-                        ) { vm.selectTheme(KeyboardTheme.SYSTEM_ID) }
+                        item(key = "system") {
+                            ThemeCard(
+                                tr("System", "সিস্টেম"),
+                                BuiltInThemes.forSystem(systemDark),
+                                settings.themeId == KeyboardTheme.SYSTEM_ID,
+                                onCustomise = null,
+                            ) { vm.selectTheme(KeyboardTheme.SYSTEM_ID) }
+                        }
                     }
-                    type.themes.forEach { t ->
-                        val summary = if (t.dynamic) "Your wallpaper colours (Android 12+)" else liveSummary(t)
-                        BuiltInThemeRow(vm, t, summary, settings.themeId, onEdit, shown = shown(t))
+                    items(type.themes, key = { "${type.name}/${it.id}" }) { t ->
+                        // The copy keeps everything, including how the theme changes by itself
+                        // (app colour, time of day, drifting glows, wallpaper colours); a
+                        // Chameleon is copied in the colour it is shown in.
+                        ThemeCard(t.name, shown(t), settings.themeId == t.id, onCustomise = { vm.duplicateTheme(t, onEdit) }) {
+                            vm.selectTheme(t.id)
+                        }
                     }
                 }
-                type.description?.let { SettingsNote("$it.") }
+            }
+            if (shows(ThemeFamily.DYNAMIC.name)) {
+                item(key = "dynamic-note", span = full) {
+                    SettingsNote(tr("Nothing moves while the phone's animations are off.", "ফোনের অ্যানিমেশন বন্ধ থাকলে কিছুই নড়ে না।"))
+                }
+            }
+
+            if (shows(FESTIVALS)) {
+                item(key = "festivals", span = full) {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        SectionHeader(tr("Festivals", "উৎসব"), BuiltInThemes.festivals.size, null)
+                        SettingsGroup {
+                            val today = remember { com.yeamin.jolpai.theme.Festivals.on(java.time.LocalDate.now()) }
+                            SettingsSwitch(
+                                tr("Festival themes", "উৎসবের থিম"),
+                                (today?.let { tr("Today is ${it.name}. ", "আজ ${it.name}। ") } ?: "") +
+                                    tr(
+                                        "A special theme on festival days like পহেলা বৈশাখ and Eid; yours comes back after.",
+                                        "পহেলা বৈশাখ, একুশে, ঈদের মতো উৎসবের দিনে বিশেষ থিম; দিন শেষে আপনার থিম ফিরে আসে।",
+                                    ),
+                                checked = settings.festivalThemes,
+                                onChange = vm::setFestivalThemes,
+                                icon = UiR.drawable.ms_auto_awesome,
+                            )
+                        }
+                    }
+                }
+                items(BuiltInThemes.festivals, key = { "festival/${it.id}" }) { t ->
+                    ThemeCard(t.name, t, settings.themeId == t.id, onCustomise = { vm.duplicateTheme(t, onEdit) }) { vm.selectTheme(t.id) }
+                }
+            }
+
+            if (shows(YOURS)) {
+                item(key = "yours", span = full) {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        SectionHeader(tr("Your themes", "আপনার থিম"), customThemes.size, null)
+                        SettingsGroup {
+                            if (customThemes.isEmpty()) {
+                                SettingsNote(
+                                    tr("Tap the pencil on any theme to make your own copy.", "নিজের কপি বানাতে যেকোনো থিমের পেনসিলে চাপুন।"),
+                                    Modifier.padding(vertical = 8.dp),
+                                )
+                            }
+                            customThemes.forEach { t ->
+                                ThemeRow(
+                                    t.name, if (t.dynamic) wallpaperSummary() else liveSummary(t), t, settings.themeId == t.id,
+                                    actions = {
+                                        IconButton(onClick = { onEdit(t) }) {
+                                            MsIcon(UiR.drawable.ms_edit, tr("Edit ${t.name}", "${t.name} এডিট করুন"))
+                                        }
+                                        IconButton(onClick = { vm.duplicateTheme(t) { } }) {
+                                            MsIcon(UiR.drawable.ms_content_copy, tr("Duplicate ${t.name}", "${t.name}-এর কপি বানান"))
+                                        }
+                                        IconButton(onClick = { vm.exportTheme(t); exported = t.name }) {
+                                            MsIcon(UiR.drawable.ms_upload, tr("Copy ${t.name} as text", "${t.name} লেখা হিসেবে কপি করুন"))
+                                        }
+                                        IconButton(onClick = { vm.deleteTheme(t, settings.themeId) }) {
+                                            MsIcon(UiR.drawable.ms_delete, tr("Delete ${t.name}", "${t.name} মুছুন"))
+                                        }
+                                    },
+                                ) { vm.selectTheme(t.id) }
+                            }
+                        }
+                        exported?.let {
+                            SettingsNote(
+                                tr(
+                                    "“$it” copied as text. Paste it anywhere to share or keep it. The background photo isn't included.",
+                                    "“$it” লেখা হিসেবে কপি হয়েছে। শেয়ার করতে বা রেখে দিতে যেকোনো জায়গায় পেস্ট করুন। ব্যাকগ্রাউন্ডের ছবি এতে থাকে না।",
+                                ),
+                            )
+                        }
+                        SettingsGroup(tr("Import a theme", "থিম ইমপোর্ট করুন")) {
+                            Column(Modifier.padding(GroupContentPadding), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                OutlinedTextField(
+                                    value = importText,
+                                    onValueChange = { importText = it },
+                                    placeholder = { Text(tr("Paste theme text", "থিমের লেখা পেস্ট করুন")) },
+                                    shape = RoundedCornerShape(16.dp),
+                                    modifier = Modifier.fillMaxWidth(),
+                                    maxLines = 4,
+                                )
+                                FilledTonalButton(onClick = {
+                                    vm.importTheme(importText) { error ->
+                                        importError = error
+                                        imported = error == null
+                                        if (error == null) importText = ""
+                                    }
+                                }, enabled = importText.isNotBlank()) {
+                                    MsIcon(UiR.drawable.ms_download, null, Modifier.size(18.dp))
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(tr("Import", "ইমপোর্ট"))
+                                }
+                                if (imported) {
+                                    Text(
+                                        tr("Imported and applied.", "ইমপোর্ট হয়ে চালু হয়েছে।"),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                                importError?.let {
+                                    Text(
+                                        tr(it, "থিমটি ইমপোর্ট করা যায়নি। পুরো লেখাটি ঠিকমতো পেস্ট হয়েছে কি না দেখুন।"),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
-        if (shows(ThemeFamily.DYNAMIC.name)) {
-            SettingsNote("With the phone's animations turned off, nothing moves.")
-        }
+    }
+}
 
-        if (shows(FESTIVALS)) SettingsGroup("Festivals · ${BuiltInThemes.festivals.size}") {
-            val today = remember { com.yeamin.jolpai.theme.Festivals.on(java.time.LocalDate.now()) }
-            SettingsSwitch(
-                "Festival themes on festival days",
-                (today?.let { "Today is ${it.name}. " } ?: "") +
-                    "পহেলা বৈশাখ, একুশে ফেব্রুয়ারি, স্বাধীনতা ও বিজয় দিবস, রমজান and both Eids get their own theme for the day; then yours comes back.",
-                checked = settings.festivalThemes,
-                onChange = vm::setFestivalThemes,
-                icon = UiR.drawable.ms_auto_awesome,
+/** The kind filters, pinned above the gallery: All, each family, Festivals, Yours (with a count). */
+@Composable
+private fun ThemeFilters(filter: String?, yours: Int, onPick: (String?) -> Unit) {
+    val chips = listOf<Pair<String?, String>>(null to tr("All", "সব")) +
+        ThemeFamily.entries.map { it.name to it.galleryLabel } +
+        listOf(FESTIVALS to tr("Festivals", "উৎসব"), YOURS to (tr("Yours", "আপনার") + if (yours > 0) " · ${num(yours)}" else ""))
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState())
+            .padding(bottom = 2.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        chips.forEach { (key, label) ->
+            FilterChip(
+                selected = filter == key,
+                onClick = { onPick(key) },
+                label = { Text(label) },
+                leadingIcon = if (filter == key) {
+                    { MsIcon(UiR.drawable.ms_check, null, Modifier.size(18.dp)) }
+                } else {
+                    null
+                },
             )
-            BuiltInThemes.festivals.forEach { t ->
-                ThemeRow(
-                    t.name, null, t, settings.themeId == t.id,
-                    actions = {
-                        IconButton(onClick = { vm.duplicateTheme(t, onEdit) }) { MsIcon(UiR.drawable.ms_edit, "Customise ${t.name}") }
-                    },
-                ) { vm.selectTheme(t.id) }
-            }
         }
+    }
+}
 
-        if (shows(YOURS)) SettingsGroup("Yours · ${customThemes.size}") {
-            if (customThemes.isEmpty()) {
-                SettingsNote("Tap the pencil on any theme to make your own copy.", Modifier.padding(vertical = 8.dp))
-            }
-            customThemes.forEach { t ->
-                ThemeRow(
-                    t.name, if (t.dynamic) "Your wallpaper colours (Android 12+)" else liveSummary(t), t, settings.themeId == t.id,
-                    actions = {
-                        IconButton(onClick = { onEdit(t) }) { MsIcon(UiR.drawable.ms_edit, "Edit ${t.name}") }
-                        IconButton(onClick = { vm.duplicateTheme(t) { } }) { MsIcon(UiR.drawable.ms_content_copy, "Duplicate ${t.name}") }
-                        IconButton(onClick = { vm.exportTheme(t); exported = t.name }) { MsIcon(UiR.drawable.ms_upload, "Copy ${t.name} as text") }
-                        IconButton(onClick = { vm.deleteTheme(t, settings.themeId) }) { MsIcon(UiR.drawable.ms_delete, "Delete ${t.name}") }
-                    },
-                ) { vm.selectTheme(t.id) }
-            }
-        }
-        exported?.let { SettingsNote("“$it” copied as text. Paste it anywhere to share or back it up (the background picture isn't included).") }
-
-        if (shows(YOURS)) SettingsGroup("Import a theme") {
-            Column(Modifier.padding(GroupContentPadding), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
-                    value = importText,
-                    onValueChange = { importText = it },
-                    placeholder = { Text("Paste theme text") },
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier.fillMaxWidth(),
-                    maxLines = 4,
+/** A group's heading in the gallery: its name, how many themes, and one short line about them. */
+@Composable
+private fun SectionHeader(title: String, count: Int, note: String?) {
+    Column(Modifier.fillMaxWidth().padding(start = 4.dp, end = 4.dp, top = 16.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+            Spacer(Modifier.width(8.dp))
+            Surface(shape = RoundedCornerShape(50), color = MaterialTheme.colorScheme.surfaceContainerHigh) {
+                Text(
+                    num(count),
+                    Modifier.padding(horizontal = 8.dp, vertical = 1.dp),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                FilledTonalButton(onClick = {
-                    vm.importTheme(importText) { error ->
-                        importMessage = error ?: "Imported and applied."
-                        if (error == null) importText = ""
-                    }
-                }, enabled = importText.isNotBlank()) {
-                    MsIcon(UiR.drawable.ms_download, null, Modifier.size(18.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text("Import")
-                }
-                importMessage?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
             }
+        }
+        if (note != null) {
+            Text(note, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
 
 /**
- * A built-in theme with a pencil that makes a custom copy. A dynamic theme is copied as it looks
- * right now (custom themes don't change by themselves; ambient glows are kept); a Chameleon in
- * the colour it is [shown] in. [shown] is what the sketch draws (a Chameleon in a preview colour).
+ * One theme in the gallery grid: a keyboard sketch in its colours with its name under it. The
+ * theme in use gets an outline and a check. [onCustomise] adds a pencil that makes your own copy.
  */
 @Composable
-private fun BuiltInThemeRow(
-    vm: MainViewModel,
-    t: KeyboardTheme,
-    summary: String?,
-    activeId: String,
-    onEdit: (KeyboardTheme) -> Unit,
-    shown: KeyboardTheme = t,
+private fun ThemeCard(
+    name: String,
+    theme: KeyboardTheme,
+    selected: Boolean,
+    onCustomise: (() -> Unit)?,
+    onSelect: () -> Unit,
 ) {
-    val context = LocalContext.current
-    ThemeRow(
-        t.name, summary, shown, activeId == t.id,
-        actions = {
-            // The copy keeps everything, including how the theme changes by itself (app colour,
-            // time of day, drifting glows, wallpaper colours); the editor can turn those off.
-            IconButton(onClick = { vm.duplicateTheme(t, onEdit) }) {
-                MsIcon(UiR.drawable.ms_edit, "Customise ${t.name}")
+    val outline by animateColorAsState(
+        if (selected) MaterialTheme.colorScheme.primary else Color.Transparent,
+        label = "cardOutline",
+    )
+    Surface(
+        selected = selected,
+        onClick = onSelect,
+        shape = RoundedCornerShape(18.dp),
+        color = if (selected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceContainer,
+        border = BorderStroke(2.dp, outline),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(Modifier.padding(start = 7.dp, end = 7.dp, top = 7.dp)) {
+            Box {
+                CardSketch(theme, Modifier.fillMaxWidth().aspectRatio(1.5f))
+                if (selected) {
+                    Box(
+                        Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(4.dp)
+                            .size(22.dp)
+                            .border(2.dp, MaterialTheme.colorScheme.surface, CircleShape)
+                            .padding(1.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primary),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        MsIcon(UiR.drawable.ms_check, tr("In use", "চালু আছে"), Modifier.size(14.dp), tint = MaterialTheme.colorScheme.onPrimary)
+                    }
+                }
             }
-        },
-    ) { vm.selectTheme(t.id) }
+            Row(Modifier.heightIn(min = 40.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    name,
+                    Modifier.weight(1f).padding(start = 2.dp, top = 4.dp, bottom = 4.dp),
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                if (onCustomise != null) {
+                    IconButton(onClick = onCustomise, modifier = Modifier.size(36.dp)) {
+                        MsIcon(
+                            UiR.drawable.ms_edit,
+                            tr("Customise $name", "$name নিজের মতো সাজান"),
+                            Modifier.size(18.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** A bigger keyboard sketch for the gallery cards: background, glows and three rows of keys. */
+@Composable
+private fun CardSketch(sketched: KeyboardTheme, modifier: Modifier) {
+    val context = LocalContext.current
+    val theme = remember(sketched, context) { KeyboardPalette.resolveDynamic(context, sketched) }
+    val shape = RoundedCornerShape(12.dp)
+    Canvas(modifier.clip(shape).border(1.dp, MaterialTheme.colorScheme.outlineVariant, shape)) {
+        val bg = theme.backgroundEnd
+        if (bg != null) {
+            drawRect(Brush.verticalGradient(listOf(Color(theme.background), Color(bg))))
+        } else {
+            drawRect(Color(theme.background))
+        }
+        // Ambient glows, at rest (the sketches don't animate).
+        theme.glows.forEach { g ->
+            val center = Offset(g.x * size.width, g.y * size.height)
+            val radius = (g.radius * size.width).coerceAtLeast(1f)
+            drawCircle(Brush.radialGradient(listOf(Color(g.color), Color(g.color).copy(alpha = 0f)), center, radius), radius, center)
+        }
+        val pad = size.width * 0.07f
+        val gap = size.width * 0.03f
+        val rowHeight = (size.height - 2 * pad - 2 * gap) / 3
+        val corner = CornerRadius((theme.keyRadiusDp.dp.toPx() / 2.5f).coerceAtMost(rowHeight / 2.5f))
+        fun row(index: Int, units: List<Pair<Float, Int>>) {
+            val total = units.sumOf { it.first.toDouble() }.toFloat()
+            val unit = (size.width - 2 * pad - gap * (units.size - 1)) / total
+            var x = pad
+            val y = pad + index * (rowHeight + gap)
+            units.forEach { (w, colour) ->
+                drawRoundRect(Color(colour), Offset(x, y), Size(w * unit, rowHeight), corner)
+                x += w * unit + gap
+            }
+        }
+        val letter = 1f to theme.key
+        row(0, List(6) { letter })
+        row(1, List(6) { letter })
+        row(2, listOf(1f to theme.functionKey, 3f to theme.key, 1f to theme.functionKey, 1f to theme.accent))
+    }
 }
 
 private const val FESTIVALS = "FESTIVALS"
 private const val YOURS = "YOURS"
 
-/** Colours to preview Chameleon themes in (null: Jolpai's own, the app you're in). */
-private val CHAMELEON_SAMPLES: List<Pair<Int?, String>> = listOf(
-    null to "Jolpai",
-    0xFF25D366.toInt() to "Green",
-    0xFF1877F2.toInt() to "Blue",
-    0xFF2AABEE.toInt() to "Sky",
-    0xFF7C4DFF.toInt() to "Purple",
-    0xFFE1306C.toInt() to "Pink",
-    0xFFFF0033.toInt() to "Red",
-    0xFFFF6D00.toInt() to "Orange",
-    0xFFFFC107.toInt() to "Yellow",
-    0xFF9E9E9E.toInt() to "Grey",
-)
+/**
+ * Colours to preview Chameleon themes in (null: Jolpai's own, the app you're in). A getter, so
+ * the names follow the app's language.
+ */
+private val CHAMELEON_SAMPLES: List<Pair<Int?, String>>
+    get() = listOf(
+        null to tr("Jolpai", "জলপাই"),
+        0xFF25D366.toInt() to tr("Green", "সবুজ"),
+        0xFF1877F2.toInt() to tr("Blue", "নীল"),
+        0xFF2AABEE.toInt() to tr("Sky", "আকাশি"),
+        0xFF7C4DFF.toInt() to tr("Purple", "বেগুনি"),
+        0xFFE1306C.toInt() to tr("Pink", "গোলাপি"),
+        0xFFFF0033.toInt() to tr("Red", "লাল"),
+        0xFFFF6D00.toInt() to tr("Orange", "কমলা"),
+        0xFFFFC107.toInt() to tr("Yellow", "হলুদ"),
+        0xFF9E9E9E.toInt() to tr("Grey", "ধূসর"),
+    )
 
 /** The kind of the theme being drawn ([id]), for the "In use" line: its family and type ("Dark · Soft dark"). */
 private fun themeTypeLabel(id: String): String = when {
-    id.startsWith(KeyboardTheme.CUSTOM_PREFIX) -> "Yours"
-    BuiltInThemes.festivals.any { it.id == id } -> "Festivals"
-    else -> ThemeTypes.typeOf(id)?.let { "${it.family.label} · ${it.name}" } ?: "Basics · Essentials"
+    id.startsWith(KeyboardTheme.CUSTOM_PREFIX) -> tr("Yours", "আপনার")
+    BuiltInThemes.festivals.any { it.id == id } -> tr("Festivals", "উৎসব")
+    else -> ThemeTypes.typeOf(id)?.let { "${it.family.galleryLabel} · ${it.galleryName}" } ?: tr("Basics · Essentials", "সাধারণ · প্রয়োজনীয়")
 }
+
+/** The gallery's filter names for the theme families (the module keeps English ones). */
+private val ThemeFamily.galleryLabel: String
+    get() = when (this) {
+        ThemeFamily.BASICS -> tr("Basics", "সাধারণ")
+        ThemeFamily.CHAMELEON -> tr("Chameleon", "ক্যামেলিয়ন")
+        ThemeFamily.DARK -> tr("Dark", "গাঢ়")
+        ThemeFamily.LIGHT -> tr("Light", "হালকা")
+        ThemeFamily.AMBIENT -> tr("Ambient", "আলো-ছায়া")
+        ThemeFamily.DYNAMIC -> tr("Dynamic", "চলমান")
+    }
+
+/** A theme type's name in the app's language; a type this list doesn't know keeps its own name. */
+private val ThemeType.galleryName: String
+    get() = when (name) {
+        "Essentials" -> tr("Essentials", "প্রয়োজনীয়")
+        "Tinted dark" -> tr("Tinted dark", "রঙিন গাঢ়")
+        "Black & neon" -> tr("Black & neon", "কালো ও নিয়ন")
+        "Tinted light" -> tr("Tinted light", "রঙিন হালকা")
+        "Moving chameleon" -> tr("Moving chameleon", "চলমান ক্যামেলিয়ন")
+        "Soft dark" -> tr("Soft dark", "নরম গাঢ়")
+        "Cool dark" -> tr("Cool dark", "ঠান্ডা গাঢ়")
+        "Classic dark" -> tr("Classic dark", "ক্লাসিক গাঢ়")
+        "Jewel tones" -> tr("Jewel tones", "রত্নের রং")
+        "Light & pastel" -> tr("Light & pastel", "হালকা ও প্যাস্টেল")
+        "Bright & colourful" -> tr("Bright & colourful", "উজ্জ্বল ও রঙিন")
+        "Gradient & glass" -> tr("Gradient & glass", "গ্রেডিয়েন্ট ও কাচ")
+        "Glow" -> tr("Glow", "আভা")
+        "Spotlight" -> tr("Spotlight", "স্পটলাইট")
+        "Light glow" -> tr("Light glow", "হালকা আভা")
+        "Key glow effects" -> tr("Key glow effects", "কী-এর আলোর ইফেক্ট")
+        "Bouncy dark" -> tr("Bouncy dark", "তুলতুলে গাঢ়")
+        "Bouncy light" -> tr("Bouncy light", "তুলতুলে হালকা")
+        "Playful effects" -> tr("Playful effects", "মজার ইফেক্ট")
+        "Glow + effects" -> tr("Glow + effects", "আভা + ইফেক্ট")
+        "Time of day" -> tr("Time of day", "দিনের সময়")
+        "Drifting glow" -> tr("Drifting glow", "ভাসমান আভা")
+        else -> name
+    }
+
+/** The one line under a theme type, short and in the app's language (no full stop); unknown types keep their own. */
+private val ThemeType.galleryNote: String?
+    get() = when (name) {
+        "Essentials" -> tr("Plain, wallpaper-coloured and high-contrast", "সাধারণ, ওয়ালপেপারের রঙে, আর স্পষ্ট কনট্রাস্টের")
+        "Tinted dark" -> tr("Dark glows and glass in the app's colour", "অ্যাপের রঙে গাঢ় আভা ও কাচের মতো কী")
+        "Black & neon" -> tr("Black keys; the app's colour in the outlines and Enter", "কালো কী; বর্ডার আর এন্টার অ্যাপের রঙে")
+        "Tinted light" -> tr("Light, with a soft tint of the app's colour", "হালকা, অ্যাপের রঙের নরম ছোঁয়ায়")
+        "Moving chameleon" -> tr("Moving glows or key effects in the app's colour", "অ্যাপের রঙে চলমান আভা বা কী চাপার ইফেক্ট")
+        "Soft dark" -> tr("Gentle darks for low light", "কম আলোর জন্য চোখে আরামের গাঢ় রং")
+        "Cool dark" -> tr("Blue and grey darks with pastel accents", "নীল ও ধূসর গাঢ় রং, সঙ্গে প্যাস্টেল অ্যাকসেন্ট")
+        "Classic dark" -> tr("Warm and deep darks", "উষ্ণ ও গভীর গাঢ় রং")
+        "Jewel tones" -> tr("Rich, bright darks", "ঝলমলে গাঢ় রং")
+        "Light & pastel" -> tr("Soft light colours, easy on the eyes", "চোখে আরামের নরম, হালকা রং")
+        "Bright & colourful" -> tr("Bright light colours", "ঝলমলে হালকা রং")
+        "Gradient & glass" -> tr("Colour blends, see-through and glowing keys", "রঙের মিশেল, স্বচ্ছ ও জ্বলজ্বলে কী")
+        "Glow" -> tr("Soft lights behind see-through keys", "স্বচ্ছ কী-এর পেছনে নরম আলো")
+        "Spotlight" -> tr("Near-black, lit from one edge like a stage", "প্রায় কালো, মঞ্চের মতো এক পাশ থেকে আলো")
+        "Light glow" -> tr("Pastel glows behind frosted keys, for daylight", "ঘষা কাচের মতো কী-এর পেছনে প্যাস্টেল আভা, দিনের আলোর জন্য")
+        "Key glow effects" -> tr("The key you press lights up, ripples or glints. Try them above", "চাপা কী-টি জ্বলে ওঠে, ঢেউ তোলে বা ঝিলিক দেয়। ওপরের কীবোর্ডে চেষ্টা করে দেখুন")
+        "Bouncy dark" -> tr("Soft rubber keys that squash and spring back", "নরম রাবারের কী, চাপলে দেবে যায়, আবার ফিরে আসে")
+        "Bouncy light" -> tr("The same springy keys in light pastel colours", "একই তুলতুলে কী, হালকা প্যাস্টেল রঙে")
+        "Playful effects" -> tr("Your letter, a heart or sparkles rise from the key", "চাপা কী থেকে অক্ষর, হার্ট বা ঝিকিমিকি ভেসে ওঠে")
+        "Glow + effects" -> tr("Soft glows plus a key press effect", "নরম আভার সঙ্গে কী চাপার ইফেক্ট")
+        "Time of day" -> tr("Colours follow the clock, changing when the keyboard opens", "রং ঘড়ি মেনে চলে; কীবোর্ড খুললে বদলায়")
+        "Drifting glow" -> tr("Glows drift slowly; still with battery saver", "আভা ধীরে ধীরে সরে; ব্যাটারি সেভারে থেমে থাকে")
+        else -> description
+    }
+
+/** The summary for a theme coloured by the wallpaper. */
+private fun wallpaperSummary(): String = tr("Your wallpaper colours (Android 12+)", "ওয়ালপেপারের রং (Android ১২+)")
 
 /** What a changing theme does, for its row in the gallery. */
 private fun liveSummary(t: KeyboardTheme): String? = when (val live = t.live) {
     is LiveStyle.TimeOfDay -> when (t.id) {
-        BuiltInThemes.NIGHT_SHIFT.id -> "Always dark: cool by day, warmer and lower in blue light late at night"
-        BuiltInThemes.TWILIGHT_CYCLE.id -> "Always dark: rose dawn, indigo day, magenta evening, navy night"
-        else -> "Follows the time of day: light by day, dark at night"
+        BuiltInThemes.NIGHT_SHIFT.id -> tr("Always dark; warmer, with less blue light, late at night", "সবসময় গাঢ়; গভীর রাতে উষ্ণ, নীল আলো কম")
+        BuiltInThemes.TWILIGHT_CYCLE.id -> tr(
+            "Always dark: rose dawn, indigo day, magenta evening, navy night",
+            "সবসময় গাঢ়: গোলাপি ভোর, নীল দিন, বেগুনি সন্ধ্যা, গাঢ় নীল রাত",
+        )
+        else -> tr("Light by day, dark at night", "দিনে হালকা, রাতে গাঢ়")
     }
-    is LiveStyle.Drift -> t.pressEffect?.let { "Drifting glow, and ${pressEffectSummary(it).replaceFirstChar(Char::lowercase)}" }
-        ?: "Slowly drifting glow (still when animations are off)"
+    is LiveStyle.Drift -> t.pressEffect?.let {
+        tr("Drifting glow, and ${pressEffectSummary(it).replaceFirstChar(Char::lowercase)}", "ভাসমান আভা, আর ${pressEffectSummary(it)}")
+    } ?: tr("Slowly drifting glow (still when animations are off)", "ধীরে ভেসে বেড়ানো আভা (অ্যানিমেশন বন্ধ থাকলে থেমে থাকে)")
     is LiveStyle.AppColour -> when {
-        live.driftSeconds > 0 -> "Glows in the app's colour that slowly drift"
-        t.pressEffect != null -> "In the app's colour; ${pressEffectSummary(t.pressEffect!!).replaceFirstChar(Char::lowercase)}"
+        live.driftSeconds > 0 -> tr("Glows in the app's colour that slowly drift", "অ্যাপের রঙে ধীরে ভেসে বেড়ানো আভা")
+        t.pressEffect != null -> tr(
+            "In the app's colour; ${pressEffectSummary(t.pressEffect!!).replaceFirstChar(Char::lowercase)}",
+            "অ্যাপের রঙে; ${pressEffectSummary(t.pressEffect!!)}",
+        )
         else -> when (live.style) {
-            AppTintStyle.GLOW -> "Glows in the colour of the app you're typing in"
-            AppTintStyle.MIST -> "A deep wash of the app's colour"
-            AppTintStyle.LIGHT -> "Light, tinted with the app's colour"
-            AppTintStyle.BLACK -> "Pure black; the app's colour in the outlines and Enter"
-            AppTintStyle.NEON -> "Bright outlines in the app's colour"
-            AppTintStyle.SPOTLIGHT -> "Lit from the top by the app's colour"
-            AppTintStyle.DUO -> "The app's colour with its opposite, as two glows"
-            AppTintStyle.GLASS -> "Frosted keys over a gradient of the app's colour"
-            AppTintStyle.PASTEL -> "Soft pastel keys in the app's colour"
+            AppTintStyle.GLOW -> tr("Glows in the colour of the app you're typing in", "আপনি যে অ্যাপে লিখছেন তার রঙে আভা")
+            AppTintStyle.MIST -> tr("A deep wash of the app's colour", "অ্যাপের রঙে গাঢ় ছোপ")
+            AppTintStyle.LIGHT -> tr("Light, tinted with the app's colour", "হালকা, অ্যাপের রঙের ছোঁয়ায়")
+            AppTintStyle.BLACK -> tr("Pure black; the app's colour in the outlines and Enter", "পুরো কালো; বর্ডার ও এন্টার অ্যাপের রঙে")
+            AppTintStyle.NEON -> tr("Bright outlines in the app's colour", "অ্যাপের রঙে উজ্জ্বল বর্ডার")
+            AppTintStyle.SPOTLIGHT -> tr("Lit from the top by the app's colour", "ওপর থেকে অ্যাপের রঙের আলো")
+            AppTintStyle.DUO -> tr("The app's colour and its opposite, as two glows", "অ্যাপের রং আর তার বিপরীত রং, দুটি আভায়")
+            AppTintStyle.GLASS -> tr("Frosted keys over the app's colour", "অ্যাপের রঙের ওপর ঘষা কাচের মতো কী")
+            AppTintStyle.PASTEL -> tr("Soft pastel keys in the app's colour", "অ্যাপের রঙে নরম প্যাস্টেল কী")
         }
     }
     null -> t.pressEffect?.let { pressEffectSummary(it) }
 }
 
 private fun pressEffectSummary(e: PressEffect): String = when (e) {
-    PressEffect.INK -> "A soft wash of colour spreads from your fingertip"
-    PressEffect.BACKLIGHT -> "Keys light up from within, like a backlit keyboard"
-    PressEffect.FLOAT -> "The letter you type floats up and fades"
-    PressEffect.HALO -> "A thin glowing outline lifts off each key"
-    PressEffect.TRAIL -> "A soft light trail joins the keys as you type"
-    PressEffect.MOTES -> "A glowing mote or two drifts up from the key"
-    PressEffect.POP -> "Keys give a soft, springy bounce of light"
-    PressEffect.SHEEN -> "A glint of light sweeps across each key"
-    PressEffect.SPARKLE -> "Little stars twinkle at the key's edges"
-    PressEffect.DROPLET -> "Rings spread from your fingertip like a raindrop"
-    PressEffect.HEARTS -> "A small heart floats up from each key"
-    PressEffect.UNDERLINE -> "A glowing line grows under each key"
-    PressEffect.RUBBER -> "Soft rubber keys that squash and bounce back"
-    PressEffect.SQUISH -> "Soft keys that squish and settle with one gentle bounce"
-    PressEffect.JELLY -> "Jelly keys: a deep squash and a slow wobble"
+    PressEffect.INK -> tr("A soft wash of colour spreads from your fingertip", "আঙুলের ছোঁয়া থেকে নরম রং ছড়িয়ে পড়ে")
+    PressEffect.BACKLIGHT -> tr("Keys light up from within, like a backlit keyboard", "ব্যাকলাইট কীবোর্ডের মতো কী ভেতর থেকে জ্বলে ওঠে")
+    PressEffect.FLOAT -> tr("The letter you type floats up and fades", "টাইপ করা অক্ষর ভেসে উঠে মিলিয়ে যায়")
+    PressEffect.HALO -> tr("A thin glowing outline lifts off each key", "প্রতিটি কী থেকে আলোর সরু রেখা উঠে যায়")
+    PressEffect.TRAIL -> tr("A soft light trail joins the keys as you type", "টাইপ করার সময় কী-গুলোর মাঝে আলোর রেখা পড়ে")
+    PressEffect.MOTES -> tr("A glowing mote or two drifts up from the key", "কী থেকে দু-একটি আলোর কণা ভেসে ওঠে")
+    PressEffect.POP -> tr("Keys give a soft, springy bounce of light", "কী থেকে আলো নরমভাবে লাফিয়ে ওঠে")
+    PressEffect.SHEEN -> tr("A glint of light sweeps across each key", "প্রতিটি কী-এর ওপর দিয়ে আলোর ঝিলিক বয়ে যায়")
+    PressEffect.SPARKLE -> tr("Little stars twinkle at the key's edges", "কী-এর কিনারে ছোট তারা ঝিকমিক করে")
+    PressEffect.DROPLET -> tr("Rings spread from your fingertip like a raindrop", "বৃষ্টির ফোঁটার মতো আঙুল থেকে বৃত্ত ছড়ায়")
+    PressEffect.HEARTS -> tr("A small heart floats up from each key", "প্রতিটি কী থেকে ছোট হার্ট ভেসে ওঠে")
+    PressEffect.UNDERLINE -> tr("A glowing line grows under each key", "প্রতিটি কী-এর নিচে আলোর দাগ ফুটে ওঠে")
+    PressEffect.RUBBER -> tr("Soft rubber keys that squash and bounce back", "নরম রাবারের কী, চাপলে দেবে যায়, আবার ফিরে আসে")
+    PressEffect.SQUISH -> tr("Soft keys that squish and settle with one gentle bounce", "নরম কী, চাপলে দেবে যায়, একবার আলতো লাফিয়ে থামে")
+    PressEffect.JELLY -> tr("Jelly keys: a deep squash and a slow wobble", "জেলির মতো কী: গভীরভাবে দেবে যায়, ধীরে দোলে")
 }
+
+/** An effect's name in the app's language (the module keeps English ones). */
+private val PressEffect.effectLabel: String
+    get() = when (this) {
+        PressEffect.INK -> tr("Ink", "কালি")
+        PressEffect.BACKLIGHT -> tr("Backlight", "ব্যাকলাইট")
+        PressEffect.FLOAT -> tr("Letter float", "ভেসে ওঠা অক্ষর")
+        PressEffect.HALO -> tr("Halo", "আলোর বলয়")
+        PressEffect.TRAIL -> tr("Light trail", "আলোর রেখা")
+        PressEffect.MOTES -> tr("Motes", "আলোর কণা")
+        PressEffect.POP -> tr("Pop", "পপ")
+        PressEffect.SHEEN -> tr("Sheen", "ঝিলিক")
+        PressEffect.SPARKLE -> tr("Sparkle", "ঝিকিমিকি")
+        PressEffect.DROPLET -> tr("Droplet", "পানির ফোঁটা")
+        PressEffect.HEARTS -> tr("Hearts", "হার্ট")
+        PressEffect.UNDERLINE -> tr("Glow line", "আলোর দাগ")
+        PressEffect.RUBBER -> tr("Rubber", "রাবার")
+        PressEffect.SQUISH -> tr("Squish", "তুলতুলে")
+        PressEffect.JELLY -> tr("Jelly", "জেলি")
+    }
 
 /** A theme: a small keyboard sketch in its colours, its name, a check when in use, and actions. */
 @Composable
@@ -396,7 +719,7 @@ private fun ThemeRow(
             Text(name, style = MaterialTheme.typography.titleMedium, fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal)
             if (summary != null) Text(summary, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        if (selected) MsIcon(UiR.drawable.ms_check_circle_fill, "In use", tint = MaterialTheme.colorScheme.primary)
+        if (selected) MsIcon(UiR.drawable.ms_check_circle_fill, tr("In use", "চালু আছে"), tint = MaterialTheme.colorScheme.primary)
         actions()
     }
 }
@@ -433,7 +756,7 @@ internal fun ThemeSketch(theme: KeyboardTheme, selected: Boolean) {
                     .background(MaterialTheme.colorScheme.primary),
                 contentAlignment = Alignment.Center,
             ) {
-                MsIcon(UiR.drawable.ms_check, "In use", Modifier.size(14.dp), tint = MaterialTheme.colorScheme.onPrimary)
+                MsIcon(UiR.drawable.ms_check, tr("In use", "চালু আছে"), Modifier.size(14.dp), tint = MaterialTheme.colorScheme.onPrimary)
             }
         }
     }
@@ -490,26 +813,27 @@ private val SWATCHES = listOf(
 fun ThemeEditorScreen(vm: MainViewModel, settings: KeyboardSettings, initial: KeyboardTheme, onDone: () -> Unit) {
     // Everything is kept, including how the theme changes by itself (see "Changes by itself").
     var t by remember(initial.id) { mutableStateOf(initial) }
-    var imageNote by remember { mutableStateOf<String?>(null) }
+    // Set when a picked picture couldn't be used; worded when shown.
+    var imageFailed by remember { mutableStateOf(false) }
     val context = LocalContext.current
     /** The colours as they look right now (app colour, time of day, wallpaper applied), as plain colours. */
     fun stillColours(x: KeyboardTheme): KeyboardTheme = LiveThemes.at(KeyboardPalette.resolveDynamic(context, x), java.time.LocalTime.now())
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         if (uri != null) vm.pickThemeBackground(uri) { path ->
-            if (path != null) t = t.copy(backgroundImage = path) else imageNote = "That picture couldn't be used."
+            if (path != null) t = t.copy(backgroundImage = path) else imageFailed = true
         }
     }
 
     SettingsScaffold(
-        "Edit theme",
+        tr("Edit theme", "থিম এডিট"),
         onDone,
-        actions = { TextButton(onClick = { vm.saveTheme(t); onDone() }) { Text("Save") } },
+        actions = { TextButton(onClick = { vm.saveTheme(t); onDone() }) { Text(tr("Save", "সেভ করুন")) } },
     ) {
         KeyboardPreview(t, settings)
         OutlinedTextField(
             value = t.name,
             onValueChange = { t = t.copy(name = it.take(40)) },
-            label = { Text("Name") },
+            label = { Text(tr("Name", "নাম")) },
             singleLine = true,
             shape = RoundedCornerShape(16.dp),
             modifier = Modifier.fillMaxWidth(),
@@ -517,69 +841,79 @@ fun ThemeEditorScreen(vm: MainViewModel, settings: KeyboardSettings, initial: Ke
 
         LiveSettings(initial, t, onChange = { t = it }, stillColours = ::stillColours)
 
+        // Where the colours come from when the theme sets them itself, or null when they're picked here.
         val colourSource = when {
-            t.live is LiveStyle.AppColour -> "the app you're typing in"
-            t.live is LiveStyle.TimeOfDay -> "the time of day"
-            t.dynamic -> "your wallpaper (Android 12+)"
+            t.live is LiveStyle.AppColour -> tr("The colours come from the app you're typing in.", "রং আসে আপনি যে অ্যাপে লিখছেন সেখান থেকে।")
+            t.live is LiveStyle.TimeOfDay -> tr("The colours follow the time of day.", "রং দিনের সময় মেনে বদলায়।")
+            t.dynamic -> tr("The colours come from your wallpaper (Android 12+).", "রং আসে আপনার ওয়ালপেপার থেকে (Android ১২+)।")
             else -> null
         }
         if (colourSource != null) {
-            SettingsGroup("Colours") {
+            SettingsGroup(tr("Colours", "রং")) {
                 SettingsNote(
-                    "The colours come from $colourSource. Turn that off above to pick your own; they start from how the theme looks now.",
+                    colourSource + " " + tr("Turn it off above to pick your own.", "নিজে রং বাছতে ওপরে এটি বন্ধ করুন।"),
                     Modifier.padding(vertical = 8.dp),
                 )
             }
-        } else SettingsGroup("Colours") {
+        } else SettingsGroup(tr("Colours", "রং")) {
             Column(Modifier.padding(GroupContentPadding), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                ColorRow("Background", t.background) { t = t.copy(background = it) }
-                OptionalColorRow("Gradient bottom", t.backgroundEnd) { t = t.copy(backgroundEnd = it) }
-                ColorRow("Letter keys", t.key) { t = t.copy(key = it) }
-                ColorRow("Pressed keys", t.keyPressed) { t = t.copy(keyPressed = it) }
-                ColorRow("Other keys", t.functionKey) { t = t.copy(functionKey = it) }
-                ColorRow("Key text", t.text) { t = t.copy(text = it) }
-                ColorRow("Small hints", t.hint) { t = t.copy(hint = it) }
-                ColorRow("Accent (Enter, highlights)", t.accent) { t = t.copy(accent = it) }
-                ColorRow("Text on accent", t.onAccent) { t = t.copy(onAccent = it) }
-                OptionalColorRow("Key outline", t.border) { t = t.copy(border = it) }
+                ColorRow(tr("Background", "ব্যাকগ্রাউন্ড"), t.background) { t = t.copy(background = it) }
+                OptionalColorRow(tr("Gradient bottom", "গ্রেডিয়েন্টের নিচের রং"), t.backgroundEnd) { t = t.copy(backgroundEnd = it) }
+                ColorRow(tr("Letter keys", "অক্ষরের কী"), t.key) { t = t.copy(key = it) }
+                ColorRow(tr("Pressed keys", "চাপ দেওয়া কী"), t.keyPressed) { t = t.copy(keyPressed = it) }
+                ColorRow(tr("Other keys", "অন্য কী"), t.functionKey) { t = t.copy(functionKey = it) }
+                ColorRow(tr("Key text", "কী-এর লেখা"), t.text) { t = t.copy(text = it) }
+                ColorRow(tr("Small hints", "কী-এর ছোট চিহ্ন"), t.hint) { t = t.copy(hint = it) }
+                ColorRow(tr("Accent (Enter, highlights)", "অ্যাকসেন্ট রং (এন্টার, হাইলাইট)"), t.accent) { t = t.copy(accent = it) }
+                ColorRow(tr("Text on accent", "অ্যাকসেন্টের ওপরের লেখা"), t.onAccent) { t = t.copy(onAccent = it) }
+                OptionalColorRow(tr("Key outline", "কী-এর বর্ডার"), t.border) { t = t.copy(border = it) }
             }
         }
 
-        SettingsGroup("Keys") {
+        SettingsGroup(tr("Keys", "কী")) {
             Column(Modifier.padding(GroupContentPadding)) {
-                LabeledSlider("Key corners", t.keyRadiusDp, 0f..24f, "${t.keyRadiusDp.toInt()} dp") { t = t.copy(keyRadiusDp = it) }
-                LabeledSlider("Space between keys", t.keyGapDp, 0f..16f, "${t.keyGapDp.toInt()} dp") { t = t.copy(keyGapDp = it) }
-                LabeledSlider("Key opacity", t.keyOpacity, 0.2f..1f, "${(t.keyOpacity * 100).toInt()} %") { t = t.copy(keyOpacity = it) }
-                LabeledSlider("Label size", t.labelScale, 0.7f..1.4f, "${(t.labelScale * 100).toInt()} %") { t = t.copy(labelScale = it) }
+                LabeledSlider(tr("Key corners", "কী-এর কোণ"), t.keyRadiusDp, 0f..24f, "${num(t.keyRadiusDp.toInt())} dp") { t = t.copy(keyRadiusDp = it) }
+                LabeledSlider(tr("Space between keys", "কী-গুলোর মাঝে ফাঁক"), t.keyGapDp, 0f..16f, "${num(t.keyGapDp.toInt())} dp") { t = t.copy(keyGapDp = it) }
+                LabeledSlider(tr("Key opacity", "কী-এর ঘনত্ব"), t.keyOpacity, 0.2f..1f, "${num((t.keyOpacity * 100).toInt())} %") { t = t.copy(keyOpacity = it) }
+                LabeledSlider(tr("Label size", "লেখার আকার"), t.labelScale, 0.7f..1.4f, "${num((t.labelScale * 100).toInt())} %") { t = t.copy(labelScale = it) }
             }
-            SettingsSwitch("Bold labels", checked = t.boldLabels, onChange = { t = t.copy(boldLabels = it) }, icon = UiR.drawable.ms_format_size)
-            SettingsSwitch("Key shadows", checked = t.shadow, onChange = { t = t.copy(shadow = it) }, icon = UiR.drawable.ms_tune)
-            SettingsSwitch("Dark theme", "For the panels and previews", t.dark, { t = t.copy(dark = it) }, UiR.drawable.ms_dark_mode)
+            SettingsSwitch(tr("Bold labels", "মোটা লেখা"), checked = t.boldLabels, onChange = { t = t.copy(boldLabels = it) }, icon = UiR.drawable.ms_format_size)
+            SettingsSwitch(tr("Key shadows", "কী-এর ছায়া"), checked = t.shadow, onChange = { t = t.copy(shadow = it) }, icon = UiR.drawable.ms_tune)
+            SettingsSwitch(
+                tr("Dark theme", "গাঢ় থিম"),
+                tr("For the panels and previews", "প্যানেল ও প্রিভিউয়ের জন্য"),
+                t.dark,
+                { t = t.copy(dark = it) },
+                UiR.drawable.ms_dark_mode,
+            )
         }
 
-        SettingsGroup("Key press effect") {
-            SettingsRadio("None", selected = t.pressEffect == null) { t = t.copy(pressEffect = null) }
+        SettingsGroup(tr("Key press effect", "কী চাপার ইফেক্ট")) {
+            SettingsRadio(tr("None", "কিছু না"), selected = t.pressEffect == null) { t = t.copy(pressEffect = null) }
             PressEffect.entries.forEach { e ->
-                SettingsRadio(e.label, selected = t.pressEffect == e) { t = t.copy(pressEffect = e) }
+                SettingsRadio(e.effectLabel, selected = t.pressEffect == e) { t = t.copy(pressEffect = e) }
             }
         }
-        SettingsNote("Drawn in the accent colour (or the theme's own effect colour). Try it on the preview above.")
+        SettingsNote(tr("Shown in the accent colour. Try it on the preview above.", "অ্যাকসেন্ট রঙে দেখায়। ওপরের প্রিভিউতে চেষ্টা করে দেখুন।"))
 
-        SettingsGroup("Background picture") {
+        SettingsGroup(tr("Background picture", "ব্যাকগ্রাউন্ডের ছবি")) {
             Column(Modifier.padding(GroupContentPadding), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     FilledTonalButton(onClick = { picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }) {
                         MsIcon(UiR.drawable.ms_image, null, Modifier.size(18.dp))
                         Spacer(Modifier.width(8.dp))
-                        Text(if (t.backgroundImage == null) "Choose picture" else "Change picture")
+                        Text(if (t.backgroundImage == null) tr("Choose picture", "ছবি বাছুন") else tr("Change picture", "ছবি বদলান"))
                     }
-                    if (t.backgroundImage != null) OutlinedButton(onClick = { t = t.copy(backgroundImage = null) }) { Text("Remove") }
+                    if (t.backgroundImage != null) OutlinedButton(onClick = { t = t.copy(backgroundImage = null) }) { Text(tr("Remove", "সরান")) }
                 }
                 if (t.backgroundImage != null) {
-                    LabeledSlider("Darken picture", t.imageDim, 0f..0.9f, "${(t.imageDim * 100).toInt()} %") { t = t.copy(imageDim = it) }
+                    LabeledSlider(tr("Darken picture", "ছবি গাঢ় করা"), t.imageDim, 0f..0.9f, "${num((t.imageDim * 100).toInt())} %") { t = t.copy(imageDim = it) }
                 }
                 Text(
-                    "Scaled to the keyboard and cropped from the centre. It stays on this phone." + (imageNote?.let { "\n$it" } ?: ""),
+                    tr(
+                        "Fitted to the keyboard from the centre. It stays on this phone.",
+                        "কীবোর্ডের মাপে মাঝখান থেকে কাটা হয়। ছবিটি এই ফোনেই থাকে।",
+                    ) + (if (imageFailed) "\n" + tr("That picture couldn't be used.", "এই ছবিটি ব্যবহার করা যায়নি।") else ""),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -587,9 +921,9 @@ fun ThemeEditorScreen(vm: MainViewModel, settings: KeyboardSettings, initial: Ke
         }
 
         Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = { vm.saveTheme(t); onDone() }) { Text("Save and use") }
-            OutlinedButton(onClick = { t = initial }) { Text("Reset") }
-            TextButton(onClick = onDone) { Text("Cancel") }
+            Button(onClick = { vm.saveTheme(t); onDone() }) { Text(tr("Save and use", "সেভ করে চালু করুন")) }
+            OutlinedButton(onClick = { t = initial }) { Text(tr("Reset", "রিসেট")) }
+            TextButton(onClick = onDone) { Text(tr("Cancel", "বাতিল")) }
         }
     }
 }
@@ -607,11 +941,11 @@ private fun LiveSettings(initial: KeyboardTheme, t: KeyboardTheme, onChange: (Ke
     val canDrift = t.glows.isNotEmpty() || appColour != null || initial.live is LiveStyle.Drift || (originalApp?.driftSeconds ?: 0) > 0
     if (originalApp == null && originalTime == null && !initial.dynamic && !canDrift) return
 
-    SettingsGroup("Changes by itself") {
+    SettingsGroup(tr("Changes by itself", "নিজে নিজে বদলায়")) {
         if (initial.dynamic) {
             SettingsSwitch(
-                "Wallpaper colours",
-                "Material You: the colours of your wallpaper (Android 12+)",
+                tr("Wallpaper colours", "ওয়ালপেপারের রং"),
+                tr("Uses your wallpaper's colours (Android 12+)", "আপনার ওয়ালপেপারের রং নেয় (Android ১২+)"),
                 checked = t.dynamic,
                 onChange = { on -> onChange(if (on) t.copy(dynamic = true) else stillColours(t).copy(dynamic = false)) },
                 icon = UiR.drawable.ms_auto_awesome,
@@ -619,8 +953,8 @@ private fun LiveSettings(initial: KeyboardTheme, t: KeyboardTheme, onChange: (Ke
         }
         if (originalApp != null) {
             SettingsSwitch(
-                "Colours from the app",
-                "Takes the colour of the app you're typing in (Chameleon)",
+                tr("Colours from the app", "অ্যাপ থেকে রং"),
+                tr("Takes the colour of the app you're typing in", "আপনি যে অ্যাপে লিখছেন তার রং নেয়"),
                 checked = appColour != null,
                 onChange = { on ->
                     onChange(
@@ -634,8 +968,8 @@ private fun LiveSettings(initial: KeyboardTheme, t: KeyboardTheme, onChange: (Ke
         }
         if (originalTime != null) {
             SettingsSwitch(
-                "Colours follow the time of day",
-                "They change through the day, each time the keyboard opens",
+                tr("Time of day colours", "দিনের সময় অনুযায়ী রং"),
+                tr("Change through the day, when the keyboard opens", "দিনভর বদলায়, কীবোর্ড খোলার সময়"),
                 checked = t.live is LiveStyle.TimeOfDay,
                 onChange = { on -> onChange(if (on) t.copy(live = originalTime) else stillColours(t).copy(live = null)) },
                 icon = UiR.drawable.ms_dark_mode,
@@ -644,8 +978,8 @@ private fun LiveSettings(initial: KeyboardTheme, t: KeyboardTheme, onChange: (Ke
         if (canDrift && t.live !is LiveStyle.TimeOfDay) {
             val drifting = t.live is LiveStyle.Drift || (appColour?.driftSeconds ?: 0) > 0
             SettingsSwitch(
-                "Glows drift slowly",
-                "Still when the phone's animations are off or battery saver is on",
+                tr("Glows drift slowly", "আভা ধীরে সরে"),
+                tr("Still with animations off or battery saver on", "অ্যানিমেশন বন্ধ বা ব্যাটারি সেভার চালু থাকলে থেমে থাকে"),
                 checked = drifting,
                 onChange = { on ->
                     val period = (initial.live as? LiveStyle.Drift)?.periodSeconds ?: originalApp?.driftSeconds?.takeIf { it > 0 } ?: 50
@@ -662,7 +996,7 @@ private fun LiveSettings(initial: KeyboardTheme, t: KeyboardTheme, onChange: (Ke
         }
     }
     if (appColour != null) {
-        SettingsGroup("Chameleon look") {
+        SettingsGroup(tr("Chameleon look", "ক্যামেলিয়নের ধরন")) {
             AppTintStyle.entries.forEach { style ->
                 SettingsRadio(appTintLabel(style), selected = appColour.style == style) {
                     onChange(t.copy(live = appColour.copy(style = style), dark = style != AppTintStyle.LIGHT && style != AppTintStyle.PASTEL))
@@ -673,15 +1007,15 @@ private fun LiveSettings(initial: KeyboardTheme, t: KeyboardTheme, onChange: (Ke
 }
 
 private fun appTintLabel(style: AppTintStyle): String = when (style) {
-    AppTintStyle.GLOW -> "Glow: near-black with glows in the app's colour"
-    AppTintStyle.MIST -> "Mist: a deep wash of the app's colour"
-    AppTintStyle.LIGHT -> "Light: a pale tint, white keys"
-    AppTintStyle.BLACK -> "Black: pure black, coloured outlines and Enter"
-    AppTintStyle.NEON -> "Neon: bright outlines in the app's colour"
-    AppTintStyle.SPOTLIGHT -> "Spotlight: lit from the top by the app's colour"
-    AppTintStyle.DUO -> "Duo: the app's colour and its opposite"
-    AppTintStyle.GLASS -> "Glass: frosted keys over the app's colour"
-    AppTintStyle.PASTEL -> "Pastel: soft pastel keys"
+    AppTintStyle.GLOW -> tr("Glow: near-black with glows in the app's colour", "আভা: প্রায় কালো, অ্যাপের রঙে আভা")
+    AppTintStyle.MIST -> tr("Mist: a deep wash of the app's colour", "কুয়াশা: অ্যাপের রঙে গাঢ় ছোপ")
+    AppTintStyle.LIGHT -> tr("Light: a pale tint, white keys", "হালকা: হালকা রঙের ছোঁয়া, সাদা কী")
+    AppTintStyle.BLACK -> tr("Black: pure black, coloured outlines and Enter", "কালো: পুরো কালো, রঙিন বর্ডার ও এন্টার")
+    AppTintStyle.NEON -> tr("Neon: bright outlines in the app's colour", "নিয়ন: অ্যাপের রঙে উজ্জ্বল বর্ডার")
+    AppTintStyle.SPOTLIGHT -> tr("Spotlight: lit from the top by the app's colour", "স্পটলাইট: ওপর থেকে অ্যাপের রঙের আলো")
+    AppTintStyle.DUO -> tr("Duo: the app's colour and its opposite", "জোড়া: অ্যাপের রং ও তার বিপরীত রং")
+    AppTintStyle.GLASS -> tr("Glass: frosted keys over the app's colour", "কাচ: অ্যাপের রঙের ওপর ঘষা কাচের মতো কী")
+    AppTintStyle.PASTEL -> tr("Pastel: soft pastel keys", "প্যাস্টেল: নরম প্যাস্টেল কী")
 }
 
 @Composable
@@ -732,7 +1066,7 @@ private fun OptionalColorRow(label: String, color: Int?, onPick: (Int?) -> Unit)
         Text(label, Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
         androidx.compose.material3.Switch(checked = color != null, onCheckedChange = null)
     }
-    if (color != null) ColorRow("$label colour", color) { onPick(it) }
+    if (color != null) ColorRow(tr("$label colour", "রং বাছুন"), color) { onPick(it) }
 }
 
 @Composable
@@ -751,92 +1085,132 @@ private fun LabeledSlider(label: String, value: Float, range: ClosedFloatingPoin
 /** Keyboard height, number row, one-handed and floating modes. */
 @Composable
 fun SizeScreen(vm: MainViewModel, settings: KeyboardSettings, theme: KeyboardTheme, onBack: () -> Unit) {
-    SettingsScaffold("Size & layout", onBack) {
+    SettingsScaffold(tr("Size & layout", "আকার ও লেআউট"), onBack) {
         KeyboardPreview(theme, settings)
-        SettingsGroup("Height") {
+        SettingsGroup(tr("Height", "উচ্চতা")) {
             Column(Modifier.padding(GroupContentPadding)) {
-                LabeledSlider("Portrait", settings.heightPortrait.toFloat(), 70f..140f, "${settings.heightPortrait} %") {
+                LabeledSlider(tr("Portrait", "খাড়া অবস্থায়"), settings.heightPortrait.toFloat(), 70f..140f, "${num(settings.heightPortrait)} %") {
                     vm.setHeight(portrait = true, percent = it.toInt())
                 }
-                LabeledSlider("Landscape", settings.heightLandscape.toFloat(), 70f..140f, "${settings.heightLandscape} %") {
+                LabeledSlider(tr("Landscape", "আড়াআড়ি অবস্থায়"), settings.heightLandscape.toFloat(), 70f..140f, "${num(settings.heightLandscape)} %") {
                     vm.setHeight(portrait = false, percent = it.toInt())
                 }
             }
         }
-        SettingsGroup("Layout") {
-            SettingsSwitch("Number row", "Digits above the letters", settings.numberRow, vm::setNumberRow, UiR.drawable.ms_123)
+        SettingsGroup(tr("Layout", "লেআউট")) {
             SettingsSwitch(
-                "Floating keyboard",
-                "A smaller keyboard you can drag; the app behind stays full size",
+                tr("Number row", "সংখ্যার সারি"),
+                tr("Digits above the letters", "অক্ষরের ওপরে সংখ্যা"),
+                settings.numberRow,
+                vm::setNumberRow,
+                UiR.drawable.ms_123,
+            )
+            SettingsSwitch(
+                tr("Floating keyboard", "ভাসমান কীবোর্ড"),
+                tr("A small keyboard you can move; the app stays full size", "ছোট কীবোর্ড, যেখানে খুশি সরান; পেছনের অ্যাপ পুরো দেখা যায়"),
                 settings.floating,
                 vm::setFloating,
                 UiR.drawable.ms_picture_in_picture,
             )
             if (settings.floating) {
-                SettingsItem("Reset position", null, UiR.drawable.ms_restart_alt, showChevron = false, onClick = vm::resetFloatPosition)
+                SettingsItem(tr("Reset position", "জায়গা রিসেট করুন"), null, UiR.drawable.ms_restart_alt, showChevron = false, onClick = vm::resetFloatPosition)
             }
         }
-        SettingsGroup("One-handed") {
-            listOf(OneHanded.OFF to "Off", OneHanded.LEFT to "Left hand", OneHanded.RIGHT to "Right hand").forEach { (mode, label) ->
-                SettingsRadio(label, selected = settings.oneHanded == mode) { vm.setOneHanded(mode) }
-            }
+        SettingsGroup(tr("Hands", "হাত")) {
+            SettingsChoice(
+                tr("One-handed", "এক হাতে"),
+                tr("Keys move to one side; the arrows beside them switch sides", "কী-গুলো এক পাশে সরে; পাশের তীর চেপে দিক বদলান"),
+                listOf(
+                    OneHanded.OFF to tr("Off", "বন্ধ"),
+                    OneHanded.LEFT to tr("Left hand", "বাঁ হাত"),
+                    OneHanded.RIGHT to tr("Right hand", "ডান হাত"),
+                ),
+                settings.oneHanded,
+                vm::setOneHanded,
+                UiR.drawable.ms_front_hand,
+            )
+            SettingsChoice(
+                tr("Split keyboard", "ভাগ করা কীবোর্ড"),
+                tr(
+                    "Keys in two halves for both thumbs on wide screens. Not with one-handed or floating.",
+                    "চওড়া স্ক্রিনে দুই বুড়ো আঙুলের জন্য কী দুই ভাগে। এক হাতে বা ভাসমান মোডে নয়।",
+                ),
+                com.yeamin.jolpai.core.settings.SplitKeys.entries.map { it to it.uiLabel },
+                settings.splitKeys,
+                vm::setSplitKeys,
+                UiR.drawable.ms_swap_horiz,
+            )
         }
-        SettingsNote("In one-handed mode the keys move to one side; the arrows beside them switch sides or return to full width.")
-
-        SettingsGroup("Split keyboard") {
-            com.yeamin.jolpai.core.settings.SplitKeys.entries.forEach { mode ->
-                SettingsRadio(mode.label, selected = settings.splitKeys == mode) { vm.setSplitKeys(mode) }
-            }
-        }
-        SettingsNote("Split keys move the two halves of the keyboard to the sides, for typing with both thumbs on a wide screen or tablet. Not in one-handed or floating mode.")
     }
 }
+
 
 /** Vibration strength and key sounds. */
 @Composable
 fun SoundScreen(vm: MainViewModel, settings: KeyboardSettings, onBack: () -> Unit) {
-    SettingsScaffold("Sound & vibration", onBack) {
-        SettingsGroup("Vibration on key press") {
-            HapticLevel.entries.forEach { level ->
-                SettingsRadio(level.label, selected = settings.haptics == level) { vm.setHaptics(level) }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val player = remember { com.yeamin.jolpai.ui.SoundPackPlayer(context) }
+    androidx.compose.runtime.DisposableEffect(player) { onDispose { player.release() } }
+    /** A short preview of a sound style: letter, letter, space. */
+    fun preview(pack: com.yeamin.jolpai.core.settings.SoundPack) {
+        if (pack == com.yeamin.jolpai.core.settings.SoundPack.SYSTEM) {
+            context.getSystemService(android.media.AudioManager::class.java)
+                ?.playSoundEffect(android.media.AudioManager.FX_KEYPRESS_STANDARD, settings.soundVolume)
+        } else {
+            player.prepare(pack)
+            val handler = android.os.Handler(android.os.Looper.getMainLooper())
+            listOf(120L, 260L, 400L).forEachIndexed { i, delay ->
+                handler.postDelayed({
+                    player.play(pack, if (i == 2) com.yeamin.jolpai.ui.SoundPackPlayer.Kind.SPACE else com.yeamin.jolpai.ui.SoundPackPlayer.Kind.STANDARD, settings.soundVolume.coerceAtLeast(0.3f))
+                }, delay)
             }
         }
-        SettingsNote("“Phone default” follows the phone's own setting. The other strengths are used only while the phone's touch vibration is on.")
-        SettingsGroup("Sound") {
-            SettingsSwitch("Key sounds", "Space, Enter and Backspace have their own sounds", settings.keySound, vm::setKeySound, UiR.drawable.ms_volume_up)
+    }
+    SettingsScaffold(tr("Sound & vibration", "শব্দ ও ভাইব্রেশন"), onBack) {
+        SettingsGroup(tr("Vibration", "ভাইব্রেশন")) {
+            SettingsChoice(
+                tr("Vibrate on key press", "কী চাপলে ভাইব্রেশন"),
+                tr(
+                    "“${HapticLevel.SYSTEM.uiLabel}” follows your phone. The others need the phone's touch vibration on.",
+                    "“${HapticLevel.SYSTEM.uiLabel}” ফোনের সেটিং মেনে চলে। বাকিগুলোর জন্য ফোনের টাচ ভাইব্রেশন চালু থাকতে হবে।",
+                ),
+                HapticLevel.entries.map { it to it.uiLabel },
+                settings.haptics,
+                vm::setHaptics,
+                UiR.drawable.ms_vibration,
+            )
+        }
+        SettingsGroup(tr("Sound", "শব্দ")) {
+            SettingsSwitch(
+                tr("Key sounds", "কী-এর শব্দ"),
+                tr("Space, Enter and Backspace have their own sounds", "স্পেস, এন্টার ও ব্যাকস্পেসের আলাদা শব্দ"),
+                settings.keySound,
+                vm::setKeySound,
+                UiR.drawable.ms_volume_up,
+            )
             if (settings.keySound) {
                 Column(Modifier.padding(GroupContentPadding)) {
-                    LabeledSlider("Volume", settings.soundVolume, 0f..1f, "${(settings.soundVolume * 100).toInt()} %") { vm.setSoundVolume(it) }
+                    LabeledSlider(tr("Volume", "ভলিউম"), settings.soundVolume, 0f..1f, "${num((settings.soundVolume * 100).toInt())} %") { vm.setSoundVolume(it) }
                 }
-            }
-        }
-        if (settings.keySound) {
-            val context = androidx.compose.ui.platform.LocalContext.current
-            val player = remember { com.yeamin.jolpai.ui.SoundPackPlayer(context) }
-            androidx.compose.runtime.DisposableEffect(player) { onDispose { player.release() } }
-            SettingsGroup("Sound") {
-                com.yeamin.jolpai.core.settings.SoundPack.entries.forEach { pack ->
-                    SettingsRadio(pack.label, selected = settings.soundPack == pack) {
+                SettingsChoice(
+                    tr("Sound style", "শব্দের ধরন"),
+                    tr("Tap one to hear it. Nothing is downloaded.", "শুনতে একটিতে চাপুন। কিছুই ডাউনলোড হয় না।"),
+                    com.yeamin.jolpai.core.settings.SoundPack.entries.map { it to it.uiLabel },
+                    settings.soundPack,
+                    { pack ->
                         vm.setSoundPack(pack)
-                        // A short preview: letter, letter, space.
-                        if (pack == com.yeamin.jolpai.core.settings.SoundPack.SYSTEM) {
-                            context.getSystemService(android.media.AudioManager::class.java)
-                                ?.playSoundEffect(android.media.AudioManager.FX_KEYPRESS_STANDARD, settings.soundVolume)
-                        } else {
-                            player.prepare(pack)
-                            val handler = android.os.Handler(android.os.Looper.getMainLooper())
-                            listOf(120L, 260L, 400L).forEachIndexed { i, delay ->
-                                handler.postDelayed({
-                                    player.play(pack, if (i == 2) com.yeamin.jolpai.ui.SoundPackPlayer.Kind.SPACE else com.yeamin.jolpai.ui.SoundPackPlayer.Kind.STANDARD, settings.soundVolume.coerceAtLeast(0.3f))
-                                }, delay)
-                            }
-                        }
-                    }
-                }
+                        preview(pack)
+                    },
+                    UiR.drawable.ms_tune,
+                )
             }
-            SettingsNote("Jolpai's own sounds are made on the phone, not downloaded. Tap one to hear it.")
         }
-        SettingsNote("Sounds stay silent when the phone is on silent, vibrate or Do Not Disturb.")
-        Spacer(Modifier.height(8.dp))
+        SettingsNote(
+            tr(
+                "No sound while the phone is on silent, vibrate or Do Not Disturb.",
+                "ফোন সাইলেন্ট, ভাইব্রেট বা ডু নট ডিস্টার্বে থাকলে কোনো শব্দ হয় না।",
+            ),
+        )
     }
 }
+

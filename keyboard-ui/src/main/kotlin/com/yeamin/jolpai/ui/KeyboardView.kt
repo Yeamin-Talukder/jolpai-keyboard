@@ -468,7 +468,9 @@ class KeyboardView(context: Context, private val palette: KeyboardPalette) : Vie
     private var press = FloatArray(0)
     private var lastFrame = 0L
 
-    override fun onDraw(canvas: Canvas) {
+    override fun onDraw(canvas: Canvas) = traced("Jolpai.drawKeys") { drawKeys(canvas) }
+
+    private fun drawKeys(canvas: Canvas) {
         if (press.size != cells.size) resetPress()
         val now = android.os.SystemClock.uptimeMillis()
         val dt = if (lastFrame == 0L) FRAME_MS else (now - lastFrame).coerceIn(0L, 64L).toFloat()

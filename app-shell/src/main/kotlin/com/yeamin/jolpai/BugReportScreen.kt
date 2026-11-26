@@ -48,27 +48,51 @@ fun BugReportScreen(settings: KeyboardSettings, setup: SetupStatus, onBack: () -
     val details = BugReport.details(info, extras, settings, setup)
     val ready = summary.isNotBlank() || what.isNotBlank()
 
-    SettingsScaffold("Report a bug", onBack) {
+    SettingsScaffold(tr("Report a problem", "সমস্যা জানান"), onBack) {
         Text(
-            "Tell us what went wrong. Jolpai fills in a GitHub issue for you; you check it and tap Submit there (a free GitHub account is needed).",
+            tr(
+                "Tell us what went wrong. You then check it and submit it on GitHub (a free account is needed).",
+                "কী সমস্যা হয়েছে লিখুন। এরপর GitHub-এ দেখে নিয়ে পাঠাবেন (একটি ফ্রি GitHub অ্যাকাউন্ট লাগবে)।",
+            ),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 4.dp),
         )
-        Field(summary, { summary = it }, "Short summary", "e.g. ৎ doesn't type in WhatsApp", singleLine = true)
-        Field(what, { what = it }, "What happened?", "What you did and what went wrong", minLines = 4)
-        Field(steps, { steps = it }, "Steps to reproduce (optional)", "1. Open …  2. Tap …", minLines = 2)
-        Field(expected, { expected = it }, "What did you expect? (optional)", null, minLines = 2)
+        Field(
+            summary, { summary = it },
+            tr("Short summary", "এক লাইনে সমস্যাটি"),
+            tr("e.g. ৎ doesn't type in WhatsApp", "যেমন: WhatsApp-এ ৎ টাইপ হয় না"),
+            singleLine = true,
+        )
+        Field(
+            what, { what = it },
+            tr("What happened?", "কী হয়েছিল?"),
+            tr("What you did and what went wrong", "আপনি কী করছিলেন, আর কী ভুল হলো"),
+            minLines = 4,
+        )
+        Field(
+            steps, { steps = it },
+            tr("Steps to make it happen (optional)", "কোন ধাপে সমস্যা হয় (ঐচ্ছিক)"),
+            tr("1. Open …  2. Tap …", "১. খুলুন …  ২. চাপুন …"),
+            minLines = 2,
+        )
+        Field(expected, { expected = it }, tr("What did you expect? (optional)", "আপনি কী আশা করেছিলেন? (ঐচ্ছিক)"), null, minLines = 2)
 
         SettingsGroup {
             SettingsSwitch(
-                "Include phone and app details",
-                "Phone model, Android version, memory, screen, and your Jolpai settings. Never what you type, learned words or the clipboard.",
+                tr("Include phone and app details", "ফোন ও অ্যাপের তথ্য যোগ করুন"),
+                tr(
+                    "Phone model, Android version and your settings. Never your typing, learned words or clipboard.",
+                    "ফোনের মডেল, Android ভার্সন ও আপনার সেটিংস। আপনার লেখা, শেখা শব্দ বা ক্লিপবোর্ড কখনো নয়।",
+                ),
                 includeDetails, { includeDetails = it }, UiR.drawable.ms_info,
             )
             if (includeDetails) {
                 TextButton(onClick = { showDetails = !showDetails }, modifier = Modifier.padding(start = 8.dp)) {
-                    Text(if (showDetails) "Hide what's included" else "See exactly what's included")
+                    Text(
+                        if (showDetails) tr("Hide what's included", "কী কী যাচ্ছে লুকান")
+                        else tr("See exactly what's included", "ঠিক কী কী যাচ্ছে দেখুন"),
+                    )
                 }
                 AnimatedVisibility(showDetails) {
                     Column(Modifier.padding(start = 20.dp, end = 16.dp, bottom = 12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -82,7 +106,12 @@ fun BugReportScreen(settings: KeyboardSettings, setup: SetupStatus, onBack: () -
                 }
             }
         }
-        SettingsNote("Don't include passwords or private messages: GitHub issues are public.")
+        SettingsNote(
+            tr(
+                "Don't include passwords or private messages: GitHub issues are public.",
+                "পাসওয়ার্ড বা ব্যক্তিগত মেসেজ লিখবেন না: GitHub-এ সবাই এটি দেখতে পারে।",
+            ),
+        )
         Button(
             onClick = {
                 val text = BugReportText(summary, what, steps, expected)
@@ -92,7 +121,7 @@ fun BugReportScreen(settings: KeyboardSettings, setup: SetupStatus, onBack: () -
             modifier = Modifier.fillMaxWidth().height(56.dp),
         ) {
             MsIcon(UiR.drawable.ms_open_in_new, null)
-            Text("  Continue on GitHub", style = MaterialTheme.typography.titleMedium)
+            Text(tr("  Continue on GitHub", "  GitHub-এ এগিয়ে যান"), style = MaterialTheme.typography.titleMedium)
         }
     }
 }

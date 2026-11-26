@@ -36,9 +36,11 @@ import androidx.compose.ui.unit.dp
 import com.yeamin.jolpai.core.stats.TypingStats
 import com.yeamin.jolpai.core.stats.TypingStatsSnapshot
 import java.text.NumberFormat
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
+import java.util.Locale
 
 /**
  * How much you type with Jolpai: words (English and Bangla), the last seven days, and what the
@@ -57,26 +59,31 @@ fun TypingStatsScreen(onBack: () -> Unit) {
     var confirmReset by remember { mutableStateOf(false) }
     val number = remember { NumberFormat.getIntegerInstance() }
 
-    SettingsScaffold("Typing stats", onBack) {
+    SettingsScaffold(tr("Typing stats", "টাইপিংয়ের হিসাব"), onBack) {
         Hero(snap, number)
-        SettingsGroup("Typing speed") { SpeedCard(snap, number) }
-        SettingsGroup("Last 7 days") { WeekChart(snap) }
-        SettingsGroup("Languages") { LanguageSplit(snap, number) }
-        SettingsGroup("What Jolpai did for you", tone = GroupTone.TERTIARY) {
+        SettingsGroup(tr("Typing speed", "টাইপিংয়ের গতি")) { SpeedCard(snap, number) }
+        SettingsGroup(tr("Last 7 days", "গত ৭ দিন")) { WeekChart(snap) }
+        SettingsGroup(tr("Languages", "ভাষা")) { LanguageSplit(snap, number) }
+        SettingsGroup(tr("What Jolpai did for you", "জলপাই আপনার জন্য যা করেছে"), tone = GroupTone.TERTIARY) {
             Row(Modifier.fillMaxWidth().padding(12.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Tile("Autocorrections", number.format(snap.autocorrections), Modifier.weight(1f))
-                Tile("Suggestions used", number.format(snap.suggestionsPicked), Modifier.weight(1f))
+                Tile(tr("Autocorrections", "অটোকারেক্ট"), number.format(snap.autocorrections).digits(), Modifier.weight(1f))
+                Tile(tr("Suggestions used", "সাজেশন নেওয়া"), number.format(snap.suggestionsPicked).digits(), Modifier.weight(1f))
             }
             Row(Modifier.fillMaxWidth().padding(start = 12.dp, end = 12.dp, bottom = 12.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Tile("Letters saved", number.format(snap.lettersSaved), Modifier.weight(1f))
-                Tile("Emoji sent", number.format(snap.emoji), Modifier.weight(1f))
+                Tile(tr("Letters saved", "অক্ষর বাঁচানো"), number.format(snap.lettersSaved).digits(), Modifier.weight(1f))
+                Tile(tr("Emoji sent", "ইমোজি পাঠানো"), number.format(snap.emoji).digits(), Modifier.weight(1f))
             }
         }
-        SettingsNote("Only numbers are kept on this phone — never what you type — and nothing is counted in password or private fields.")
+        SettingsNote(
+            tr(
+                "Only counts are kept, on this phone, never what you type. Password and private fields aren't counted.",
+                "শুধু সংখ্যা এই ফোনে রাখা হয়, আপনার লেখা নয়। পাসওয়ার্ড বা প্রাইভেট ঘরে কিছুই গোনা হয় না।",
+            ),
+        )
         SettingsGroup {
             SettingsItem(
-                if (confirmReset) "Tap again to reset" else "Reset stats",
-                "Start counting from zero",
+                if (confirmReset) tr("Tap again to reset", "রিসেট করতে আবার চাপুন") else tr("Reset stats", "হিসাব রিসেট"),
+                tr("Start counting from zero", "শূন্য থেকে আবার গোনা শুরু"),
                 com.yeamin.jolpai.ui.R.drawable.ms_restart_alt,
                 showChevron = false,
             ) {
@@ -94,20 +101,24 @@ fun TypingStatsScreen(onBack: () -> Unit) {
 
 @Composable
 private fun Hero(snap: TypingStatsSnapshot, number: NumberFormat) {
-    val since = remember(snap.sinceEpochDay) {
-        LocalDate.ofEpochDay(snap.sinceEpochDay).format(DateTimeFormatter.ofPattern("d MMM yyyy"))
+    // Keyed on the app language too, so the month name follows it.
+    val bangla = AppLanguage.bangla
+    val since = remember(snap.sinceEpochDay, bangla) {
+        val date = LocalDate.ofEpochDay(snap.sinceEpochDay)
+        if (bangla) date.format(DateTimeFormatter.ofPattern("d MMM yyyy", Locale.forLanguageTag("bn-BD"))).digits()
+        else date.format(DateTimeFormatter.ofPattern("d MMM yyyy"))
     }
     Surface(shape = RoundedCornerShape(28.dp), color = MaterialTheme.colorScheme.primaryContainer, modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(22.dp)) {
-            Text("Words typed", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onPrimaryContainer)
+            Text(tr("Words typed", "টাইপ করা শব্দ"), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onPrimaryContainer)
             Text(
-                number.format(snap.words),
+                number.format(snap.words).digits(),
                 style = MaterialTheme.typography.displayMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
             )
             Text(
-                "${number.format(snap.today)} today · counting since $since",
+                tr("${number.format(snap.today)} today · since $since", "আজ ${number.format(snap.today).digits()} · $since থেকে"),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
             )
@@ -124,7 +135,7 @@ private fun SpeedCard(snap: TypingStatsSnapshot, number: NumberFormat) {
     val wpm = snap.wpm
     if (wpm == null) {
         Text(
-            "Type a few sentences and your speed shows up here. Only time spent typing counts — pauses don't.",
+            tr("Type a few sentences to see your speed here. Pauses don't count.", "কয়েকটি বাক্য লিখলে এখানে আপনার গতি দেখাবে। থেমে থাকার সময় গোনা হয় না।"),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(16.dp),
@@ -148,15 +159,16 @@ private fun SpeedCard(snap: TypingStatsSnapshot, number: NumberFormat) {
                 drawArc(arc, 180f, 180f * fill.value.coerceIn(0.01f, 1f), false, topLeft, arcSize, style = cap)
             }
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("$wpm", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.SemiBold)
-                Text("words per minute", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(num(wpm), style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.SemiBold)
+                Text(tr("words per minute", "শব্দ প্রতি মিনিটে"), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
         Spacer(Modifier.height(16.dp))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Tile("Today", snap.todayWpm?.let { "$it wpm" } ?: "—", Modifier.weight(1f))
-            Tile("Best burst", snap.bestWpm?.let { "$it wpm" } ?: "—", Modifier.weight(1f))
-            Tile("Accuracy", snap.accuracy?.let { "$it%" } ?: "—", Modifier.weight(1f))
+            // In Bangla the tiles show just the number; the gauge above names the unit.
+            Tile(tr("Today", "আজকের গতি"), snap.todayWpm?.let { tr("$it wpm", num(it)) } ?: "—", Modifier.weight(1f))
+            Tile(tr("Best burst", "সেরা গতি"), snap.bestWpm?.let { tr("$it wpm", num(it)) } ?: "—", Modifier.weight(1f))
+            Tile(tr("Accuracy", "নির্ভুলতা"), snap.accuracy?.let { "${num(it)}%" } ?: "—", Modifier.weight(1f))
         }
         if (snap.speedDays.count { it != null } >= 2) {
             Spacer(Modifier.height(14.dp))
@@ -164,7 +176,10 @@ private fun SpeedCard(snap: TypingStatsSnapshot, number: NumberFormat) {
         }
         Spacer(Modifier.height(10.dp))
         Text(
-            "From ${number.format(snap.typingMinutes)} min of typing. Accuracy is how many key presses weren't deleted again.",
+            tr(
+                "From ${number.format(snap.typingMinutes)} min of typing. Accuracy counts the key presses you kept.",
+                "${number.format(snap.typingMinutes).digits()} মিনিট টাইপিংয়ের হিসাব। নির্ভুলতা মানে যত কী-চাপ মুছতে হয়নি।",
+            ),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -213,7 +228,7 @@ private fun WeekChart(snap: TypingStatsSnapshot) {
             LaunchedEffect(count) { grow.animateTo(count.toFloat() / max, spring(dampingRatio = 0.7f, stiffness = Spring.StiffnessLow)) }
             val isToday = i == snap.days.lastIndex
             Column(Modifier.weight(1f).fillMaxHeight(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Bottom) {
-                Text(if (count > 0) "$count" else "", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+                Text(if (count > 0) num(count) else "", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
                 Box(
                     Modifier
                         .fillMaxWidth()
@@ -223,8 +238,9 @@ private fun WeekChart(snap: TypingStatsSnapshot) {
                         .background(if (isToday) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondaryContainer),
                 )
                 Spacer(Modifier.height(6.dp))
+                val day = today.minusDays((snap.days.lastIndex - i).toLong()).dayOfWeek
                 Text(
-                    today.minusDays((snap.days.lastIndex - i).toLong()).dayOfWeek.getDisplayName(TextStyle.SHORT, locale),
+                    if (AppLanguage.bangla) banglaDay(day) else day.getDisplayName(TextStyle.SHORT, locale),
                     style = MaterialTheme.typography.labelSmall,
                     color = if (isToday) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                     fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal,
@@ -232,6 +248,17 @@ private fun WeekChart(snap: TypingStatsSnapshot) {
             }
         }
     }
+}
+
+/** Short Bangla day names, as on Bangladeshi calendars. */
+private fun banglaDay(day: DayOfWeek): String = when (day) {
+    DayOfWeek.SATURDAY -> "শনি"
+    DayOfWeek.SUNDAY -> "রবি"
+    DayOfWeek.MONDAY -> "সোম"
+    DayOfWeek.TUESDAY -> "মঙ্গল"
+    DayOfWeek.WEDNESDAY -> "বুধ"
+    DayOfWeek.THURSDAY -> "বৃহঃ"
+    DayOfWeek.FRIDAY -> "শুক্র"
 }
 
 /** English and বাংলা as two parts of one rounded bar. */
@@ -248,9 +275,9 @@ private fun LanguageSplit(snap: TypingStatsSnapshot, number: NumberFormat) {
         }
         Spacer(Modifier.height(10.dp))
         Row(Modifier.fillMaxWidth()) {
-            Legend(MaterialTheme.colorScheme.primary, "বাংলা  ${number.format(snap.banglaWords)}")
+            Legend(MaterialTheme.colorScheme.primary, "বাংলা  ${number.format(snap.banglaWords).digits()}")
             Spacer(Modifier.weight(1f))
-            Legend(MaterialTheme.colorScheme.secondaryContainer, "English  ${number.format(snap.englishWords)}")
+            Legend(MaterialTheme.colorScheme.secondaryContainer, tr("English  ${number.format(snap.englishWords)}", "ইংরেজি  ${number.format(snap.englishWords).digits()}"))
         }
     }
 }

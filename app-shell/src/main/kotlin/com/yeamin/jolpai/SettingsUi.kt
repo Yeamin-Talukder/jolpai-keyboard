@@ -60,6 +60,12 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import com.yeamin.jolpai.ui.R as UiR
 
 /*
@@ -100,7 +106,7 @@ fun SettingsScaffold(
                 title = { Text(title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
                 navigationIcon = {
                     if (onBack != null) {
-                        IconButton(onClick = onBack) { MsIcon(UiR.drawable.ms_arrow_back, "Back") }
+                        IconButton(onClick = onBack) { MsIcon(UiR.drawable.ms_arrow_back, tr("Back", "পেছনে")) }
                     }
                 },
                 actions = actions,
@@ -122,7 +128,8 @@ fun SettingsScaffold(
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             content()
-            if (scrollable) Spacer(Modifier.height(24.dp))
+            // Room under the last row for the floating "try the keyboard" button.
+            if (scrollable) Spacer(Modifier.height(FabClearance))
         }
     }
 }
@@ -282,6 +289,75 @@ fun SettingsSwitch(
     ) { Switch(checked = checked, onCheckedChange = null, enabled = enabled) }
 }
 
+/**
+ * One choice of a few, in a single row: icon, title and a short explanation, with the choices as
+ * chips underneath (segmented buttons when there are three or fewer short ones). It replaces a
+ * group of radio rows plus a separate note, so a page shows the same options in less space.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun <T> SettingsChoice(
+    title: String,
+    summary: String?,
+    options: List<Pair<T, String>>,
+    selected: T,
+    onSelect: (T) -> Unit,
+    @DrawableRes icon: Int? = null,
+    enabled: Boolean = true,
+) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 10.dp)
+            .alpha(if (enabled) 1f else 0.45f),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (icon != null) {
+                IconBadge(icon)
+                Spacer(Modifier.width(16.dp))
+            }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(title, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Normal))
+                if (!summary.isNullOrEmpty()) {
+                    Text(summary, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+        Spacer(Modifier.height(10.dp))
+        // Choices line up with the title, past the icon badge (40 dp + 16 dp gap).
+        val indent = if (icon != null) Modifier.padding(start = 56.dp) else Modifier
+        if (options.size <= 3 && options.all { it.second.length <= 12 }) {
+            SingleChoiceSegmentedButtonRow(indent.fillMaxWidth()) {
+                options.forEachIndexed { i, (value, label) ->
+                    SegmentedButton(
+                        selected = value == selected,
+                        onClick = { onSelect(value) },
+                        shape = SegmentedButtonDefaults.itemShape(i, options.size),
+                        enabled = enabled,
+                    ) { Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+                }
+            }
+        } else {
+            FlowRow(indent, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                options.forEach { (value, label) ->
+                    val on = value == selected
+                    FilterChip(
+                        selected = on,
+                        onClick = { onSelect(value) },
+                        enabled = enabled,
+                        label = { Text(label) },
+                        leadingIcon = if (on) {
+                            { MsIcon(UiR.drawable.ms_check, null, Modifier.size(18.dp)) }
+                        } else {
+                            null
+                        },
+                    )
+                }
+            }
+        }
+    }
+}
+
 /** One choice of several: the whole row selects. */
 @Composable
 fun SettingsRadio(title: String, summary: String? = null, selected: Boolean, enabled: Boolean = true, onSelect: () -> Unit) {
@@ -313,6 +389,9 @@ fun SettingsNote(text: String, modifier: Modifier = Modifier) =
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = modifier.padding(horizontal = 16.dp, vertical = 4.dp),
     )
+
+/** Space to leave under a page's last row so the floating keyboard button never covers it. */
+val FabClearance = 96.dp
 
 /** Padding for text and controls placed directly inside a [SettingsGroup]. */
 val GroupContentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)

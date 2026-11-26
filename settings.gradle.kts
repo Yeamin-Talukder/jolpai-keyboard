@@ -27,5 +27,8 @@ include(":voice-input")
 include(":media")
 include(":theme-engine")
 
+// On-device performance tests and Baseline Profile generation (run by hand, see benchmark/README.md).
+include(":benchmark")
+
 // PC-only tool: trains the next-word models (not part of the app).
 include(":lm-trainer")

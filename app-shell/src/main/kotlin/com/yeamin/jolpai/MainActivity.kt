@@ -54,6 +54,17 @@ import com.yeamin.jolpai.core.theme.ThemeRepository
 import com.yeamin.jolpai.theme.KeyboardTheme
 import com.yeamin.jolpai.theme.BuiltInThemes
 import androidx.compose.runtime.remember
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.isImeVisible
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.Alignment
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -64,6 +75,7 @@ class MainActivity : ComponentActivity() {
     /** Screen requested by the keyboard (e.g. "Manage" in the clipboard panel). */
     private val requestedScreen = mutableStateOf<Destination?>(null)
 
+    @OptIn(ExperimentalLayoutApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         // The app is always dark (Jolpai olive), so the system bars always get light icons.
         enableEdgeToEdge(
@@ -71,6 +83,7 @@ class MainActivity : ComponentActivity() {
             navigationBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
         )
         super.onCreate(savedInstanceState)
+        AppLanguage.load(this)
         if (savedInstanceState == null) playLaunchAnimation()
         if (savedInstanceState == null) handleScreenExtra(intent)
         setContent {
@@ -152,6 +165,9 @@ class MainActivity : ComponentActivity() {
                     )
                 } else if (welcome == false) {
 
+                // The floating keyboard button and its "try the keyboard" panel sit over every page.
+                var trying by rememberSaveable { mutableStateOf(false) }
+                Box(Modifier.fillMaxSize()) {
                 AnimatedContent(
                     targetState = screen,
                     // Black behind the pages: a page that fades while covered reads as dimmed.
@@ -192,7 +208,6 @@ class MainActivity : ComponentActivity() {
                             settings = settings,
                             themeName = theme.name,
                             learnedWordCount = learnedCount,
-                            personalWordCount = personalWords.size,
                             onOpenKeyboardSettings = { startFirst(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS), Intent(Settings.ACTION_SETTINGS)) },
                             onPickKeyboard = ::pickKeyboard,
                             onOpen = open,
@@ -251,6 +266,27 @@ class MainActivity : ComponentActivity() {
                         Destination.REPORT_BUG -> BugReportScreen(settings, setup, back)
                     }
                     }
+                }
+                // Hidden while another page's text field has the keyboard up, and on the page
+                // of test fields (it is the same thing, bigger).
+                AnimatedVisibility(
+                    visible = !trying && !WindowInsets.isImeVisible && screen != Destination.TEST_FIELDS,
+                    enter = scaleIn(initialScale = 0.6f) + fadeIn(),
+                    exit = scaleOut(targetScale = 0.6f) + fadeOut(),
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .navigationBarsPadding()
+                        .padding(end = 16.dp, bottom = 16.dp),
+                ) {
+                    TryKeyboardButton(expanded = screen == Destination.HOME, onClick = { trying = true })
+                }
+                TryKeyboardSheet(
+                    visible = trying,
+                    keyboardReady = setup.enabled && setup.selected,
+                    onPickKeyboard = ::pickKeyboard,
+                    onMoreFields = { open(Destination.TEST_FIELDS) },
+                    onClose = { trying = false },
+                )
                 }
                 }
                 }
@@ -364,7 +400,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun openDefaultKeyboardSettings() {
-        Toast.makeText(this, "Choose “Jolpai Keyboard” as the default or current keyboard", Toast.LENGTH_LONG).show()
+        Toast.makeText(this, tr("Choose “Jolpai Keyboard” as the default or current keyboard", "ডিফল্ট বা বর্তমান কীবোর্ড হিসেবে “Jolpai Keyboard” বেছে নিন"), Toast.LENGTH_LONG).show()
         startFirst(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS), Intent(Settings.ACTION_SETTINGS))
     }
 }

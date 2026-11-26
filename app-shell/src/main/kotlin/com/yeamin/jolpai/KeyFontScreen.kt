@@ -83,13 +83,19 @@ fun KeyFontScreen(vm: MainViewModel, settings: KeyboardSettings, theme: Keyboard
     val showBangla = if (mixed) editingBangla else settings.keyFont.bangla && settings.keyFont != KeyFont.SYSTEM
     val previewLayout = if (showBangla && banglaLayout != null) banglaLayout else LayoutId.ENGLISH
 
-    SettingsScaffold("Key font", onBack) {
+    SettingsScaffold(tr("Key font", "কী-এর ফন্ট"), onBack) {
         key(previewLayout) {
             KeyboardPreview(theme, settings.copy(rememberLastLayout = true, lastLayout = previewLayout))
         }
         Text(
-            if (mixed) "English: ${fontName(settings.keyFont, settings)} · Bangla: ${fontName(settings.banglaLettersFont, settings)}"
-            else "In use: ${fontName(settings.keyFont, settings)}",
+            if (mixed) {
+                tr(
+                    "English: ${fontName(settings.keyFont, settings)} · Bangla: ${fontName(settings.banglaLettersFont, settings)}",
+                    "ইংরেজি: ${fontName(settings.keyFont, settings)} · বাংলা: ${fontName(settings.banglaLettersFont, settings)}",
+                )
+            } else {
+                tr("In use: ${fontName(settings.keyFont, settings)}", "এখন চালু: ${fontName(settings.keyFont, settings)}")
+            },
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
@@ -97,8 +103,8 @@ fun KeyFontScreen(vm: MainViewModel, settings: KeyboardSettings, theme: Keyboard
 
         SettingsGroup {
             SettingsSwitch(
-                "Mix fonts",
-                "One font for English letters and another for Bangla letters",
+                tr("Mix fonts", "দুই ফন্ট মেশান"),
+                tr("One font for English letters, another for Bangla", "ইংরেজি অক্ষরে এক ফন্ট, বাংলায় আরেকটি"),
                 mixed,
                 { on ->
                     vm.setBanglaKeyFont(if (on) settings.banglaLettersFont else null)
@@ -115,12 +121,12 @@ fun KeyFontScreen(vm: MainViewModel, settings: KeyboardSettings, theme: Keyboard
                 FilterChip(
                     selected = !editingBangla,
                     onClick = { editingBangla = false },
-                    label = { Text("English letters · ${fontName(settings.keyFont, settings)}") },
+                    label = { Text(tr("English letters · ${fontName(settings.keyFont, settings)}", "ইংরেজি অক্ষর · ${fontName(settings.keyFont, settings)}")) },
                 )
                 FilterChip(
                     selected = editingBangla,
                     onClick = { editingBangla = true },
-                    label = { Text("বাংলা letters · ${fontName(settings.banglaLettersFont, settings)}") },
+                    label = { Text(tr("Bangla letters · ${fontName(settings.banglaLettersFont, settings)}", "বাংলা অক্ষর · ${fontName(settings.banglaLettersFont, settings)}")) },
                 )
             }
         }
@@ -136,49 +142,75 @@ fun KeyFontScreen(vm: MainViewModel, settings: KeyboardSettings, theme: Keyboard
             // English letters in a mix: only fonts that have them.
             val fonts = KeyFont.bundled(group).filter { !mixed || forBangla || it.english }
             if (fonts.isNotEmpty()) {
-                SettingsGroup(group.title) {
+                SettingsGroup(group.uiTitle) {
                     fonts.forEach { font -> KeyFontRow(font, selected == font, onSelect = { choose(font) }) }
                 }
             }
         }
         if (!mixed) {
-            SettingsNote("English and Stylish English fonts change the English letters; with them, Bangla keys use the phone's font. Turn on Mix fonts to pick a Bangla font as well.")
+            SettingsNote(
+                tr(
+                    "English fonts change only English letters. Turn on Mix fonts to pick a Bangla font too.",
+                    "ইংরেজি ফন্ট শুধু ইংরেজি অক্ষর বদলায়। বাংলা ফন্টও বাছতে “দুই ফন্ট মেশান” চালু করুন।",
+                ),
+            )
         }
 
-        SettingsGroup("Your own font") {
+        SettingsGroup(tr("Your own font", "নিজের ফন্ট")) {
             if (hasCustom) {
                 KeyFontRow(KeyFont.CUSTOM, selected == KeyFont.CUSTOM, name = settings.customKeyFontName, version = settings.customKeyFontVersion) {
                     choose(KeyFont.CUSTOM)
                 }
                 Row(Modifier.padding(start = 52.dp, bottom = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(onClick = pick, enabled = !busy) { Text("Change file") }
+                    OutlinedButton(onClick = pick, enabled = !busy) { Text(tr("Change file", "ফাইল বদলান")) }
                     TextButton(onClick = {
                         note = null
                         vm.removeCustomKeyFont()
-                    }) { Text("Remove") }
+                    }) { Text(tr("Remove", "সরিয়ে দিন")) }
                 }
             } else {
                 SettingsItem(
-                    if (busy) "Checking the font…" else "Choose a font file",
-                    "A .ttf or .otf font saved on this phone",
+                    if (busy) tr("Checking the font…", "ফন্ট দেখা হচ্ছে…") else tr("Choose a font file", "ফন্ট ফাইল বেছে নিন"),
+                    tr("A .ttf or .otf font saved on this phone", "এই ফোনে রাখা .ttf বা .otf ফন্ট"),
                     UiR.drawable.ms_upload,
                     showChevron = false,
                     onClick = { if (!busy) pick() },
                 )
             }
         }
-        note?.let { SettingsNote(it) }
+        note?.let { SettingsNote(fontNote(it)) }
         SettingsNote(
-            "Fonts change the letters on the keys, not the text you type. Vowel-sign keys (ি া ে ো ু ্) show just the sign in every font. " +
-                "Bundled fonts are open fonts (SIL Open Font License or Apache 2.0; see About). Your own font is copied into Jolpai and stays on this phone; " +
-                "it isn't in backups. If it stops loading, the keys use the phone's font.",
+            tr(
+                "Fonts change only the letters on the keys, not the text you type. Your own font stays on this phone and isn't backed up. " +
+                    "Included fonts are open-licensed; see About.",
+                "ফন্ট শুধু কী-এর অক্ষর বদলায়, আপনার লেখা নয়। নিজের ফন্ট এই ফোনেই থাকে, ব্যাকআপে যায় না। " +
+                    "দেওয়া ফন্টগুলো ওপেন লাইসেন্সের; বিস্তারিত “সম্পর্কে” পাতায়।",
+            ),
         )
     }
 }
 
+/**
+ * The font check's message (KeyFontCheck.message() in keyboard-core, which stays English) in
+ * the app's language. An unknown message is shown as it is.
+ */
+private fun fontNote(message: String): String = when (message) {
+    "This font has no Bangla letters, so Bangla keys use the phone's font." ->
+        tr(message, "এই ফন্টে বাংলা অক্ষর নেই, তাই বাংলা কী-তে ফোনের ফন্ট থাকবে।")
+    "This font has no English letters, so English keys use the phone's font." ->
+        tr(message, "এই ফন্টে ইংরেজি অক্ষর নেই, তাই ইংরেজি কী-তে ফোনের ফন্ট থাকবে।")
+    "That file isn't a font Jolpai can use. Pick a .ttf or .otf file." ->
+        tr(message, "এই ফাইলটি জলপাই ব্যবহার করতে পারে না। একটি .ttf বা .otf ফাইল বেছে নিন।")
+    "That font file is too big (over 32 MB)." ->
+        tr(message, "ফন্ট ফাইলটি অনেক বড় (৩২ MB-এর বেশি)।")
+    "That font has no English or Bangla letters." ->
+        tr(message, "এই ফন্টে ইংরেজি বা বাংলা কোনো অক্ষর নেই।")
+    else -> message
+}
+
 /** A font's name as shown: the picked file's name for "Your own font". */
 private fun fontName(font: KeyFont, settings: KeyboardSettings): String =
-    if (font == KeyFont.CUSTOM) settings.customKeyFontName ?: font.label else font.label
+    if (font == KeyFont.CUSTOM) settings.customKeyFontName ?: font.uiLabel else font.uiLabel
 
 /** A key font choice, previewed in that font. */
 @Composable
@@ -203,7 +235,7 @@ private fun KeyFontRow(font: KeyFont, selected: Boolean, name: String? = null, v
         RadioButton(selected = selected, onClick = null)
         Spacer(Modifier.width(16.dp))
         Column(Modifier.weight(1f)) {
-            Text(name ?: font.label, style = MaterialTheme.typography.bodyLarge)
+            Text(name ?: font.uiLabel, style = MaterialTheme.typography.bodyLarge)
             Text(
                 sample,
                 style = MaterialTheme.typography.titleMedium,

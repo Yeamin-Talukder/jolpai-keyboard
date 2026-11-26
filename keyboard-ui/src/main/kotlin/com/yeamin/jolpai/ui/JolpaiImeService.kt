@@ -62,7 +62,7 @@ import com.yeamin.jolpai.data.EmojiUsageEntity
 import com.yeamin.jolpai.emoji.EmojiData
 import com.yeamin.jolpai.media.Gif
 import com.yeamin.jolpai.media.GifCache
-import com.yeamin.jolpai.media.GiphyProvider
+import com.yeamin.jolpai.media.GifException
 import com.yeamin.jolpai.media.Sticker
 import com.yeamin.jolpai.media.StickerStore
 import com.yeamin.jolpai.voice.VoiceAvailability
@@ -126,6 +126,10 @@ class JolpaiImeService : InputMethodService(), LifecycleOwner, SavedStateRegistr
     private val voiceAvailability = MutableStateFlow<VoiceAvailability?>(null)
     private val stickerStore by lazy { StickerStore(this) }
     private val gifCache by lazy { GifCache(this) }
+    private val recentGifs by lazy { RecentGifs(this) }
+
+    /** The search that led to the GIFs on screen ("" for trending), sent with a share. */
+    private var lastGifQuery = ""
     private lateinit var recentEmoji: StateFlow<List<String>>
     private lateinit var favoriteEmoji: StateFlow<List<String>>
 
@@ -141,7 +145,7 @@ class JolpaiImeService : InputMethodService(), LifecycleOwner, SavedStateRegistr
     private val backgroundRunner = SuggestionRunner { work, deliver ->
         suggestionJob?.cancel()
         suggestionJob = scope.launch {
-            val result = withContext(Dispatchers.Default) { work() }
+            val result = withContext(Dispatchers.Default) { traced("Jolpai.suggest") { work() } }
             deliver(result)
         }
     }
@@ -196,7 +200,9 @@ class JolpaiImeService : InputMethodService(), LifecycleOwner, SavedStateRegistr
     /** Whether this phone's font can draw [emoji] (older phones lack newer emoji). */
     private fun canDraw(emoji: String): Boolean = glyphCache.getOrPut(emoji) { PaintCompat.hasGlyph(glyphPaint, emoji) }
 
-    override fun onCreate() {
+    override fun onCreate() = traced("Jolpai.imeCreate") { createService() }
+
+    private fun createService() {
         super.onCreate() // Hilt injects here
         scope.launch { clipboardRepository.addPacksOnce() } // ready-made snippet packs, once
         savedStateController.performAttach()
@@ -268,10 +274,12 @@ class JolpaiImeService : InputMethodService(), LifecycleOwner, SavedStateRegistr
 
         // Avro rules first (needed for the first Bangla key press), then history, dictionaries, emoji.
         scope.launch(Dispatchers.Default) {
-            controller.preloadAvro()
+            beginAsyncTrace("Jolpai.loadDictionaries", 0)
+            traced("Jolpai.loadAvro") { controller.preloadAvro() }
             suggestionResources.loadAll { scope.launch { controller.onSuggestionDataLoaded() } }
-            emojiData = EmojiData.load()
+            emojiData = traced("Jolpai.loadEmoji") { EmojiData.load() }
             buildEmojiPredictor()
+            endAsyncTrace("Jolpai.loadDictionaries", 0)
             scope.launch { controller.onSuggestionDataLoaded() }
         }
 
@@ -295,7 +303,9 @@ class JolpaiImeService : InputMethodService(), LifecycleOwner, SavedStateRegistr
         scope.launch { voice.state.collect { if (inlineVoice) renderVoiceBar() } }
     }
 
-    override fun onCreateInputView(): View {
+    override fun onCreateInputView(): View = traced("Jolpai.createInputView") { createInputView() }
+
+    private fun createInputView(): View {
         window.window?.decorView?.let { decor ->
             decor.setViewTreeLifecycleOwner(this)
             decor.setViewTreeSavedStateRegistryOwner(this)
@@ -323,7 +333,7 @@ class JolpaiImeService : InputMethodService(), LifecycleOwner, SavedStateRegistr
         renderJob?.cancel()
         renderJob = scope.launch {
             controller.state.collect { s ->
-                view.render(s)
+                traced("Jolpai.render") { view.render(s) }
                 onPanelShown(s)
                 onTranslateState(s.translate)
                 onCheckState(s.check)
@@ -580,21 +590,23 @@ class JolpaiImeService : InputMethodService(), LifecycleOwner, SavedStateRegistr
                 val recents by recentEmoji.collectAsState()
                 val favorites by favoriteEmoji.collectAsState()
                 val stickers by stickerStore.stickers.collectAsState()
-                EmojiPanel(
-                    data = EmojiPanelData(
-                        emoji = emojiData,
-                        canDraw = ::canDraw,
-                        recents = recents,
-                        favorites = favorites,
-                        stickers = stickers,
-                        skinTone = state.emojiSkinTone,
-                        gifsEnabled = settings.giphyApiKey.isNotBlank(),
-                        startTab = state.emojiTab,
-                    ),
-                    query = state.panelQuery,
-                    colors = colors,
-                    actions = emojiActions,
+                val data = EmojiPanelData(
+                    emoji = emojiData,
+                    canDraw = ::canDraw,
+                    recents = recents,
+                    favorites = favorites,
+                    stickers = stickers,
+                    skinTone = state.emojiSkinTone,
+                    gifSource = GifSources.name(settings),
+                    startTab = state.emojiTab,
                 )
+                // While the keys type a search, the panel steps aside for a search bar with live
+                // results above the keys (KeyboardContainer's search section).
+                if (state.search == Panel.EMOJI) {
+                    EmojiSearchBar(data, state.searchQuery, colors, emojiActions)
+                } else {
+                    EmojiPanel(data = data, query = state.panelQuery, colors = colors, actions = emojiActions)
+                }
             }
             Panel.VOICE -> {
                 val voiceState by voice.state.collectAsState()
@@ -652,7 +664,10 @@ class JolpaiImeService : InputMethodService(), LifecycleOwner, SavedStateRegistr
         editor.onStartInput(attribute)
     }
 
-    override fun onStartInputView(info: EditorInfo, restarting: Boolean) {
+    override fun onStartInputView(info: EditorInfo, restarting: Boolean) =
+        traced("Jolpai.startInputView") { startInputView(info, restarting) }
+
+    private fun startInputView(info: EditorInfo, restarting: Boolean) {
         super.onStartInputView(info, restarting)
         // A time-of-day theme may have moved on since the keyboard was last shown, or a Chameleon
         // theme may need another app's colour (rebuilds only if the look changed).
@@ -699,7 +714,9 @@ class JolpaiImeService : InputMethodService(), LifecycleOwner, SavedStateRegistr
     /** A full-screen extract view would hide the app; modern keyboards keep the app visible. */
     override fun onEvaluateFullscreenMode(): Boolean = false
 
-    private fun handleAction(action: KeyAction) {
+    private fun handleAction(action: KeyAction) = traced("Jolpai.key") { handleKey(action) }
+
+    private fun handleKey(action: KeyAction) {
         // Typing while dictating in the top bar ends the dictation first (what was heard is kept),
         // so typed and spoken text never interleave. Shift, pages, layouts and cursor moves don't.
         if (inlineVoice && stopsDictation(action)) stopInlineVoice()
@@ -892,15 +909,32 @@ class JolpaiImeService : InputMethodService(), LifecycleOwner, SavedStateRegistr
             commitImage(stickerStore.contentUri(sticker, authority), sticker.mimeType)
 
         override suspend fun loadGifs(query: String): Result<List<Gif>> = runCatching {
-            val provider = GiphyProvider(settings.giphyApiKey)
+            val provider = GifSources.provider(this@JolpaiImeService, settings) ?: throw GifException("GIF search is off.")
+            lastGifQuery = query
             if (query.isBlank()) provider.trending() else provider.search(query)
         }
 
         override suspend fun gifPreview(gif: Gif): Bitmap? = gifCache.preview(gif)
 
+        override suspend fun gifAnimation(gif: Gif): android.graphics.drawable.Drawable? = gifCache.animation(gif)
+
         override suspend fun sendGif(gif: Gif): String? = runCatching {
-            commitImage(gifCache.file(gif, authority), "image/gif")
+            val problem = commitImage(gifCache.file(gif, authority), "image/gif")
+            if (problem == null) {
+                // Kept for the Recent chip, except in private (incognito) fields.
+                if (!controller.state.value.field.isSensitive) recentGifs.add(gif)
+                // Counted as a share (KLIPY tailors results by it) only once it really went into
+                // the app; in the background, so "Sent" doesn't wait for it.
+                val provider = GifSources.provider(this@JolpaiImeService, settings)
+                val query = lastGifQuery
+                if (provider != null) kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch { provider.shared(gif, query) }
+            }
+            problem
         }.getOrElse { it.message ?: "Couldn't send the GIF." }
+
+        override fun recentGifs(): List<Gif> = recentGifs.all()
+
+        override fun finishSearch() = controller.onKey(KeyAction.EndSearch(keepQuery = true))
 
         override fun openSettings(screen: String) = openApp(screen)
     }

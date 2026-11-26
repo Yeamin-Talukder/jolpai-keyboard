@@ -375,8 +375,13 @@ class KeyboardController(
     }
 
     fun onStartInput(newField: FieldInfo, restarting: Boolean) {
+        // Compose apps (Jolpai's own settings too) and WebViews host every text field in one
+        // view, so moving from a text field to a number or phone field arrives as a *restart*
+        // on that view. A different kind of field is a new field: it gets its own page (the
+        // number pad) and layout, as if it had started fresh.
+        val newFieldStarted = !restarting || newField.kind != editorField.kind || newField.isPassword != editorField.isPassword
         editorField = newField
-        if (!restarting) {
+        if (newFieldStarted) {
             speed.flush()
             textStyle = null // styled typing is for the field it was turned on in
             endTranslate()

@@ -307,6 +307,25 @@ class KeyboardControllerTest {
         assertEquals(KeyboardPage.PHONE, controller.state.value.page)
     }
 
+    @Test fun `moving to a number field in the same view opens the pad`() {
+        // Compose apps restart input on one view when focus moves between their fields.
+        controller.onStartInput(FieldInfo.DEFAULT, restarting = false)
+        assertEquals(KeyboardPage.LETTERS, controller.state.value.page)
+        controller.onStartInput(FieldInfo(kind = FieldKind.NUMBER), restarting = true)
+        assertEquals(KeyboardPage.NUMBER, controller.state.value.page)
+        controller.onStartInput(FieldInfo(kind = FieldKind.PHONE), restarting = true)
+        assertEquals(KeyboardPage.PHONE, controller.state.value.page)
+        controller.onStartInput(FieldInfo.DEFAULT, restarting = true)
+        assertEquals(KeyboardPage.LETTERS, controller.state.value.page)
+    }
+
+    @Test fun `restarting the same kind of field keeps the page`() {
+        controller.onStartInput(FieldInfo.DEFAULT, restarting = false)
+        controller.onKey(KeyAction.SwitchPage(KeyboardPage.SYMBOLS))
+        controller.onStartInput(FieldInfo.DEFAULT, restarting = true)
+        assertEquals(KeyboardPage.SYMBOLS, controller.state.value.page)
+    }
+
     @Test fun `email field puts at sign on the bottom row`() {
         controller.onStartInput(FieldInfo(kind = FieldKind.EMAIL), restarting = false)
         val labels = controller.state.value.layout.rows.last().keys.map { it.label }

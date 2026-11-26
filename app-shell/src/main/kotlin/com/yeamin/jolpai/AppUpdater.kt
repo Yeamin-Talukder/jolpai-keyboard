@@ -52,7 +52,35 @@ sealed interface UpdateState {
     /** The new APK is signed with a different key than the installed app (e.g. a developer build). */
     data class SignedDifferently(val release: LatestRelease) : UpdateState
 
-    data class Failed(val message: String, val release: LatestRelease?) : UpdateState
+    /** [detail] fills in [reason] where it needs one (an error code, Android's message). */
+    data class Failed(val reason: UpdateFailure, val release: LatestRelease?, val detail: String? = null) : UpdateState
+}
+
+/** Why an update stopped. The About screen words it while drawing, in the app's language. */
+enum class UpdateFailure {
+    /** Couldn't connect to GitHub at all. */
+    OFFLINE,
+
+    /** GitHub answered, but not with a release. */
+    GITHUB_BUSY,
+
+    /** The release has no APK for this phone's processor. */
+    NO_APK,
+
+    /** GitHub answered the download with an error; the detail is the HTTP status code. */
+    HTTP_ERROR,
+    DOWNLOAD_STOPPED,
+    CHECKSUM_MISMATCH,
+    NO_CHECKSUM,
+    NOT_JOLPAI,
+    NOT_NEWER,
+    NO_SPACE,
+
+    /** Android's installer refused; the detail is its message, if it gave one. */
+    INSTALL_FAILED,
+
+    /** Anything else; the detail names the error. */
+    UNEXPECTED,
 }
 
 /**
@@ -81,8 +109,8 @@ object AppUpdater {
         _state.value = UpdateState.Checking
         job = scope.launch {
             _state.value = when (val found = AppUpdates.lookupLatest(installedVersion)) {
-                LatestLookup.Offline -> UpdateState.Failed("Couldn't connect to GitHub. Check the internet and try again.", null)
-                LatestLookup.Unavailable -> UpdateState.Failed("GitHub didn't answer just now. Try again in a few minutes.", null)
+                LatestLookup.Offline -> UpdateState.Failed(UpdateFailure.OFFLINE, null)
+                LatestLookup.Unavailable -> UpdateState.Failed(UpdateFailure.GITHUB_BUSY, null)
                 is LatestLookup.Found ->
                     if (AppUpdates.isNewer(found.release.version, installedVersion)) UpdateState.Available(found.release)
                     else UpdateState.UpToDate(found.release.version)
@@ -96,7 +124,7 @@ object AppUpdater {
         val app = context.applicationContext
         if (busy()) return
         if (release.apkUrl == null || release.apkName == null) {
-            _state.value = UpdateState.Failed("This release has no APK for your phone's processor.", release)
+            _state.value = UpdateState.Failed(UpdateFailure.NO_APK, release)
             return
         }
         if (!canInstall(app)) {
@@ -120,7 +148,7 @@ object AppUpdater {
                     }
                     else -> {
                         file.delete()
-                        _state.value = UpdateState.Failed(problem.message, release)
+                        _state.value = UpdateState.Failed(problem.failure ?: UpdateFailure.UNEXPECTED, release)
                     }
                 }
             } catch (e: CancellationException) {
@@ -129,13 +157,13 @@ object AppUpdater {
                 throw e
             } catch (e: HttpStatusException) {
                 clearCache(app)
-                _state.value = UpdateState.Failed("GitHub didn't send the file (error ${e.code}). Try again later, or use the release page.", release)
+                _state.value = UpdateState.Failed(UpdateFailure.HTTP_ERROR, release, e.code.toString())
             } catch (e: IOException) {
                 clearCache(app)
-                _state.value = UpdateState.Failed("The download stopped. Check the internet and try again.", release)
+                _state.value = UpdateState.Failed(UpdateFailure.DOWNLOAD_STOPPED, release)
             } catch (e: Exception) {
                 clearCache(app)
-                _state.value = UpdateState.Failed("The update couldn't be installed (${e.javaClass.simpleName}).", release)
+                _state.value = UpdateState.Failed(UpdateFailure.UNEXPECTED, release, e.javaClass.simpleName)
             }
         }
     }
@@ -230,12 +258,14 @@ object AppUpdater {
 
     // ---------------------------------------------------------------- verify
 
-    private enum class Problem(val message: String) {
-        CHECKSUM("The download didn't match the release's checksum, so it wasn't installed. Try again."),
-        NO_CHECKSUM("Couldn't read the release's checksum file, so the download wasn't installed. Try again."),
-        NOT_JOLPAI("The downloaded file isn't Jolpai, so it wasn't installed."),
-        NOT_NEWER("The downloaded version isn't newer than the one you have."),
-        SIGNER("Signed with a different key."),
+    private enum class Problem(val failure: UpdateFailure?) {
+        CHECKSUM(UpdateFailure.CHECKSUM_MISMATCH),
+        NO_CHECKSUM(UpdateFailure.NO_CHECKSUM),
+        NOT_JOLPAI(UpdateFailure.NOT_JOLPAI),
+        NOT_NEWER(UpdateFailure.NOT_NEWER),
+
+        /** Signed with a different key: shown as [UpdateState.SignedDifferently], not as a failure. */
+        SIGNER(null),
     }
 
     private fun verify(context: Context, release: LatestRelease, file: File): Problem? {
@@ -334,10 +364,10 @@ object AppUpdater {
             PackageInstaller.STATUS_FAILURE_ABORTED ->
                 release?.let { UpdateState.Available(it) } ?: UpdateState.Idle
             PackageInstaller.STATUS_FAILURE_CONFLICT, PackageInstaller.STATUS_FAILURE_INCOMPATIBLE ->
-                release?.let { UpdateState.SignedDifferently(it) } ?: UpdateState.Failed("Android couldn't install the update.", null)
+                release?.let { UpdateState.SignedDifferently(it) } ?: UpdateState.Failed(UpdateFailure.INSTALL_FAILED, null)
             PackageInstaller.STATUS_FAILURE_STORAGE ->
-                UpdateState.Failed("Not enough free space to install the update.", release)
-            else -> UpdateState.Failed("Android couldn't install the update${message?.let { ": $it" } ?: "."}", release)
+                UpdateState.Failed(UpdateFailure.NO_SPACE, release)
+            else -> UpdateState.Failed(UpdateFailure.INSTALL_FAILED, release, message)
         }
     }
 

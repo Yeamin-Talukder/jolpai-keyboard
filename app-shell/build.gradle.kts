@@ -51,6 +51,23 @@ android {
             val useStoreKey = keystoreFile.exists() && project.hasProperty("storeKey")
             signingConfig = if (useStoreKey) signingConfigs.getByName("release") else signingConfigs.getByName("debug")
         }
+        // For the on-device performance tests in :benchmark (never published). Same code, shrinking
+        // and signing as release, so the numbers are what users get and the APK installs over the
+        // phone's app without losing its data; profileable lets Perfetto read its trace sections.
+        create("benchmarkRelease") {
+            initWith(getByName("release"))
+            isProfileable = true
+            matchingFallbacks += "release"
+        }
+        // Same as release without R8, so the generated Baseline Profile keeps real class names
+        // (R8 rewrites the profile for the shrunk release build).
+        create("nonMinifiedRelease") {
+            initWith(getByName("release"))
+            isMinifyEnabled = false
+            isShrinkResources = false
+            isProfileable = true
+            matchingFallbacks += "release"
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -96,4 +113,7 @@ dependencies {
     debugImplementation(libs.compose.ui.tooling)
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
+    // Installs the bundled Baseline Profile (src/main/baselineProfiles) on first launch when the
+    // APK didn't come from Play, so hot code is compiled ahead of time for sideloads too.
+    implementation(libs.androidx.profileinstaller)
 }

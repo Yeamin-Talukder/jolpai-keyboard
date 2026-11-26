@@ -149,6 +149,10 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch { repository.setBanglishSuggestions(v) }
     }
 
+    fun setGifSearch(on: Boolean) {
+        viewModelScope.launch { repository.setGifSearch(on) }
+    }
+
     fun setGiphyApiKey(key: String) {
         viewModelScope.launch { repository.setGiphyApiKey(key) }
     }
@@ -233,7 +237,12 @@ class MainViewModel @Inject constructor(
     fun importTheme(json: String, onResult: (String?) -> Unit) {
         viewModelScope.launch {
             val error = runCatching { repository.setThemeId(themes.import(json)) }.exceptionOrNull()
-            onResult(error?.message ?: if (error != null) "Couldn't import the theme." else null)
+            // Worded now, when the screen shows it. The theme reader's reasons are in English only.
+            onResult(
+                error?.let {
+                    tr(it.message ?: "Couldn't import the theme.", "থিমটি আনা গেল না। পুরো থিমের লেখাটি পেস্ট করেছেন কি না দেখুন।")
+                },
+            )
         }
     }
 
@@ -315,7 +324,8 @@ class MainViewModel @Inject constructor(
 
     // ------------------------------------------------------------------ backup
 
-    fun exportBackup(uri: Uri, includeLearned: Boolean, onResult: (String) -> Unit) {
+    /** [onResult] gets how it went; the screen words it in the app's language. */
+    fun exportBackup(uri: Uri, includeLearned: Boolean, onResult: (BackupResult) -> Unit) {
         viewModelScope.launch {
             val result = runCatching {
                 val json = backup.export(includeLearned)
@@ -324,11 +334,11 @@ class MainViewModel @Inject constructor(
                         ?: error("Couldn't write the file.")
                 }
             }
-            onResult(result.fold({ "Backup saved." }, { it.message ?: "Couldn't save the backup." }))
+            onResult(result.fold({ BackupResult.Saved }, { BackupResult.SaveFailed }))
         }
     }
 
-    fun restoreBackup(uri: Uri, onResult: (String) -> Unit) {
+    fun restoreBackup(uri: Uri, onResult: (BackupResult) -> Unit) {
         viewModelScope.launch {
             val result = runCatching {
                 val json = withContext(Dispatchers.IO) {
@@ -338,9 +348,8 @@ class MainViewModel @Inject constructor(
             }
             onResult(
                 result.fold(
-                    { s -> "Restored ${s.settings} settings, ${s.personalWords} dictionary words, ${s.snippets} snippets, ${s.themes} themes" +
-                        (if (s.learnedWords > 0) " and ${s.learnedWords} learned words." else ".") },
-                    { it.message ?: "Couldn't restore the backup." },
+                    { s -> BackupResult.Restored(s) },
+                    { if (it is NotABackupException) BackupResult.NotABackup else BackupResult.RestoreFailed },
                 ),
             )
         }

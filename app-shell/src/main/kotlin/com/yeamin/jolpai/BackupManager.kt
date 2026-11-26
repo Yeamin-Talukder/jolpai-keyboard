@@ -35,6 +35,21 @@ import kotlinx.serialization.json.put
 data class RestoreSummary(val settings: Int, val personalWords: Int, val snippets: Int, val themes: Int, val learnedWords: Int)
 
 /**
+ * How a backup or restore went. The Backup screen puts it into words while drawing, so the
+ * message follows the app's language.
+ */
+sealed interface BackupResult {
+    data object Saved : BackupResult
+    data class Restored(val summary: RestoreSummary) : BackupResult
+    data object SaveFailed : BackupResult
+    data object NotABackup : BackupResult
+    data object RestoreFailed : BackupResult
+}
+
+/** The chosen file isn't a Jolpai backup. */
+class NotABackupException : IllegalArgumentException("That file isn't a Jolpai backup.")
+
+/**
  * Backup to a file the user chooses, and restore from it. Contains settings, the personal
  * dictionary, snippets and custom themes; learned words, word pairs and Avro picks only
  * when the user asks. Clipboard history, pictures and the GIPHY key are never included.
@@ -101,10 +116,10 @@ class BackupManager @Inject constructor(
         }
     }.toString()
 
-    /** Restores a backup, adding to what is already there. Throws [IllegalArgumentException] for a wrong file. */
+    /** Restores a backup, adding to what is already there. Throws [NotABackupException] for a wrong file. */
     suspend fun restore(json: String): RestoreSummary {
         val root = runCatching { Json.parseToJsonElement(json).jsonObject }.getOrNull()
-        require(root != null && root["format"]?.jsonPrimitive?.contentOrNull == FORMAT) { "That file isn't a Jolpai backup." }
+        if (root == null || root["format"]?.jsonPrimitive?.contentOrNull != FORMAT) throw NotABackupException()
 
         val restoredSettings = HashMap<String, Any>()
         root["settings"]?.jsonObject?.forEach { (k, e) ->

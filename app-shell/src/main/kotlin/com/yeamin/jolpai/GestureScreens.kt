@@ -83,7 +83,56 @@ private fun gestureIcon(type: GestureType): Int = when (type) {
 }
 
 private fun actionLabel(b: GestureBinding): String =
-    if (b.action == GestureAction.INSERT_TEXT) "Insert “${b.text}”" else b.action.title
+    if (b.action == GestureAction.INSERT_TEXT) tr("Insert “${b.text}”", "“${b.text}” বসান") else b.action.uiTitle
+
+/**
+ * Why the keyboard keeps this gesture for itself, in the app's language, or null when it is free.
+ * Whether it is reserved still comes from [GestureConflicts.reserved]; this only words it.
+ */
+private fun reservedReason(zone: GestureZone, type: GestureType, builtIns: BuiltIns): String? {
+    val english = GestureConflicts.reserved(zone, type, builtIns) ?: return null
+    return when {
+        type !in GestureConflicts.allowedTypes(zone) ->
+            tr("Not available on the ${zone.uiTitle.lowercase()}", "${zone.uiTitle}-এ এটি হয় না")
+        zone == GestureZone.SPACE && type == GestureType.LONG_PRESS ->
+            tr("Holding space moves the cursor", "স্পেস চেপে ধরলে কার্সর সরে")
+        zone == GestureZone.SPACE && type == GestureType.DOUBLE_TAP ->
+            tr("Double space types a full stop (Typing settings)", "দুবার স্পেস দিলে দাঁড়ি বসে (টাইপিং সেটিংস)")
+        zone == GestureZone.SHIFT && type == GestureType.DOUBLE_TAP ->
+            tr("Double-tapping Shift is caps lock", "শিফটে দুবার ট্যাপ করলে ক্যাপস লক হয়")
+        zone == GestureZone.BACKSPACE && type == GestureType.LONG_PRESS ->
+            tr("Holding backspace keeps deleting", "ব্যাকস্পেস চেপে ধরলে মুছতেই থাকে")
+        zone == GestureZone.BACKSPACE && type == GestureType.DOUBLE_TAP ->
+            tr("Two quick taps on backspace delete twice", "ব্যাকস্পেসে দুবার ট্যাপ করলে দুবার মোছে")
+        zone == GestureZone.BACKSPACE && type == GestureType.SWIPE_LEFT ->
+            tr("Swiping left from backspace selects words (Swipe gestures)", "ব্যাকস্পেস থেকে বাঁয়ে সোয়াইপ করলে শব্দ সিলেক্ট হয় (সোয়াইপ জেসচার)")
+        else -> english
+    }
+}
+
+/**
+ * A heads-up when the gesture replaces something built in, in the app's language, or null.
+ * Whether there is one still comes from [GestureConflicts.replaces]; this only words it.
+ */
+private fun replacesNote(zone: GestureZone, type: GestureType, builtIns: BuiltIns): String? {
+    val english = GestureConflicts.replaces(zone, type, builtIns) ?: return null
+    return when {
+        zone == GestureZone.SPACE && (type == GestureType.SWIPE_LEFT || type == GestureType.SWIPE_RIGHT) ->
+            tr("Replaces moving the cursor that way", "ওই দিকে কার্সর সরানোর বদলে এটি হবে")
+        zone == GestureZone.COMMA && type == GestureType.LONG_PRESS ->
+            tr("Replaces the comma's symbol menu", "কমার চিহ্ন-মেনুর বদলে এটি হবে")
+        zone == GestureZone.PERIOD && type == GestureType.LONG_PRESS ->
+            tr("Replaces the full stop's symbol menu", "দাঁড়ির চিহ্ন-মেনুর বদলে এটি হবে")
+        zone == GestureZone.TOOLBAR ->
+            tr(
+                "Slide along the top bar until the pill fills, then let go. Slide back to cancel. Not over scrolling suggestions.",
+                "ওপরের বারে আঙুল টানুন, পিলটি ভরে গেলে ছেড়ে দিন। বাতিল করতে উল্টো দিকে টানুন। স্ক্রল হওয়া সাজেশনের ওপর কাজ করে না।",
+            )
+        type == GestureType.DOUBLE_TAP ->
+            tr("One tap on this key now waits a moment for a second tap", "এই কী-তে এক ট্যাপের পর দ্বিতীয় ট্যাপের জন্য একটু অপেক্ষা করবে")
+        else -> english
+    }
+}
 
 /** Custom gestures: master switch, sensitivity, the gesture list and its editor. */
 @Composable
@@ -95,53 +144,65 @@ fun GestureScreen(vm: MainViewModel, settings: KeyboardSettings, onBack: () -> U
     fun save(c: GestureConfig) = vm.setGestures(c)
 
     SettingsScaffold(
-        "Custom gestures",
+        tr("Custom gestures", "নিজের মতো জেসচার"),
         onBack,
-        actions = { IconButton(onClick = { confirmRestore = true }) { MsIcon(UiR.drawable.ms_restart_alt, "Restore defaults") } },
+        actions = { IconButton(onClick = { confirmRestore = true }) { MsIcon(UiR.drawable.ms_restart_alt, tr("Restore defaults", "ডিফল্টে ফেরান")) } },
     ) {
         SettingsGroup {
+            val active = config.activeCount(builtIns)
             SettingsSwitch(
-                "Gesture shortcuts",
-                "${config.activeCount(builtIns)} active · swipe, hold or double-tap keys to run actions",
+                tr("Gesture shortcuts", "জেসচার শর্টকাট"),
+                tr(
+                    "$active active · swipe, hold or double-tap a key to run an action",
+                    "${num(active)}টি চালু · কী-তে সোয়াইপ, চেপে ধরা বা দুবার ট্যাপে কাজ চলে",
+                ),
                 config.enabled,
                 { save(config.copy(enabled = it)) },
                 UiR.drawable.ms_gesture,
             )
         }
 
-        SettingsGroup("Sensitivity") {
+        SettingsGroup(tr("Sensitivity", "সেনসিটিভিটি")) {
             Column(Modifier.padding(GroupContentPadding).alpha(if (config.enabled) 1f else 0.45f)) {
                 GestureSlider(
-                    "Swipe direction",
+                    tr("How straight to swipe", "সোয়াইপ কতটা সোজা হবে"),
                     config.sensitivity.toFloat(), 1f..5f, 3,
-                    listOf("Strict", "Firm", "Normal", "Relaxed", "Loose")[config.sensitivity - 1],
+                    listOf(
+                        tr("Strict", "কড়া"),
+                        tr("Firm", "একটু কড়া"),
+                        tr("Normal", "স্বাভাবিক"),
+                        tr("Relaxed", "একটু ঢিলা"),
+                        tr("Loose", "ঢিলা"),
+                    )[config.sensitivity - 1],
                     config.enabled,
                 ) { save(config.copy(sensitivity = it.toInt())) }
                 GestureSlider(
-                    "Minimum swipe distance",
-                    config.minSwipeDp.toFloat(), 20f..80f, 11, "${config.minSwipeDp} dp", config.enabled,
+                    tr("Shortest swipe", "সবচেয়ে ছোট সোয়াইপ"),
+                    config.minSwipeDp.toFloat(), 20f..80f, 11, "${num(config.minSwipeDp)} dp", config.enabled,
                 ) { save(config.copy(minSwipeDp = it.toInt())) }
                 GestureSlider(
-                    "Long-press duration",
-                    config.longPressMs.toFloat(), 250f..900f, 12, "${config.longPressMs} ms", config.enabled,
+                    tr("Hold time", "কতক্ষণ চেপে ধরতে হবে"),
+                    config.longPressMs.toFloat(), 250f..900f, 12, "${num(config.longPressMs)} ms", config.enabled,
                 ) { save(config.copy(longPressMs = (it / 50).toInt() * 50)) }
             }
         }
 
-        SettingsGroup("Gestures") {
+        SettingsGroup(tr("Gestures", "জেসচার")) {
             val sorted = config.bindings.sortedWith(compareBy({ it.zone.ordinal }, { it.type.ordinal }))
             sorted.forEach { b ->
                 GestureRow(b, config, builtIns, onToggle = { on -> save(config.with(b.copy(enabled = on))) }) { editing = b }
             }
-            SettingsItem("Add a gesture", "Pick a key, a gesture and what it does", UiR.drawable.ms_add, showChevron = false) {
+            SettingsItem(tr("Add a gesture", "জেসচার যোগ করুন"), tr("Pick a key, a gesture and an action", "কী, জেসচার আর কাজ বেছে নিন"), UiR.drawable.ms_add, showChevron = false) {
                 val free = GestureZone.entries.flatMap { z -> GestureConflicts.allowedTypes(z).map { z to it } }
                     .firstOrNull { (z, t) -> config.binding(z, t) == null && GestureConflicts.reserved(z, t, builtIns) == null }
                 editing = GestureBinding(free?.first ?: GestureZone.COMMA, free?.second ?: GestureType.SWIPE_UP, GestureAction.INSERT_TEXT, text = "")
             }
         }
         SettingsNote(
-            "Reserved gestures stay with the keyboard: holding space is the trackpad, double-tapping Shift is caps lock, " +
-                "holding backspace keeps deleting, and swiping left from backspace selects words.",
+            tr(
+                "A few gestures belong to the keyboard, like holding space to move the cursor.",
+                "কিছু জেসচার কীবোর্ডের নিজের, যেমন স্পেস চেপে ধরে কার্সর সরানো।",
+            ),
         )
     }
 
@@ -164,10 +225,10 @@ fun GestureScreen(vm: MainViewModel, settings: KeyboardSettings, onBack: () -> U
         AlertDialog(
             onDismissRequest = { confirmRestore = false },
             icon = { MsIcon(UiR.drawable.ms_restart_alt, null) },
-            title = { Text("Restore default gestures?") },
-            text = { Text("Your gestures, custom texts and sensitivity are replaced by the defaults.") },
-            confirmButton = { TextButton(onClick = { save(GestureConfig()); confirmRestore = false }) { Text("Restore") } },
-            dismissButton = { TextButton(onClick = { confirmRestore = false }) { Text("Cancel") } },
+            title = { Text(tr("Restore default gestures?", "ডিফল্ট জেসচারে ফিরবেন?")) },
+            text = { Text(tr("Your gestures, texts and sensitivity go back to the defaults.", "আপনার জেসচার, লেখা ও সেনসিটিভিটি ডিফল্টে ফিরে যাবে।")) },
+            confirmButton = { TextButton(onClick = { save(GestureConfig()); confirmRestore = false }) { Text(tr("Restore", "ফেরান")) } },
+            dismissButton = { TextButton(onClick = { confirmRestore = false }) { Text(tr("Cancel", "বাতিল")) } },
         )
     }
 }
@@ -188,8 +249,8 @@ private fun GestureSlider(label: String, value: Float, range: ClosedFloatingPoin
 /** One gesture: icon, gesture and key, the action (or why it can't run), a switch, and edit. */
 @Composable
 private fun GestureRow(b: GestureBinding, config: GestureConfig, builtIns: BuiltIns, onToggle: (Boolean) -> Unit, onEdit: () -> Unit) {
-    val reserved = GestureConflicts.reserved(b.zone, b.type, builtIns)
-    val problem = reserved ?: if (!b.action.available) "Not available yet" else if (b.action == GestureAction.INSERT_TEXT && b.text.isEmpty()) "No text set" else null
+    val reserved = reservedReason(b.zone, b.type, builtIns)
+    val problem = reserved ?: if (!b.action.available) tr("Not available yet", "এখনো নেই") else if (b.action == GestureAction.INSERT_TEXT && b.text.isEmpty()) tr("No text set", "কোনো লেখা দেওয়া হয়নি") else null
     val usable = problem == null
     Row(
         Modifier
@@ -203,12 +264,12 @@ private fun GestureRow(b: GestureBinding, config: GestureConfig, builtIns: Built
     ) {
         IconBadge(gestureIcon(b.type))
         Column(Modifier.weight(1f).padding(start = 16.dp)) {
-            Text("${b.type.title} · ${b.zone.title}", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Normal))
+            Text("${b.type.uiTitle} · ${b.zone.uiTitle}", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Normal))
             Text(actionLabel(b), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             if (problem != null) Text(problem, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
         }
         Switch(checked = b.enabled && usable, onCheckedChange = onToggle, enabled = usable && config.enabled)
-        IconButton(onClick = onEdit) { MsIcon(UiR.drawable.ms_edit, "Edit ${b.type.title} on ${b.zone.title}") }
+        IconButton(onClick = onEdit) { MsIcon(UiR.drawable.ms_edit, tr("Edit ${b.type.uiTitle} on ${b.zone.uiTitle}", "${b.zone.uiTitle}-এ ${b.type.uiTitle} এডিট করুন")) }
     }
 }
 
@@ -229,44 +290,44 @@ private fun GestureEditor(
     var action by remember { mutableStateOf(initial.action) }
     var text by remember { mutableStateOf(initial.text) }
     val draft = GestureBinding(zone, type, action, initial.enabled || isNew, text)
-    val reserved = GestureConflicts.reserved(zone, type, builtIns)
+    val reserved = reservedReason(zone, type, builtIns)
     val taken = config.binding(zone, type)?.takeIf { zone != initial.zone || type != initial.type }
-    val replaces = GestureConflicts.replaces(zone, type, builtIns)
+    val replaces = replacesNote(zone, type, builtIns)
     val same = GestureConflicts.sameAction(config, draft)
     val canSave = reserved == null && action.available && (action != GestureAction.INSERT_TEXT || text.isNotEmpty())
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (isNew) "New gesture" else "Edit gesture") },
+        title = { Text(if (isNew) tr("New gesture", "নতুন জেসচার") else tr("Edit gesture", "জেসচার এডিট")) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 GestureDemo(type, zone)
 
-                Text("Key", style = MaterialTheme.typography.labelLarge)
+                Text(tr("Key", "কী"), style = MaterialTheme.typography.labelLarge)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     GestureZone.entries.forEach { z ->
                         FilterChip(selected = zone == z, onClick = {
                             zone = z
                             if (type !in GestureConflicts.allowedTypes(z)) type = GestureConflicts.allowedTypes(z).first()
-                        }, label = { Text(z.title) })
+                        }, label = { Text(z.uiTitle) })
                     }
                 }
-                Text("Gesture", style = MaterialTheme.typography.labelLarge)
+                Text(tr("Gesture", "জেসচার"), style = MaterialTheme.typography.labelLarge)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     GestureConflicts.allowedTypes(zone).forEach { t ->
                         FilterChip(
                             selected = type == t,
                             onClick = { type = t },
-                            label = { Text(t.title) },
+                            label = { Text(t.uiTitle) },
                             leadingIcon = { MsIcon(gestureIcon(t), null, Modifier.size(18.dp)) },
                         )
                     }
                 }
-                reserved?.let { Text("Reserved: $it", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
-                taken?.let { Text("Replaces the current “${actionLabel(it)}” on this gesture", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
+                reserved?.let { Text(tr("Can't use: $it", "ব্যবহার করা যাবে না: $it"), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
+                taken?.let { Text(tr("Replaces “${actionLabel(it)}” on this gesture", "এই জেসচারের “${actionLabel(it)}” বদলে যাবে"), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
                 replaces?.let { Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall) }
 
-                Text("Action", style = MaterialTheme.typography.labelLarge)
+                Text(tr("Action", "কাজ"), style = MaterialTheme.typography.labelLarge)
                 Column {
                     GestureAction.entries.forEach { a ->
                         Row(
@@ -280,8 +341,8 @@ private fun GestureEditor(
                         ) {
                             RadioButton(selected = action == a, onClick = null, enabled = a.available)
                             Column(Modifier.padding(start = 8.dp)) {
-                                Text(a.title, style = MaterialTheme.typography.bodyMedium)
-                                Text(a.description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(a.uiTitle, style = MaterialTheme.typography.bodyMedium)
+                                Text(a.uiDescription, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
                     }
@@ -290,7 +351,7 @@ private fun GestureEditor(
                     OutlinedTextField(
                         value = text,
                         onValueChange = { text = it.take(500) },
-                        label = { Text("Text to insert") },
+                        label = { Text(tr("Text to insert", "যে লেখা বসবে")) },
                         placeholder = { Text("@gmail.com") },
                         shape = RoundedCornerShape(16.dp),
                         modifier = Modifier.fillMaxWidth(),
@@ -298,21 +359,21 @@ private fun GestureEditor(
                 }
                 if (same.isNotEmpty()) {
                     Text(
-                        "Also on: " + same.joinToString { "${it.type.title} · ${it.zone.title}" },
+                        tr("Also on: ", "এটি আরও আছে: ") + same.joinToString { "${it.type.uiTitle} · ${it.zone.uiTitle}" },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
 
-                Text("Try it", style = MaterialTheme.typography.labelLarge)
+                Text(tr("Try it", "চালিয়ে দেখুন"), style = MaterialTheme.typography.labelLarge)
                 GestureTestPad(config, draft)
             }
         },
-        confirmButton = { TextButton(onClick = { onSave(draft) }, enabled = canSave) { Text("Save") } },
+        confirmButton = { TextButton(onClick = { onSave(draft) }, enabled = canSave) { Text(tr("Save", "সেভ করুন")) } },
         dismissButton = {
             Row {
-                if (!isNew) TextButton(onClick = onDelete) { Text("Delete") }
-                TextButton(onClick = onDismiss) { Text("Cancel") }
+                if (!isNew) TextButton(onClick = onDelete) { Text(tr("Delete", "মুছুন")) }
+                TextButton(onClick = onDismiss) { Text(tr("Cancel", "বাতিল")) }
             }
         },
     )
@@ -360,7 +421,7 @@ private fun GestureDemo(type: GestureType, zone: GestureZone) {
                     }
                 }
             }
-            Text(zone.title, style = MaterialTheme.typography.labelSmall, color = label, modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 6.dp))
+            Text(zone.uiTitle, style = MaterialTheme.typography.labelSmall, color = label, modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 6.dp))
         }
     }
 }
@@ -422,11 +483,15 @@ private fun GestureTestPad(config: GestureConfig, draft: GestureBinding) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 if (r == null) {
                     MsIcon(UiR.drawable.ms_gesture, null, tint = MaterialTheme.colorScheme.onSecondaryContainer)
-                    Text(if (tapped) "That was a tap" else "Do the gesture here", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                    Text(if (tapped) tr("That was a tap", "এটা ছিল একটা ট্যাপ") else tr("Do the gesture here", "এখানে জেসচারটি করে দেখুন"), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSecondaryContainer)
                 } else {
                     MsIcon(gestureIcon(r), null, tint = MaterialTheme.colorScheme.onSecondaryContainer)
                     Text(
-                        if (r == draft.type) "${r.title} ✓ → ${actionLabel(draft)}" else "${r.title} (this one is ${draft.type.title.lowercase()})",
+                        if (r == draft.type) {
+                            "${r.uiTitle} ✓ → ${actionLabel(draft)}"
+                        } else {
+                            tr("${r.uiTitle} (this one is ${draft.type.uiTitle.lowercase()})", "${r.uiTitle} (এখানে লাগবে ${draft.type.uiTitle})")
+                        },
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSecondaryContainer,
                     )

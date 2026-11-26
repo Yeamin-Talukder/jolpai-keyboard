@@ -111,6 +111,9 @@ jobs:
         run: ./gradlew test --stacktrace
 
       - name: Build store-signed APKs
+        # Built-in GIFs (KLIPY). Optional: without the secret, GIFs need the user's own GIPHY key.
+        env:
+          KLIPY_API_KEY: ${{ secrets.KLIPY_API_KEY }}
         run: ./gradlew :app-shell:assembleRelease -PstoreKey --stacktrace
 
       - name: Name the APKs after the version

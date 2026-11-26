@@ -191,6 +191,18 @@ class KeyboardContainer(
         }
     }
 
+    /**
+     * The emoji / GIF search bar with live results, above the toolbar while the keys type a
+     * search (the panel steps aside for the keys). Drawn by the service, like the panels.
+     */
+    private val searchView = ComposeView(context).apply {
+        visibility = View.GONE
+        setContent {
+            val s = uiState.value ?: return@setContent
+            if (s.search == Panel.EMOJI) servicePanel(Panel.EMOJI, panelColors, s)
+        }
+    }
+
     // ------------------------------------------------------------------ upper section (emoji, clipboard)
 
     /** Which panel the section above the toolbar shows (kept while it animates away). */
@@ -591,6 +603,7 @@ class KeyboardContainer(
         }
         column.addView(swipeable(translateCard) { onAction(KeyAction.EndTranslate) }, LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
         column.addView(swipeable(checkCard) { onAction(KeyAction.EndCheck) }, LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
+        column.addView(searchView, LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
         column.addView(
             SwipeDownToClose(context) { onAction(KeyAction.ShowPanel(Panel.NONE)) }.apply {
                 addView(upperSection, LayoutParams(LayoutParams.MATCH_PARENT, (UPPER_HEIGHT_DP * density).toInt()))
@@ -877,6 +890,7 @@ class KeyboardContainer(
 
         if (uiState.value?.panel != state.panel && state.panel != Panel.NONE) keyboardView.cancelTouches()
         uiState.value = state
+        searchView.visibility = if (state.search == Panel.EMOJI) View.VISIBLE else View.GONE
         // Emoji and clipboard open above the toolbar (the keys stay), or in place of the keys if the
         // user chose that (Toolbar settings); editing and voice always cover the keys.
         val upper = state.panelsAbove && (state.panel == Panel.EMOJI || state.panel == Panel.CLIPBOARD)
@@ -1002,7 +1016,9 @@ class KeyboardContainer(
      * them (like Gboard); the one that space will commit is bold. More than three (Avro
      * candidates, emoji search) scroll sideways.
      */
-    private fun renderStrip(items: List<StripItem>) {
+    private fun renderStrip(items: List<StripItem>) = traced("Jolpai.strip") { buildStrip(items) }
+
+    private fun buildStrip(items: List<StripItem>) {
         stripRow.removeAllViews()
         val fill = items.size <= 3
         stripScroll.scrollTo(0, 0)

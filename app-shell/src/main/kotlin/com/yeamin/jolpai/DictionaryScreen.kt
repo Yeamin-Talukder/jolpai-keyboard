@@ -1,10 +1,9 @@
 package com.yeamin.jolpai
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -44,35 +43,49 @@ fun DictionaryScreen(
             newWord = ""
         }
     }
-    SettingsScaffold("Personal dictionary", onBack, scrollable = false) {
-        SettingsNote("Names, slang and other words you use, in English or Bangla. They're always suggested and never autocorrected.")
+    SettingsScaffold(tr("Personal dictionary", "নিজের অভিধান"), onBack, scrollable = false) {
+        SettingsNote(
+            tr(
+                "Names, slang and other words you use, in English or Bangla. Always suggested, never autocorrected.",
+                "আপনার ব্যবহার করা নাম বা অন্য শব্দ, বাংলা বা ইংরেজিতে। এগুলো সবসময় সাজেশনে আসে, অটোকারেক্ট হয় না।",
+            ),
+        )
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedTextField(
                 value = newWord,
                 onValueChange = { newWord = it.replace("\n", "") },
-                placeholder = { Text("Add a word") },
+                placeholder = { Text(tr("Add a word", "শব্দ যোগ করুন")) },
                 singleLine = true,
                 shape = RoundedCornerShape(28.dp),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(onDone = { add() }),
                 modifier = Modifier.weight(1f),
             )
-            FilledIconButton(onClick = { add() }, enabled = newWord.isNotBlank()) { MsIcon(UiR.drawable.ms_add, "Add word") }
+            FilledIconButton(onClick = { add() }, enabled = newWord.isNotBlank()) { MsIcon(UiR.drawable.ms_add, tr("Add word", "শব্দ যোগ করুন")) }
         }
         if (words.isEmpty()) {
-            SettingsNote("No words yet. You can also add one from the keyboard: tap the word you typed in the suggestion strip, then “Add to dictionary”.")
+            SettingsNote(
+                tr(
+                    "No words yet. In the keyboard, tap your typed word in the suggestions, then “Add to dictionary”.",
+                    "এখনো কোনো শব্দ নেই। কীবোর্ডে সাজেশনের সারিতে আপনার লেখা শব্দটি চাপুন, তারপর “Add to dictionary”।",
+                ),
+            )
         }
-        LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        // Room at the bottom so the floating button never covers the last word.
+        LazyColumn(
+            Modifier.weight(1f),
+            contentPadding = PaddingValues(bottom = FabClearance),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
             items(words, key = { it.language + ":" + it.key }) { word ->
                 Surface(shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.surfaceContainer, modifier = Modifier.fillMaxWidth()) {
                     Row(Modifier.padding(start = 12.dp, end = 4.dp, top = 8.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                         TextBadge(if (word.language == "bn") "অ" else "En")
                         Text(word.word, Modifier.weight(1f).padding(start = 16.dp), style = MaterialTheme.typography.bodyLarge)
-                        IconButton(onClick = { onRemove(word) }) { MsIcon(UiR.drawable.ms_delete, "Remove ${word.word}") }
+                        IconButton(onClick = { onRemove(word) }) { MsIcon(UiR.drawable.ms_delete, tr("Remove ${word.word}", "${word.word} মুছুন")) }
                     }
                 }
             }
-            item { Spacer(Modifier.height(24.dp)) }
         }
     }
 }

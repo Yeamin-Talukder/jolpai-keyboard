@@ -69,7 +69,7 @@ enum class GestureType(val id: String, val title: String) {
 enum class GestureAction(val id: String, val title: String, val description: String, val available: Boolean = true) {
     EMOJI("emoji", "Open emoji panel", "Emoji, kaomoji and search"),
     CLIPBOARD("clipboard", "Open clipboard", "Clipboard history and snippets"),
-    GIF("gif", "Open GIF panel", "GIF search (needs a GIPHY key)"),
+    GIF("gif", "Open GIF panel", "Trending GIFs and GIF search"),
     STICKERS("stickers", "Open stickers", "Your own stickers"),
     VOICE("voice", "Voice typing", "Dictate in the top bar"),
     TRANSLATE("translate", "Open translation", "Not available yet: Jolpai has no translator", available = false),

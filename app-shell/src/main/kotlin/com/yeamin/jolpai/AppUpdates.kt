@@ -380,7 +380,7 @@ fun deviceInfo(context: Context): DeviceInfo {
 /** Opens [url] in the browser, or says so if the phone has no app for links. */
 fun openLink(context: Context, url: String) {
     if (!context.startFirst(Intent(Intent.ACTION_VIEW, url.toUri()))) {
-        Toast.makeText(context, "No app on this phone can open links", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, tr("No app on this phone can open links", "এই ফোনে লিংক খোলার মতো কোনো অ্যাপ নেই"), Toast.LENGTH_SHORT).show()
     }
 }
 
@@ -393,17 +393,24 @@ fun Context.startFirst(vararg intents: Intent): Boolean = intents.any { intent -
     runCatching { startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }.isSuccess
 }
 
-/** Android's share sheet with a short pitch and the download link. */
+/** Android's share sheet with a short pitch and the download link, in the app's language. */
 fun shareJolpai(context: Context) {
-    val text = "Jolpai Keyboard (জলপাই) — a free, private Bangla & English keyboard for Android: " +
-        "Avro phonetic, the National (জাতীয়) layout, offline translation and 64 themes. No ads.\n" +
-        "Download: ${JolpaiLinks.LATEST_RELEASE}"
+    val text = tr(
+        "Jolpai Keyboard (জলপাই) — a free, private Bangla & English keyboard for Android: " +
+            "Avro phonetic, the National (জাতীয়) layout, offline translation and 64 themes. No ads.\n" +
+            "Download: ${JolpaiLinks.LATEST_RELEASE}",
+        "জলপাই কীবোর্ড — Android-এর জন্য ফ্রি ও প্রাইভেট বাংলা-ইংরেজি কীবোর্ড: " +
+            "অভ্র ফোনেটিক, জাতীয় লেআউট, অফলাইন অনুবাদ আর ৬৪টি থিম। কোনো বিজ্ঞাপন নেই।\n" +
+            "ডাউনলোড: ${JolpaiLinks.LATEST_RELEASE}",
+    )
     val send = Intent(Intent.ACTION_SEND).apply {
         type = "text/plain"
-        putExtra(Intent.EXTRA_SUBJECT, "Jolpai Keyboard")
+        putExtra(Intent.EXTRA_SUBJECT, tr("Jolpai Keyboard", "জলপাই কীবোর্ড"))
         putExtra(Intent.EXTRA_TEXT, text)
     }
     runCatching {
-        context.startActivity(Intent.createChooser(send, "Share Jolpai").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        context.startActivity(
+            Intent.createChooser(send, tr("Share Jolpai", "জলপাই শেয়ার করুন")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+        )
     }
 }
