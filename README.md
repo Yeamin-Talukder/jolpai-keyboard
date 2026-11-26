@@ -12,7 +12,7 @@ and nothing you type leaves your phone.**
 [![Downloads](https://img.shields.io/github/downloads/Yeamin-Talukder/jolpai-keyboard/total?label=downloads&color=6E8A2C&logo=android&logoColor=white)](https://github.com/Yeamin-Talukder/jolpai-keyboard/releases)
 [![Views](https://hits.sh/github.com/Yeamin-Talukder/jolpai-keyboard.svg?label=views&color=6E8A2C)](https://hits.sh/github.com/Yeamin-Talukder/jolpai-keyboard/)
 [![Stars](https://img.shields.io/github/stars/Yeamin-Talukder/jolpai-keyboard?style=flat&color=B5C94A&logo=github)](https://github.com/Yeamin-Talukder/jolpai-keyboard/stargazers)
-[![Version](https://img.shields.io/badge/version-0.14.1--beta-B5C94A)](docs/ROADMAP.md)
+[![Version](https://img.shields.io/badge/version-0.15.0--beta-B5C94A)](docs/ROADMAP.md)
 [![License: Apache-2.0](https://img.shields.io/github/license/Yeamin-Talukder/jolpai-keyboard?color=4E6120)](LICENSE)
 <br>
 [![Android 8.0+](https://img.shields.io/badge/Android-8.0%2B%20(API%2026)-3DDC84?logo=android&logoColor=white)](#requirements)
@@ -25,17 +25,17 @@ and nothing you type leaves your phone.**
 
 **[🌐 Website](https://yeamin-talukder.github.io/jolpai-keyboard/)** · [What's new](#-whats-new-in-0141) · [Demo](#-see-it-in-action) · [Features](#-features) · [Screenshots](#-screenshots) · [Download](#-download--install) · [Architecture](#-architecture) · [Build](#-build-from-source) · [FAQ](#-faq) · [বাংলা](#-বাংলায়-জলপাই-কিবোর্ড)
 
-### ⬇️ Download Jolpai 0.14.1 (ডাউনলোড)
+### ⬇️ Download Jolpai 0.15.0 (ডাউনলোড)
 
-[![Most Android phones: arm64-v8a, 30 MB](https://img.shields.io/badge/Most%20Android%20phones-arm64--v8a%20·%2030%20MB-6E8A2C?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Yeamin-Talukder/jolpai-keyboard/releases/download/v0.14.1/jolpai-keyboard-0.14.1-arm64-v8a.apk)
-[![Older or budget phones: armeabi-v7a, 25 MB](https://img.shields.io/badge/Older%20%2F%20budget%20phones-armeabi--v7a%20·%2025%20MB-4E6120?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Yeamin-Talukder/jolpai-keyboard/releases/download/v0.14.1/jolpai-keyboard-0.14.1-armeabi-v7a.apk)
+[![Most Android phones: arm64-v8a, 38 MB](https://img.shields.io/badge/Most%20Android%20phones-arm64--v8a%20·%2038%20MB-6E8A2C?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Yeamin-Talukder/jolpai-keyboard/releases/download/v0.15.0/jolpai-keyboard-0.15.0-arm64-v8a.apk)
+[![Older or budget phones: armeabi-v7a, 32 MB](https://img.shields.io/badge/Older%20%2F%20budget%20phones-armeabi--v7a%20·%2032%20MB-4E6120?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Yeamin-Talukder/jolpai-keyboard/releases/download/v0.15.0/jolpai-keyboard-0.15.0-armeabi-v7a.apk)
 <br>
-[![Chromebooks, emulators, Intel 64-bit: x86_64, 31 MB](https://img.shields.io/badge/Chromebook%20%2F%20emulator-x86__64%20·%2031%20MB-55701F?style=for-the-badge&logo=googlechrome&logoColor=white)](https://github.com/Yeamin-Talukder/jolpai-keyboard/releases/download/v0.14.1/jolpai-keyboard-0.14.1-x86_64.apk)
-[![Old Intel 32-bit tablets: x86, 31 MB](https://img.shields.io/badge/Old%20Intel%2032--bit-x86%20·%2031%20MB-3B4F10?style=for-the-badge&logo=intel&logoColor=white)](https://github.com/Yeamin-Talukder/jolpai-keyboard/releases/download/v0.14.1/jolpai-keyboard-0.14.1-x86.apk)
+[![Chromebooks, emulators, Intel 64-bit: x86_64, 39 MB](https://img.shields.io/badge/Chromebook%20%2F%20emulator-x86__64%20·%2039%20MB-55701F?style=for-the-badge&logo=googlechrome&logoColor=white)](https://github.com/Yeamin-Talukder/jolpai-keyboard/releases/download/v0.15.0/jolpai-keyboard-0.15.0-x86_64.apk)
+[![Old Intel 32-bit tablets: x86, 39 MB](https://img.shields.io/badge/Old%20Intel%2032--bit-x86%20·%2039%20MB-3B4F10?style=for-the-badge&logo=intel&logoColor=white)](https://github.com/Yeamin-Talukder/jolpai-keyboard/releases/download/v0.15.0/jolpai-keyboard-0.15.0-x86.apk)
 
 **Not sure which one?** Almost every phone from 2017 onwards (Samsung, Xiaomi, Realme, vivo, OPPO, Pixel…) needs
 **arm64-v8a**. If Android says *"App not installed"* or *"not compatible"*, use **armeabi-v7a** instead.
-Android 8.0 or newer · free, no ads · [all versions](https://github.com/Yeamin-Talukder/jolpai-keyboard/releases) · [checksums](https://github.com/Yeamin-Talukder/jolpai-keyboard/releases/download/v0.14.1/SHA256SUMS.txt) · [how to install](#-download--install)
+Android 8.0 or newer · free, no ads · [all versions](https://github.com/Yeamin-Talukder/jolpai-keyboard/releases) · [checksums](https://github.com/Yeamin-Talukder/jolpai-keyboard/releases/download/v0.15.0/SHA256SUMS.txt) · [how to install](#-download--install)
 
 </div>
 
@@ -56,7 +56,17 @@ English↔Bangla translation run **offline**.
 > **Also known as:** Jolpai Bangla Keyboard · Jalpai Keyboard · জলপাই বাংলা কিবোর্ড · Jolpai Avro Keyboard
 > (package `com.yeamin.jolpai`; the project was first called *Lipi Keyboard*, package `com.yeamin.lipi` up to v0.8.0).
 
-## 🆕 What's new in 0.14.1
+## 🆕 What's new in 0.15.0
+
+- 🌐 **The app speaks Bangla:** tap **বাংলা** at the top of the home page (English | বাংলা) and every settings page switches at once.
+- 🏠 **Simpler settings:** big tiles for what you change most, shorter descriptions, quick choice chips, and a **Themes** grid with the filters pinned on top. A floating **Try keyboard** button on every page.
+- 🎞️ **GIFs built in, no key needed** (powered by KLIPY): trending, quick topics (Haha, Love, Eid Mubarak …), your recent GIFs, moving previews.
+- 😊 **New emoji panel:** Emoji · GIF · Stickers · Kaomoji always in the bottom bar, one scrolling emoji list, and search with live results above the keys.
+- 🔢 Number and phone boxes open the number pad in more apps.
+
+[0.15.0 release notes](docs/release-notes/v0.15.0.md)
+
+### In 0.14.1
 
 - 🔢 **A number pad in any text box** (asked for by a Jolpai user): tap **123** in the top bar, or hold **?123**, to type numbers on a big calculator-style pad in chats, notes, search or forms; tap it again or **ABC** for the letters. Hold a digit for its Bangla form. Also a gesture action, and it stays in password fields for PINs.
 - ✏️ The **text editing tools** have a clearer layout: a cursor pad around a big **Select** button, and a clipboard column where **Paste** shows a peek of what it will paste.
@@ -229,7 +239,7 @@ Earlier, in 0.13.1–0.13.3: the keyboard chooser and settings buttons work on v
 
 ## 📥 Download & install
 
-> **Status: beta (v0.14.1).** All seven development phases are built and 350+ unit tests pass. The app runs
+> **Status: beta (v0.15.0).** All seven development phases are built and 550+ unit tests pass. The app runs
 > daily on a Pixel 7 Pro (Android 17); testing on more phones is ongoing. See the [roadmap](docs/ROADMAP.md)
 > for exactly what works and what is pending.
 

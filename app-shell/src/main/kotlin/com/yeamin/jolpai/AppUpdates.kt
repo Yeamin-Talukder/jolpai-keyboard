@@ -37,6 +37,18 @@ object Changelog {
     /** Newest first. */
     val RELEASES: List<ChangelogRelease> = listOf(
         ChangelogRelease(
+            "0.15.0", "26 Nov 2026",
+            listOf(
+                "The app speaks Bangla: tap বাংলা at the top of the home page (English | বাংলা)",
+                "Simpler settings: big tiles for what you change most, shorter descriptions, quick choice chips",
+                "Try the keyboard from any page with the floating keyboard button",
+                "Number and phone boxes open the number pad, also in apps where they didn't before",
+                "GIFs built in, no key needed (powered by KLIPY): trending, quick topics, moving previews",
+                "New emoji panel: Emoji, GIF, Stickers and Kaomoji always in the bottom bar; search shows live results above the keys",
+                "Themes page: a grid of theme cards with the filters pinned at the top",
+            ),
+        ),
+        ChangelogRelease(
             "0.14.1", "21 Nov 2026",
             listOf(
                 "Number pad in any text box: tap 123 in the top bar (or hold ?123); tap again or ABC for the letters",

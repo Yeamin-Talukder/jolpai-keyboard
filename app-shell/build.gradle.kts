@@ -23,8 +23,8 @@ android {
         applicationId = "com.yeamin.jolpai"
         minSdk = 26
         targetSdk = 37
-        versionCode = 14
-        versionName = "0.14.1"
+        versionCode = 15
+        versionName = "0.15.0"
     }
 
     signingConfigs {
