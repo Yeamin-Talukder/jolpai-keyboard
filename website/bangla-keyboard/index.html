@@ -45,7 +45,7 @@
       "@id": "https://yeamin-talukder.github.io/jolpai-keyboard/#app",
       "name": "Jolpai Keyboard",
       "alternateName": ["Jolpai Bangla Keyboard", "জলপাই কিবোর্ড", "Jolpai Avro Keyboard", "Jalpai Keyboard"],
-      "description": "A free, open-source Bangla (Bengali) and English keyboard for Android with a modern UI and on-device machine learning: Avro phonetic, National (জাতীয়) and Probhat (প্রভাত) layouts, next-word prediction, autocorrect, offline spelling and grammar check, offline English–Bangla translation, voice typing, clipboard manager and 143 themes. No ads, no account, no tracking.",
+      "description": "A free, open-source Bangla (Bengali) and English keyboard for Android with a modern UI and on-device machine learning: Avro phonetic, National (জাতীয়) and Probhat (প্রভাত) layouts, Banglish, next-word prediction in Bangla and English, autocorrect, offline spelling and grammar check, offline English–Bangla translation, voice typing, clipboard manager and 143 themes. No ads, no account, no tracking.",
       "url": "https://yeamin-talukder.github.io/jolpai-keyboard/",
       "downloadUrl": "https://github.com/Yeamin-Talukder/jolpai-keyboard/releases/latest",
       "installUrl": "https://yeamin-talukder.github.io/jolpai-keyboard/get/",
@@ -66,8 +66,10 @@
         "Avro phonetic Bangla typing (ami → আমি) with dictionary candidates",
         "Bangladesh National (জাতীয়) layout",
         "Probhat (প্রভাত) layout",
-        "On-device machine learning (neural) next-word prediction for English",
-        "Bangla next-word suggestions from 91 million words of open Bangla text",
+        "On-device machine learning (neural) next-word prediction for English, Bangla and Banglish",
+        "Jolpai's own Bangla and Banglish next-word models, trained for the keyboard",
+        "Banglish (Bangla in English letters) suggestions on the English keyboard",
+        "Built-in GIFs",
         "Context-aware autocorrect and emoji prediction",
         "Offline Bangla and English spelling and grammar check",
         "Offline English ↔ Bangla translation",
@@ -106,7 +108,7 @@
         {"@type": "Question", "name": "Is there an open-source Bangla keyboard for Android?",
          "acceptedAnswer": {"@type": "Answer", "text": "Yes. Jolpai Keyboard is open source under the Apache License 2.0. Its full source code is on GitHub, and every release is built and signed by GitHub Actions from that code, with SHA-256 checksums."}},
         {"@type": "Question", "name": "Which Bangla keyboard uses machine learning?",
-         "acceptedAnswer": {"@type": "Answer", "text": "Jolpai runs a small neural language model (an LSTM of about 4.7 MB) on the phone. It reads the sentence you are typing to predict the next word, rank suggestions, autocorrect and pick emoji by meaning. On held-out sentences it put the right next word in the top 3 about 35% of the time (up from 0%) and cut wrong autocorrections from 12.5% to 5.5%. Bangla next words come from counts over 91 million words of open Bangla text plus what you type."}},
+         "acceptedAnswer": {"@type": "Answer", "text": "Jolpai runs small neural language models on the phone, in English, Bangla and Banglish. The English model (an LSTM of about 4.7 MB) put the right next word in the top 3 about 35% of the time on held-out sentences and cut wrong autocorrections from 12.5% to 5.5%. Jolpai's own Bangla model (5.9 MB), trained for Jolpai on everyday Bangla, puts the right next word in the top 3 22.7% of the time on held-out chat (7.7% with word lists alone) and helps Avro pick the intended word (57.5% to 61.5%). A Banglish model (2.8 MB) guesses the next Banglish word. They read the sentence you are typing to predict the next word, rank suggestions, autocorrect and pick emoji by meaning, and never send it anywhere."}},
         {"@type": "Question", "name": "Does the AI send my typing to a server?",
          "acceptedAnswer": {"@type": "Answer", "text": "No. The model runs inside the keyboard on your phone. Jolpai has no account, no analytics and no ads, and keeps learned words and clipboard history in an encrypted database on the device."}},
         {"@type": "Question", "name": "What is a good-looking, modern Bangla keyboard?",
@@ -114,7 +116,7 @@
         {"@type": "Question", "name": "Which Bangla layouts does Jolpai support?",
          "acceptedAnswer": {"@type": "Answer", "text": "Avro phonetic (type how a word sounds, ami → আমি), the Bangladesh National (জাতীয়) layout, the Probhat (প্রভাত) layout and English QWERTY. You switch between them with one tap. Bijoy is not included."}},
         {"@type": "Question", "name": "Does Jolpai work without internet?",
-         "acceptedAnswer": {"@type": "Answer", "text": "Yes. Typing, suggestions, the AI model, Avro, the spelling check, clipboard and themes all work offline. Translation works offline after a one-time download of about 30 MB. Only GIF search and checking for updates use the internet."}},
+         "acceptedAnswer": {"@type": "Answer", "text": "Yes. Typing, suggestions, the AI model, Avro, the spelling check, clipboard and themes all work offline. Translation works offline after a one-time download of about 30 MB. Only GIFs and checking for updates use the internet."}},
         {"@type": "Question", "name": "Is Jolpai on the Google Play Store?",
          "acceptedAnswer": {"@type": "Answer", "text": "Not yet. Download the APK from the official website or GitHub Releases; most phones need the arm64-v8a file. After that, the app can update itself from About → Update."}},
         {"@type": "Question", "name": "Is Jolpai free?",
@@ -222,16 +224,16 @@
     <tr><th scope="row">Licence</th><td>Open source, Apache License 2.0</td></tr>
     <tr><th scope="row">Latest version</th><td>0.15.0 (beta), about 38 MB</td></tr>
     <tr><th scope="row">Needs</th><td>Android 8.0 (Oreo) or newer; Material You colours on Android 12+</td></tr>
-    <tr><th scope="row">Layouts</th><td>Avro phonetic, National (জাতীয়), Probhat (প্রভাত), English QWERTY</td></tr>
-    <tr><th scope="row">AI / ML</th><td>On-device neural next-word model for English; Bangla next words from 91 million words of text</td></tr>
+    <tr><th scope="row">Layouts</th><td>Avro phonetic, National (জাতীয়), Probhat (প্রভাত), English QWERTY with Banglish</td></tr>
+    <tr><th scope="row">AI / ML</th><td>On-device neural next-word models for English, Bangla and Banglish (the Bangla and Banglish ones trained for Jolpai)</td></tr>
     <tr><th scope="row">Works offline</th><td>Yes: typing, suggestions, AI, spell check; translation after a one-time download</td></tr>
     <tr><th scope="row">Privacy</th><td>No account, analytics or ads; encrypted on-device storage</td></tr>
     <tr><th scope="row">Developer</th><td><a href="https://github.com/Yeamin-Talukder">Md Yeamin Talukder</a>, Bangladesh</td></tr>
   </table>
 
   <h2 id="ml">A modern, machine-learning (ML) keyboard that stays on your phone</h2>
-  <p>Most keyboards guess the next word from the last one or two words. Jolpai also runs a <b>small neural language model</b> (an LSTM of
-    about 4.7 MB) right inside the keyboard. It reads the sentence you're writing and uses it to:</p>
+  <p>Most keyboards guess the next word from the last one or two words. Jolpai also runs <b>small neural language models</b> right inside the keyboard,
+    for English (an LSTM of about 4.7 MB), Bangla and Banglish. It reads the sentence you're writing and uses it to:</p>
   <ul>
     <li><b>Predict the next word</b> from the whole sentence, not just the last word.</li>
     <li><b>Rank suggestions</b> so the word that fits the sentence comes first.</li>
@@ -242,8 +244,13 @@
   <p>On held-out everyday sentences the model put the right next word in the top 3 about <b>35% of the time (up from 0%)</b> and cut wrong
     autocorrections from <b>12.5% to 5.5%</b>. For Bangla, next-word suggestions come from counts over <b>91 million words</b> of open Bangla
     text (কেমন → আছেন, আমি তোমাকে → ভালোবাসি), and the keyboard learns your own phrases, letting old habits fade.</p>
+  <p><b>Jolpai's own Bangla model</b> (5.9 MB, new in 0.15) was trained for Jolpai on everyday Bangla: chat-style web text, YouTube and
+    online comments, Common Voice, subtitles, Tatoeba and Wikipedia. On held-out chat it puts the right next word in the top 3
+    <b>22.7% of the time</b> (7.7% with word lists alone), and it helps <b>Avro</b> pick the word you mean: on 9,579 real test words,
+    57.5% → <b>61.5%</b>. A <b>Banglish model</b> (2.8 MB), trained only on real Banglish, guesses your next word when you write Bangla in
+    English letters (<code>valo achi</code>).</p>
   <p>Because the model runs <b>on the device</b>, nothing you type is sent to a server. You can turn it off in
-    <i>Suggestions → On-device AI predictions</i>.</p>
+    <i>Suggestions &amp; spelling → On-device AI predictions</i>.</p>
 
   <h2 id="open-source">An open-source keyboard you can check</h2>
   <p>A keyboard sees every password, message and search you type, so trust matters. Jolpai is <b>open source</b> under the Apache License 2.0:
@@ -253,7 +260,7 @@
     <li>No account, no analytics, no ads and no crash-reporting SDK.</li>
     <li>Learned words and clipboard history live in an <b>encrypted database</b> (SQLCipher, key in the Android Keystore).</li>
     <li>Password and incognito fields are never learned or saved.</li>
-    <li>The internet is used only for features you turn on: GIF search, the translation pack download and checking for updates.</li>
+    <li>The internet is used only for GIFs (only your GIF search words are sent), the translation pack download and checking for updates.</li>
   </ul>
 
   <h2 id="design">A good-looking Bangla keyboard with a clean, modern UI</h2>
@@ -297,6 +304,15 @@
     <li><b>Backup and restore</b> to a file you choose, and updates right inside the app.</li>
   </ul>
 
+  <h2 id="new">New in 0.15: Jolpai learned Bangla, and Banglish</h2>
+  <p>Update inside the app (About → Update); your words and settings stay.</p>
+  <div class="cards">
+    <div class="card"><h3>Our own Bangla AI</h3><p>A next-word model trained for Jolpai on everyday Bangla: better next words in Avro, জাতীয় and প্রভাত, and Avro picks the word you mean more often.</p></div>
+    <div class="card"><h3>Banglish on the English keys</h3><p><code>valob</code> → valobashi in your own spelling, no more "corrections" into English, and a Banglish model for the next word.</p></div>
+    <div class="card"><h3>The app in বাংলা</h3><p>Every settings page in Bangla with one tap, simpler pages, and a floating button to try the keyboard.</p></div>
+    <div class="card"><h3>GIFs built in</h3><p>Trending GIFs, one-tap topics and search with no key or setup (powered by KLIPY), and a quicker emoji panel.</p></div>
+  </div>
+
   <h2 id="next">New in 0.14: an easy switch from Ridmik or Gboard</h2>
   <p>Already using Jolpai? Update inside the app (About → Update); your words and settings stay.</p>
   <div class="cards">
@@ -305,7 +321,7 @@
     <div class="card"><h3>143 themes, 30 key fonts</h3><p>Cool dark, ambient, Chameleon (the colour of the app you're in) and moving themes, plus Bangla and stylish fonts or your own font file.</p></div>
     <div class="card"><h3>A smarter Bangla spell check</h3><p>Leaves Bangla typed in English letters alone, understands জাতীয় typed key by key, and suggests fixes as you type.</p></div>
   </div>
-  <p>A short <b>welcome</b> sets the keyboard up like the one you used before (also later in <i>Typing → Quick setup</i>), and a
+  <p>A short <b>welcome</b> sets the keyboard up like the one you used before (also later in <i>Typing → Easy setup</i>), and a
     <b>🐞 Report a bug</b> button opens a ready-filled GitHub issue with your phone's details, never your typing.</p>
 
   <h2 id="compare">Jolpai vs Ridmik Keyboard vs Gboard</h2>
@@ -349,11 +365,11 @@
 
   <h2 id="faq">Frequently asked questions</h2>
   <details><summary>Is there an open-source Bangla keyboard for Android?</summary><p>Yes. Jolpai Keyboard is open source under the Apache License 2.0. Its full source code is on GitHub, and every release is built and signed by GitHub Actions from that code, with SHA-256 checksums.</p></details>
-  <details><summary>Which Bangla keyboard uses machine learning?</summary><p>Jolpai runs a small neural language model (an LSTM of about 4.7 MB) on the phone. It reads the sentence you are typing to predict the next word, rank suggestions, autocorrect and pick emoji by meaning. On held-out sentences it put the right next word in the top 3 about 35% of the time (up from 0%) and cut wrong autocorrections from 12.5% to 5.5%. Bangla next words come from counts over 91 million words of open Bangla text plus what you type.</p></details>
+  <details><summary>Which Bangla keyboard uses machine learning?</summary><p>Jolpai runs small neural language models on the phone, in English, Bangla and Banglish. The English model (an LSTM of about 4.7 MB) put the right next word in the top 3 about 35% of the time on held-out sentences and cut wrong autocorrections from 12.5% to 5.5%. Jolpai's own Bangla model (5.9 MB), trained for Jolpai on everyday Bangla, puts the right next word in the top 3 22.7% of the time on held-out chat (7.7% with word lists alone) and helps Avro pick the intended word (57.5% to 61.5%). A Banglish model (2.8 MB) guesses the next Banglish word. They read the sentence you are typing to predict the next word, rank suggestions, autocorrect and pick emoji by meaning, and never send it anywhere.</p></details>
   <details><summary>Does the AI send my typing to a server?</summary><p>No. The model runs inside the keyboard on your phone. Jolpai has no account, no analytics and no ads, and keeps learned words and clipboard history in an encrypted database on the device.</p></details>
   <details><summary>What is a good-looking, modern Bangla keyboard?</summary><p>Jolpai is designed to look clean and modern: Bangla vowel-sign keys without dotted circles, Material You colours that follow your wallpaper, 143 themes including Chameleon themes in the colour of the app you are in, gradients and your own photo, rounded keys, key fonts and smooth animations.</p></details>
   <details><summary>Which Bangla layouts does Jolpai support?</summary><p>Avro phonetic (type how a word sounds, ami → আমি), the Bangladesh National (জাতীয়) layout, the Probhat (প্রভাত) layout and English QWERTY. You switch between them with one tap. Bijoy is not included.</p></details>
-  <details><summary>Does Jolpai work without internet?</summary><p>Yes. Typing, suggestions, the AI model, Avro, the spelling check, clipboard and themes all work offline. Translation works offline after a one-time download of about 30 MB. Only GIF search and checking for updates use the internet.</p></details>
+  <details><summary>Does Jolpai work without internet?</summary><p>Yes. Typing, suggestions, the AI model, Avro, the spelling check, clipboard and themes all work offline. Translation works offline after a one-time download of about 30 MB. Only GIFs and checking for updates use the internet.</p></details>
   <details><summary>Is Jolpai on the Google Play Store?</summary><p>Not yet. Download the APK from the official website or GitHub Releases; most phones need the arm64-v8a file. After that, the app can update itself from About → Update.</p></details>
   <details><summary>Is Jolpai free?</summary><p>Yes. It is completely free, with no ads, no in-app purchases and no subscription.</p></details>
 
