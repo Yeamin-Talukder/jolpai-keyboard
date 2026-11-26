@@ -164,8 +164,8 @@ Earlier, in 0.13.1–0.13.3: the keyboard chooser and settings buttons work on v
 - **Snippets / text expansion**: type `@addr` + space to insert your address. Snippets can hold `{date}`, `{bangla_date}`, `{day}`, `{time}`, `{clipboard}` and `{cursor}`; ready-made packs of everyday messages and Islamic greetings (`@salam` → আসসালামু আলাইকুম).
 - **Editing panel**: select, cut/copy/paste, arrow keys, word delete, undo/redo, date & time, and **বাংলা তারিখ** (today's Bangla calendar date, e.g. ২৩ কার্তিক ১৪৩৩).
 - **Text styles**: 𝐁𝐨𝐥𝐝, 𝐼𝑡𝑎𝑙𝑖𝑐, 𝓢𝓬𝓻𝓲𝓹𝓽, 𝔊𝔬𝔱𝔥𝔦𝔠, 𝕆𝕦𝕥𝕝𝕚𝕟𝕖, 𝙼𝚘𝚗𝚘, Ⓒⓘⓡⓒⓛⓔ, Sᴍᴀʟʟ ᴄᴀᴘs, S̶t̶r̶i̶k̶e̶ and more for Facebook, WhatsApp and bios: restyle a selection, or type in a style.
-- **Space-bar trackpad** (iPhone-style) to move the cursor, plus **Backspace swipe** to delete whole words, and optional **hold-Enter gestures** (emoji, or slide to select text).
-- **Custom gestures**: assign swipes, holds and double-taps to actions, or to insert your own text.
+- **Gestures, on by default**: hold and slide on the **space bar** to move the cursor (an iPhone-style trackpad), **swipe ⌫ left** to delete whole words, **swipe the top bar** left to undo and right to redo, **swipe up on space** for the clipboard and **down** for emoji, and **swipe a panel down** to close it. Optional **hold-Enter gestures**: emoji, or slide to select text.
+- **Custom gestures**: assign swipes, holds and double-taps on Space, comma, full stop, Shift, Backspace or the top bar to actions, or to insert your own text (e.g. `@gmail.com`).
 - **Smart field handling**: calculator number pad, phone dial pad, and Send/Search/Go Enter keys.
 
 ### 🎨 Themes and customisation
