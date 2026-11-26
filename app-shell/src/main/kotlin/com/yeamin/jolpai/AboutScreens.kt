@@ -99,6 +99,9 @@ private val NOTICES = listOf(
     Notice("Emoji data (Unicode Emoji 17.0, CLDR 49) — Unicode License V3", "/emoji/NOTICE.txt", "/emoji/LICENSE-UNICODE-V3.txt"),
     Notice("Icons (Material Symbols by Google) — Apache-2.0", "/icons/NOTICE.txt", "/en/LICENSE-APACHE-2.0.txt"),
     Notice("Bangla word frequencies (FrequencyWords, OpenSubtitles) — CC BY-SA 4.0; code MIT", "/bn/NOTICE.txt", "/bn/LICENSE-MIT-FrequencyWords.txt"),
+    Notice("Banglish spellings (BanglaTLit, Fahim et al. 2024) — MIT", "/bn/NOTICE.txt", "/bn/LICENSE-MIT-BanglaTLit.txt"),
+    Notice("Bangla next-word model (trained for Jolpai on HPLT, YouTube and online comments, Common Voice, OpenSubtitles, Tatoeba, Wikipedia) — CC BY-SA 4.0", "/lm/NOTICE.txt", "/lm/CC-BY-SA-4.0.txt"),
+    Notice("Banglish next-word model (trained for Jolpai on BanglaTLit, YouTube comments, BANTEN and other Mendeley comment sets) — CC BY 4.0; BanglaTLit MIT", "/lm/NOTICE.txt", "/bn/LICENSE-MIT-BanglaTLit.txt"),
     Notice("English next-word model (Destin Moss, youcoded.ai; FineWeb and Tatoeba) — ODC-By 1.0 and CC BY 2.0 FR", "/lm/NOTICE.txt", "/lm/ODC-By-1.0.txt"),
     Notice("Key fonts: Hind Siliguri, Tiro Bangla, Galada, Atma, Baloo Da 2, Mina, Poppins, Quicksand, Space Mono, Pacifico, Dancing Script, Lobster, Kaushan Script, Indie Flower, Righteous, Orbitron, Press Start 2P (Google Fonts) — SIL Open Font License 1.1", "/fonts/NOTICE.txt", "/fonts/OFL.txt"),
 )

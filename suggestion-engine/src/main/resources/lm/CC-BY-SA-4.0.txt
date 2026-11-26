@@ -1,0 +1,7 @@
+Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)
+
+bn.nwp.bin is shared under this licence. You may copy and change it, also commercially, if you
+give credit (see NOTICE.txt), link to the licence, say what you changed, and share what you make
+from it under the same licence.
+
+Full legal code: https://creativecommons.org/licenses/by-sa/4.0/legalcode

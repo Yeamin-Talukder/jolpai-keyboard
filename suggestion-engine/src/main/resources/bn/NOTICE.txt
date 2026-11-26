@@ -48,3 +48,15 @@ bangla-nextwords.tsv, bangla-trigrams.tsv
   Changes: wiki markup removed, য় ড় ঢ় written as single characters, ZWNJ/ZWJ removed, repeated
   sentences dropped, only Bangla words kept, rare pairs and triples dropped, counts turned into
   1-255 weights. tools/prepare-bangla-nextwords.pl rebuilds both files (commands in its header).
+
+banglish-words.tsv
+  Banglish (Bangla written in English letters) spellings counted from BanglaTLit
+  (https://github.com/farhanishmam/BanglaTLit, data from https://huggingface.co/datasets/
+  aplycaebous/BanglaTLit, downloaded 2026-11-26): BanglaTLit-PT.txt and BanglaTLit_train.csv.
+  Copyright (c) 2024 Aplycaebous. MIT License — see LICENSE-MIT-BanglaTLit.txt.
+  M. F. Fahim et al.: BanglaTLit: A Benchmark Dataset for Back-Transliteration of Romanized
+  Bangla. Findings of EMNLP 2024.
+  Changes: only spellings seen 3+ times kept (val and test sentences not counted), common
+  English words left out, counts turned into a 1-255 weight, each spelling given its Bangla word
+  (from the paired sentences, or the Avro search over bangla-words.txt), swear words flagged.
+  lm-trainer's `banglish` command rebuilds it (lm-trainer/src/.../Banglish.kt).

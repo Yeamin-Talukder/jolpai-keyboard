@@ -24,7 +24,7 @@ fun main(args: Array<String>) {
     val opts = args.drop(2).chunked(2).filter { it.size == 2 && it[0].startsWith("--") }.associate { it[0].removePrefix("--") to it[1] }
     fun int(name: String, default: Int) = opts[name]?.toInt() ?: default
     fun float(name: String, default: Float) = opts[name]?.toFloat() ?: default
-    if (cmd != "xlsx-peek") dir.mkdirs()
+    if (cmd != "xlsx-peek" && cmd != "banglish") dir.mkdirs()
     when (cmd) {
         "prepare" -> {
             val p = Prepare(dir, 0)
@@ -48,18 +48,39 @@ fun main(args: Array<String>) {
         "xlsx-peek" -> Xlsx.rows(dir).take(args.getOrNull(2)?.toInt() ?: 4).forEach { row ->
             println(row.entries.sortedBy { it.key.length * 100 + it.key.first().code }.joinToString(" | ") { "${it.key}: ${it.value.take(160).replace(Regex("\\s+"), " ")}" })
         }
-        "encode" -> Prepare(dir, int("vocab", 30000), int("repeat-everyday", 2), opts["wiki-words"]?.toLong() ?: Long.MAX_VALUE).encode()
+        // e.g. encode DIR --vocab 30000 --repeat-everyday 2 --wiki-words 10000000 --once chat --once-words 15000000
+        "encode" -> Prepare(
+            dir, int("vocab", 30000), int("repeat-everyday", 2), opts["wiki-words"]?.toLong() ?: Long.MAX_VALUE,
+            once = opts["once"]?.split(",")?.toSet() ?: emptySet(), onceWords = opts["once-words"]?.toLong() ?: Long.MAX_VALUE,
+        ).encode()
         "train" -> Training(dir, int("dim", 96), int("hidden", 512)).train(
             minutes = int("minutes", 60), threads = int("threads", Runtime.getRuntime().availableProcessors()),
             lr = float("lr", 0.05f), negatives = int("negatives", 256), batch = int("batch", 16),
         )
         "eval" -> Training(dir, int("dim", 96), int("hidden", 512)).evaluate(int("sentences", 3000))
         "export" -> Training(dir, int("dim", 96), int("hidden", 512)).export(File(args.getOrNull(2) ?: return usage()))
+        // banglish TLIT_DIR OUT.tsv: the app's Banglish word list from BanglaTLit (see Banglish.kt).
+        "banglish" -> Banglish.build(dir, File(args.getOrNull(2) ?: return usage()), int("min-count", 3))
+        // top MODEL.nwp.bin "words so far" ...: next-word guesses read by the app's own reader
+        // (to check a file exported by scripts/train_torch.py against its `top` command).
+        "top" -> {
+            val model = dir.inputStream().use { NextWordModel.read(it) }
+            // @FILE: one text per line (Windows mangles Bangla command-line arguments).
+            val texts = args.drop(2).flatMap { if (it.startsWith("@")) File(it.drop(1)).readLines().filter(String::isNotBlank) else listOf(it) }
+            for (text in texts) {
+                var state = model.start()
+                text.split(' ').filter { it.isNotEmpty() }.forEach { state = model.step(state, model.token(it)) }
+                val lp = model.logProbs(state)
+                val top = lp.indices.sortedByDescending { lp[it] }.take(8)
+                val names = listOf("<unk>", "<s>", "</s>")
+                println("$text → " + top.joinToString(", ") { "${if (it < 3) names[it] else model.words[it]} %.2f".format(lp[it]) })
+            }
+        }
         else -> usage()
     }
 }
 
-private fun usage() = println("usage: prepare|encode|train|eval|export DIR [options] (see Main.kt)")
+private fun usage() = println("usage: prepare|encode|train|eval|export DIR [options], or top MODEL.nwp.bin 'words' (see Main.kt)")
 
 class Training(private val dir: File, dim: Int, hidden: Int) {
     private val vocabWords: List<String> = File(dir, "vocab.tsv").readLines().map { it.substringBefore('\t') }

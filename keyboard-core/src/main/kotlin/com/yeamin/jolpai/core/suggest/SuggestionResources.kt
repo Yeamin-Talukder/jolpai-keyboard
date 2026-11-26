@@ -6,6 +6,7 @@ import com.yeamin.jolpai.data.RoomHistoryStore
 import com.yeamin.jolpai.suggest.AvroDictionarySearch
 import com.yeamin.jolpai.suggest.AvroSuggester
 import com.yeamin.jolpai.suggest.BanglaDictionary
+import com.yeamin.jolpai.suggest.BanglishWords
 import com.yeamin.jolpai.suggest.EnglishDictionary
 import com.yeamin.jolpai.suggest.NextWordModel
 import com.yeamin.jolpai.suggest.Suggester
@@ -32,6 +33,7 @@ class SuggestionResources @Inject constructor(private val store: RoomHistoryStor
     @Volatile private var english: EnglishDictionary? = null
     @Volatile private var bangla: BanglaDictionary? = null
     @Volatile private var avro: AvroSuggester? = null
+    @Volatile private var banglish: BanglishWords? = null
 
     /** The English next-word model (4.7 MB, loaded with the dictionaries); null until then or if damaged. */
     @Volatile var englishModel: NextWordModel? = null
@@ -41,7 +43,11 @@ class SuggestionResources @Inject constructor(private val store: RoomHistoryStor
     @Volatile var banglaModel: NextWordModel? = null
         private set
 
-    val suggester = Suggester({ english }, { bangla }, { avro }, history, model = { englishModel }, banglaModel = { banglaModel })
+    /** The Banglish next-word model (English layout); null until loaded or if missing. */
+    @Volatile var banglishModel: NextWordModel? = null
+        private set
+
+    val suggester = Suggester({ english }, { bangla }, { avro }, history, model = { englishModel }, banglaModel = { banglaModel }, banglish = { banglish }, banglishModel = { banglishModel })
 
     private val started = AtomicBoolean(false)
 
@@ -55,6 +61,10 @@ class SuggestionResources @Inject constructor(private val store: RoomHistoryStor
         runCatching { history.load(store.loadSnapshot()) }
         onProgress()
         english = EnglishDictionary.load()
+        onProgress()
+        banglish = runCatching { BanglishWords.load() }.getOrNull()
+        onProgress()
+        banglishModel = NextWordModel.loadBanglish()
         onProgress()
         englishModel = NextWordModel.loadEnglish()
         onProgress()

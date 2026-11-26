@@ -143,6 +143,18 @@ class UserHistory(
         return top.result().distinct()
     }
 
+    /**
+     * Learned words (as typed) that pass [test], with how much they are used (faded by age),
+     * most used first. Banglish uses it to find the user's spelling of a word by sound.
+     */
+    @Synchronized
+    fun wordsMatching(language: Language, limit: Int, test: (String) -> Boolean): List<Pair<String, Float>> {
+        val now = clock()
+        val top = TopN<Pair<String, Float>>(limit)
+        words[language]?.values?.forEach { e -> if (test(e.form)) faded(e, now).let { w -> top.offer(e.form to w, w) } }
+        return top.result()
+    }
+
     /** How often the user has typed [word] right after [previous] (0 if never). */
     @Synchronized
     fun bigramCount(language: Language, previous: String, word: String): Int =

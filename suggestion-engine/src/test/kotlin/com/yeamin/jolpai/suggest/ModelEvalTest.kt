@@ -106,6 +106,24 @@ class ModelEvalTest {
         assertTrue(aNew.right - aNew.wrong >= aOld.right - aOld.wrong)
     }
 
+    /** The Banglish list must not take over English typing (it is on by default). */
+    @Test fun `banglish list leaves english typing alone`() {
+        val withList = Suggester({ dict }, { null }, { null }, UserHistory(), model = { NextWordModelTest.model }, banglish = { BanglishWords.load() })
+        val nwNew = nextWordHits(new, true)
+        val nwList = nextWordHits(withList, true)
+        println("EVAL banglish list, next word top-3: without ${pct(nwNew)}, with ${pct(nwList)}")
+        for (letters in 1..2) {
+            val cNew = completionHits(new, true, letters)
+            val cList = completionHits(withList, true, letters)
+            println("EVAL banglish list, after $letters letter(s), top-2: without ${pct(cNew)}, with ${pct(cList)}")
+            assertTrue(cList.first >= cNew.first - cNew.second / 100) // at most 1 point lower
+        }
+        val aNew = autocorrect(new, true)
+        val aList = autocorrect(withList, true)
+        println("EVAL banglish list, autocorrect (${aNew.total} slips): without right ${aNew.right}, wrong ${aNew.wrong}; with right ${aList.right}, wrong ${aList.wrong}")
+        assertTrue(aList.wrong <= aNew.wrong + aNew.total / 100)
+    }
+
     @Test fun `sweep the model weight`() {
         if (System.getenv("LM_SWEEP") == null) return
         for (weight in listOf(0.3f, 0.4f, 0.5f, 0.6f, 0.7f, 0.8f)) {

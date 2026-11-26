@@ -83,6 +83,8 @@ data class KeyboardSettings(
     val emojiSuggestions: Boolean = true,
     /** Use the on-device next-word model (English): next words, ranking by context, word choice, emoji by meaning. */
     val smartPredictions: Boolean = true,
+    /** Offer Banglish words (Bangla in English letters: valo, kmn, achi) on the English layout. */
+    val banglishSuggestions: Boolean = true,
     val voiceLanguage: VoiceLanguage = VoiceLanguage.AUTO,
     /** The user's own GIPHY API key; GIF search is off until one is set. Stored only on the device. */
     val giphyApiKey: String = "",
@@ -339,6 +341,7 @@ class KeyboardSettingsRepository @Inject constructor(
                 emojiSkinTone = (p[EMOJI_TONE] ?: 0).coerceIn(0, 5),
                 emojiSuggestions = p[EMOJI_SUGGESTIONS] ?: true,
                 smartPredictions = p[SMART_PREDICTIONS] ?: true,
+                banglishSuggestions = p[BANGLISH_SUGGESTIONS] ?: true,
                 voiceLanguage = VoiceLanguage.fromStorageKey(p[VOICE_LANGUAGE]),
                 giphyApiKey = p[GIPHY_KEY].orEmpty(),
                 themeId = p[THEME_ID] ?: KeyboardTheme.DEFAULT_ID,
@@ -404,6 +407,7 @@ class KeyboardSettingsRepository @Inject constructor(
     suspend fun setEmojiSkinTone(value: Int) = dataStore.edit { it[EMOJI_TONE] = value.coerceIn(0, 5) }
     suspend fun setEmojiSuggestions(value: Boolean) = dataStore.edit { it[EMOJI_SUGGESTIONS] = value }
     suspend fun setSmartPredictions(value: Boolean) = dataStore.edit { it[SMART_PREDICTIONS] = value }
+    suspend fun setBanglishSuggestions(value: Boolean) = dataStore.edit { it[BANGLISH_SUGGESTIONS] = value }
     suspend fun setVoiceLanguage(value: VoiceLanguage) = dataStore.edit { it[VOICE_LANGUAGE] = value.storageKey }
     suspend fun setGiphyApiKey(value: String) = dataStore.edit { it[GIPHY_KEY] = value.trim() }
     suspend fun setThemeId(value: String) = dataStore.edit { it[THEME_ID] = value }
@@ -542,6 +546,7 @@ class KeyboardSettingsRepository @Inject constructor(
         val EMOJI_TONE = intPreferencesKey("emoji_skin_tone")
         val EMOJI_SUGGESTIONS = booleanPreferencesKey("emoji_suggestions")
         val SMART_PREDICTIONS = booleanPreferencesKey("smart_predictions")
+        val BANGLISH_SUGGESTIONS = booleanPreferencesKey("banglish_suggestions")
         val VOICE_LANGUAGE = stringPreferencesKey("voice_language")
         val GIPHY_KEY = stringPreferencesKey("giphy_api_key")
         val THEME_ID = stringPreferencesKey("theme_id")
@@ -571,7 +576,7 @@ class KeyboardSettingsRepository @Inject constructor(
         val BACKUP_KEYS: Set<String> = listOf(
             AUTO_CAPITALIZE, DOUBLE_SPACE_PERIOD, BANGLA_AUTO_VOWELS, REMEMBER_LAST_LAYOUT, DEFAULT_LAYOUT, LAST_LAYOUT, ENABLED_LAYOUTS,
             SHOW_SUGGESTIONS, AUTO_CORRECT, NEXT_WORD, LEARNING, BLOCK_OFFENSIVE, CLIPBOARD_HISTORY, CLIPBOARD_IMAGES,
-            CLIPBOARD_RETENTION, CURSOR_SWIPE, TRACKPAD_VERTICAL, ENTER_HOLD_EMOJI, ENTER_HOLD_SELECT, LONG_PRESS, PREDICTIVE_TOUCH, TOUCH_CALIBRATION, GESTURES, TOOLBAR, TOOLBAR_SEEN, PANEL_PLACEMENT, KEY_LOOK, EMOJI_TONE, EMOJI_SUGGESTIONS, SMART_PREDICTIONS, VOICE_LANGUAGE, THEME_ID,
+            CLIPBOARD_RETENTION, CURSOR_SWIPE, TRACKPAD_VERTICAL, ENTER_HOLD_EMOJI, ENTER_HOLD_SELECT, LONG_PRESS, PREDICTIVE_TOUCH, TOUCH_CALIBRATION, GESTURES, TOOLBAR, TOOLBAR_SEEN, PANEL_PLACEMENT, KEY_LOOK, EMOJI_TONE, EMOJI_SUGGESTIONS, SMART_PREDICTIONS, BANGLISH_SUGGESTIONS, VOICE_LANGUAGE, THEME_ID,
             HEIGHT_PORTRAIT, HEIGHT_LANDSCAPE, NUMBER_ROW, ONE_HANDED, FLOATING, FLOAT_X, FLOAT_Y, HAPTICS, KEY_SOUND, SOUND_VOLUME,
             KEY_FONT, BANGLA_KEY_FONT, SOUND_PACK, SPLIT_KEYS, FESTIVAL_THEMES,
         ).map { it.name }.toSet()

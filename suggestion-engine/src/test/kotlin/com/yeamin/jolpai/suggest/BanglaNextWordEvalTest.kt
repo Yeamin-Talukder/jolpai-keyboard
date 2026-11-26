@@ -20,10 +20,13 @@ class BanglaNextWordEvalTest {
         val pairs = text("/bn/bangla-nextwords.tsv")
         val triples = text("/bn/bangla-trigrams.tsv")
 
-        fun run(name: String, list: BanglaNextWords?, learn: Boolean) {
+        // LM_BN_MODEL (a .nwp.bin file) or the bundled model, for the "+ model" rows.
+        val model = System.getenv("LM_BN_MODEL")?.let { NextWordModel.read(File(it).inputStream()) } ?: NextWordModel.loadBangla()
+
+        fun run(name: String, list: BanglaNextWords?, learn: Boolean, useModel: Boolean = false) {
             dict.nextWords = list
             val history = UserHistory()
-            val s = Suggester({ null }, { dict }, { null }, history)
+            val s = Suggester({ null }, { dict }, { null }, history, banglaModel = { model })
             var n = 0
             var hit = 0
             var startN = 0
@@ -37,7 +40,7 @@ class BanglaNextWordEvalTest {
                     for (i in w.indices) {
                         if (i == 0 && !start) continue // a word run after a break is not a sentence start
                         val prev = w.getOrNull(i - 1)
-                        val got = s.nextWords(Language.BANGLA, prev, 3, SuggestOptions(context = w.subList(0, i)))
+                        val got = s.nextWords(Language.BANGLA, prev, 3, SuggestOptions(context = w.subList(0, i), useModel = useModel))
                         val ok = got.any { BanglaNextWords.normalize(it) == BanglaNextWords.normalize(w[i]) }
                         n++; if (ok) hit++
                         if (i == 0) { startN++; if (ok) startHit++ }
@@ -56,6 +59,11 @@ class BanglaNextWordEvalTest {
         run("pair list", BanglaNextWords.of(pairs), learn = false)
         run("pair + three-word list", BanglaNextWords.of(pairs, triples), learn = false)
         run("pair + three-word list + learning", BanglaNextWords.of(pairs, triples), learn = true)
+        if (model != null) {
+            run("model only", null, learn = false, useModel = true)
+            run("lists + model", BanglaNextWords.of(pairs, triples), learn = false, useModel = true)
+            run("lists + model + learning", BanglaNextWords.of(pairs, triples), learn = true, useModel = true)
+        }
         dict.nextWords = BanglaNextWords.of(pairs, triples)
     }
 }

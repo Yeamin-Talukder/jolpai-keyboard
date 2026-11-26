@@ -184,6 +184,9 @@ class Prepare(
     private val repeatEveryday: Int = 1,
     /** Wikipedia is cut off after this many words. */
     private val wikiWords: Long = Long.MAX_VALUE,
+    /** Sources that count once, not [repeatEveryday] times, each cut off after [onceWords] words (the large web chat set). */
+    private val once: Set<String> = emptySet(),
+    private val onceWords: Long = Long.MAX_VALUE,
 ) {
 
     private fun hash(words: List<String>): Long {
@@ -271,12 +274,20 @@ class Prepare(
         // Everyday text is what people type: it counts [repeatEveryday] times, and the encyclopedia
         // is cut to [wikiWords] words (enough for spellings, not enough to set the style).
         fun isWiki(f: File) = f.name.contains("wikipedia")
-        fun repeats(f: File) = if (isWiki(f)) 1 else repeatEveryday
+        fun isOnce(f: File) = f.name.removePrefix("sentences-").removePrefix("valid-").removeSuffix(".txt") in once
+        fun repeats(f: File) = if (isWiki(f) || isOnce(f)) 1 else repeatEveryday
+        fun cap(f: File) = when {
+            f.name.startsWith("valid-") -> Long.MAX_VALUE
+            isWiki(f) -> wikiWords
+            isOnce(f) -> onceWords
+            else -> Long.MAX_VALUE
+        }
         fun linesOf(f: File, each: (String) -> Unit) {
             var words = 0L
+            val limit = cap(f)
             f.bufferedReader().useLines { seq ->
                 for (line in seq) {
-                    if (isWiki(f) && words >= wikiWords) break
+                    if (words >= limit) break
                     words += line.count { it == ' ' } + 1
                     each(line)
                 }

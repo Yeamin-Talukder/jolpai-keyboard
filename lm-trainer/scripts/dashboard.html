@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bangla Model Training</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Jolpai training dashboard: reads progress.json (written by train_torch.py) every 15 s. */
+  :root {
+    --bg: #f6f7f4; --card: #ffffff; --ink: #1d2320; --muted: #66706a; --line: #e3e6e1; --grid: #eef0ec;
+    --accent: #5b7f2a; --accent-soft: #e9f0dc; --warn: #b4541f; --warn-soft: #fbe9df; --track: #e6e9e3;
+    --s1: #5b7f2a; --s2: #2f6fb0; --s3: #c2452d; --s4: #8a55b8; --s5: #c58a12; --s6: #1d9a8a; --s7: #8b8f8c;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #111412; --card: #1a1e1b; --ink: #e8ece8; --muted: #9aa49d; --line: #2b312d; --grid: #232825;
+      --accent: #9cc65a; --accent-soft: #263220; --warn: #f08a55; --warn-soft: #3a261b; --track: #2a302c;
+      --s1: #9cc65a; --s2: #6aa8e8; --s3: #ef7a62; --s4: #b991e0; --s5: #e6b54a; --s6: #4cc7b5; --s7: #a3a8a5;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #111412; --card: #1a1e1b; --ink: #e8ece8; --muted: #9aa49d; --line: #2b312d; --grid: #232825;
+    --accent: #9cc65a; --accent-soft: #263220; --warn: #f08a55; --warn-soft: #3a261b; --track: #2a302c;
+    --s1: #9cc65a; --s2: #6aa8e8; --s3: #ef7a62; --s4: #b991e0; --s5: #e6b54a; --s6: #4cc7b5; --s7: #a3a8a5;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 Inter, system-ui, sans-serif; }
+  .bn { font-family: "Noto Sans Bengali", Inter, system-ui, sans-serif; }
+  main { max-width: 1120px; margin: 0 auto; padding: 28px 16px 48px; }
+  header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; margin-bottom: 20px; }
+  h1 { font-size: 22px; margin: 0; letter-spacing: -0.01em; }
+  h2 { font-size: 15px; margin: 0 0 12px; }
+  .sub { color: var(--muted); font-size: 13px; }
+  .pill { display: inline-flex; align-items: center; gap: 7px; padding: 4px 11px; border-radius: 999px; font-size: 13px; font-weight: 600;
+          background: var(--accent-soft); color: var(--accent); }
+  .pill::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+  .pill.live::before { animation: pulse 1.6s infinite; }
+  .pill.warn { background: var(--warn-soft); color: var(--warn); }
+  @keyframes pulse { 50% { opacity: .3; } }
+  .spacer { flex: 1; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px; }
+  .grid { display: grid; gap: 14px; }
+  .tiles { grid-template-columns: repeat(4, 1fr); margin: 14px 0; }
+  .tile .label { color: var(--muted); font-size: 12.5px; }
+  .tile .value { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .tile .note { color: var(--muted); font-size: 12.5px; }
+  .bar { height: 12px; border-radius: 6px; background: var(--track); overflow: hidden; margin: 10px 0 8px; }
+  .bar > div { height: 100%; background: var(--accent); border-radius: 6px; transition: width .6s; }
+  .row { display: flex; flex-wrap: wrap; gap: 6px 20px; color: var(--muted); font-size: 13px; }
+  .row b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .two { grid-template-columns: 1fr 1fr; margin-top: 14px; }
+  svg { display: block; width: 100%; height: auto; overflow: visible; }
+  svg text { fill: var(--muted); font: 11px Inter, system-ui, sans-serif; }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 10px; font-size: 12.5px; color: var(--muted); }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 3px; border-radius: 2px; margin-right: 6px; vertical-align: middle; background: var(--c); }
+  .legend span.hl { color: var(--ink); font-weight: 600; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th { text-align: left; color: var(--muted); font-weight: 500; font-size: 12.5px; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+  td { padding: 7px 8px; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; vertical-align: top; }
+  td.num, th.num { text-align: right; }
+  .samples { grid-template-columns: repeat(2, 1fr); }
+  .sample .q { font-weight: 600; margin-bottom: 6px; }
+  .guess { display: grid; grid-template-columns: minmax(70px, auto) 1fr 44px; gap: 8px; align-items: center; font-size: 14px; margin: 3px 0; }
+  .guess .g { height: 7px; border-radius: 4px; background: var(--accent); opacity: .75; }
+  .guess .p { color: var(--muted); font-size: 12px; text-align: right; font-variant-numeric: tabular-nums; }
+  .empty { color: var(--muted); font-size: 13.5px; padding: 20px 0; text-align: center; }
+  .hint { color: var(--muted); font-size: 12.5px; margin-top: 8px; }
+  .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+  .steps li { display: grid; grid-template-columns: 22px 1fr auto; gap: 10px; align-items: baseline; font-size: 14px; }
+  .steps .dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--line); align-self: center; }
+  .steps li.done .dot { background: var(--accent); border-color: var(--accent); }
+  .steps li.active .dot { border-color: var(--accent); animation: pulse 1.6s infinite; }
+  .steps li.pending { color: var(--muted); }
+  .steps .when { color: var(--muted); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+  .steps .note { grid-column: 2 / 4; color: var(--muted); font-size: 12.5px; margin-top: -4px; }
+  footer { color: var(--muted); font-size: 12.5px; margin-top: 22px; }
+  button { font: inherit; font-size: 12.5px; color: var(--muted); background: none; border: 1px solid var(--line); border-radius: 8px; padding: 4px 10px; cursor: pointer; }
+  @media (max-width: 820px) { .tiles { grid-template-columns: repeat(2, 1fr); } .two, .samples { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1 id="title">Jolpai Bangla model training</h1>
+      <div class="sub" id="subtitle">Waiting for the first update…</div>
+    </div>
+    <div class="spacer"></div>
+    <span class="pill" id="status">Loading</span>
+    <button id="theme" title="Switch light / dark">◐</button>
+  </header>
+
+  <section class="card" id="stepsCard" hidden style="margin-bottom:14px">
+    <h2>Steps</h2>
+    <ol class="steps" id="steps"></ol>
+  </section>
+
+  <section class="card">
+    <div class="row"><span>Training progress</span><span class="spacer"></span><b id="pct">0%</b></div>
+    <div class="bar"><div id="bar" style="width:0%"></div></div>
+    <div class="row">
+      <span>Passes over the data <b id="passes">–</b></span>
+      <span>Elapsed <b id="elapsed">–</b></span>
+      <span>Time left <b id="eta">–</b></span>
+      <span>Speed <b id="speed">–</b></span>
+      <span>Last update <b id="updated">–</b></span>
+    </div>
+  </section>
+
+  <section class="grid tiles">
+    <div class="card tile"><div class="label">Best everyday perplexity</div><div class="value" id="bestPpl">–</div><div class="note" id="bestNote">lower is better</div></div>
+    <div class="card tile"><div class="label" id="mainLabel">Chat: right word in top 3</div><div class="value" id="chatTop3">–</div><div class="note" id="chatNote">on held-out sentences</div></div>
+    <div class="card tile"><div class="label">Training perplexity</div><div class="value" id="trainPpl">–</div><div class="note">recent batches</div></div>
+    <div class="card tile"><div class="label">Learning rate</div><div class="value" id="lr">–</div><div class="note">slowly lowered to the end</div></div>
+  </section>
+
+  <section class="grid two">
+    <div class="card">
+      <h2>Held-out perplexity</h2>
+      <div id="pplChart"></div>
+      <div class="legend" id="pplLegend"></div>
+      <div class="hint">How surprised the model is by sentences it never trained on. Lower is better; log scale.</div>
+    </div>
+    <div class="card">
+      <h2>Right next word in the top 3</h2>
+      <div id="accChart"></div>
+      <div class="legend" id="accLegend"></div>
+      <div class="hint">How often the word that really came next is among the model's first three guesses.</div>
+    </div>
+  </section>
+
+  <section class="card" style="margin-top:14px">
+    <h2>Training perplexity</h2>
+    <div id="trainChart"></div>
+  </section>
+
+  <section class="card" style="margin-top:14px">
+    <h2>What the model guesses next</h2>
+    <div class="sub" id="samplesNote" style="margin:-6px 0 12px">From the latest measurement.</div>
+    <div class="grid samples" id="samples"><div class="empty">Shown after the first measurement.</div></div>
+  </section>
+
+  <section class="card" style="margin-top:14px">
+    <h2>Latest measurement by test set</h2>
+    <div id="table"><div class="empty">Shown after the first measurement.</div></div>
+  </section>
+
+  <footer id="footer"></footer>
+</main>
+
+<script>
+let MAIN = "chat";
+const NAMES = { chat: "Chat (web)", youtube: "YouTube comments", subtitles: "Subtitles", commonvoice: "Common Voice",
+  tatoeba: "Tatoeba", online: "Online comments", wikipedia: "Wikipedia" };
+const ORDER = ["chat", "youtube", "subtitles", "commonvoice", "tatoeba", "online", "wikipedia"];
+const COLOR = { chat: "--s1", youtube: "--s2", subtitles: "--s3", commonvoice: "--s4", tatoeba: "--s5", online: "--s6", wikipedia: "--s7" };
+const $ = id => document.getElementById(id);
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+let last = null;
+
+try { const t = localStorage.getItem("theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+$("theme").onclick = () => {
+  const dark = document.documentElement.dataset.theme
+    ? document.documentElement.dataset.theme === "dark"
+    : matchMedia("(prefers-color-scheme: dark)").matches;
+  document.documentElement.dataset.theme = dark ? "light" : "dark";
+  try { localStorage.setItem("theme", document.documentElement.dataset.theme); } catch (e) {}
+  if (last) render(last);
+};
+
+function fmtMin(m) {
+  if (m == null || !isFinite(m)) return "–";
+  const h = Math.floor(m / 60), mm = Math.round(m % 60);
+  return h ? `${h} h ${mm} min` : `${mm} min`;
+}
+function ago(s) {
+  if (s < 60) return `${Math.round(s)} s ago`;
+  return `${Math.round(s / 60)} min ago`;
+}
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+// A small line chart: series = [{key, pts: [[x, y]], color, width}]
+function lineChart(el, series, opts) {
+  // Drawn at the element's real width, so text stays 11 px on any screen.
+  const W = Math.max(280, Math.round(el.clientWidth || 520)), H = opts.h || 230, L = 46, R = 12, T = 10, B = 28;
+  const all = series.flatMap(s => s.pts);
+  if (all.length < 1) { el.innerHTML = '<div class="empty">Shown after the first measurement.</div>'; return; }
+  const xs = all.map(p => p[0]);
+  let x0 = Math.min(...xs), x1 = Math.max(...xs); if (x1 - x0 < 1) x1 = x0 + 1;
+  const tf = opts.log ? Math.log : (v => v), itf = opts.log ? Math.exp : (v => v);
+  let ys = all.map(p => tf(p[1]));
+  let y0 = Math.min(...ys), y1 = Math.max(...ys);
+  if (opts.zero) y0 = Math.min(y0, 0);
+  if (y1 - y0 < 1e-6) { y1 += 0.5; y0 -= 0.5; }
+  const pad = (y1 - y0) * 0.08; y0 -= opts.zero ? 0 : pad; y1 += pad;
+  const X = x => L + (x - x0) / (x1 - x0) * (W - L - R);
+  const Y = y => T + (1 - (tf(y) - y0) / (y1 - y0)) * (H - T - B);
+  let g = "";
+  // y ticks
+  const ticks = 4;
+  for (let i = 0; i <= ticks; i++) {
+    const v = itf(y0 + (y1 - y0) * i / ticks);
+    const y = Y(v);
+    g += `<line x1="${L}" x2="${W - R}" y1="${y}" y2="${y}" stroke="${css("--grid")}"/>`;
+    g += `<text x="${L - 6}" y="${y + 4}" text-anchor="end">${opts.fmt ? opts.fmt(v) : Math.round(v)}</text>`;
+  }
+  // x ticks (minutes)
+  const seenX = new Set();
+  for (let i = 0; i <= 4; i++) {
+    const v = x0 + (x1 - x0) * i / 4, label = fmtMin(v);
+    if (seenX.has(label)) continue; // no repeated labels while the run is short
+    seenX.add(label);
+    g += `<text x="${X(v)}" y="${H - 8}" text-anchor="middle">${label}</text>`;
+  }
+  for (const s of series) {
+    if (!s.pts.length) continue;
+    const d = s.pts.map((p, i) => `${i ? "L" : "M"}${X(p[0]).toFixed(1)},${Y(p[1]).toFixed(1)}`).join("");
+    g += `<path d="${d}" fill="none" stroke="${s.color}" stroke-width="${s.width || 2}" stroke-linejoin="round" stroke-linecap="round" opacity="${s.dim ? 0.55 : 1}"/>`;
+    const p = s.pts[s.pts.length - 1];
+    g += `<circle cx="${X(p[0])}" cy="${Y(p[1])}" r="${s.width > 2 ? 4 : 3}" fill="${s.color}"/>`;
+  }
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(opts.label || "chart")}">${g}</svg>`;
+}
+
+function legend(el, keys) {
+  el.innerHTML = keys.map(k => `<span class="${k === MAIN ? "hl" : ""}" style="--c:${css(COLOR[k] || "--s7")}">${esc(NAMES[k] || k)}</span>`).join("");
+}
+
+function renderSteps(p) {
+  const steps = p.steps || [];
+  $("stepsCard").hidden = !steps.length;
+  $("steps").innerHTML = steps.map(s => `<li class="${esc(s.state || "pending")}"><span class="dot"></span><span>${esc(s.name)}</span><span class="when">${esc(s.when || "")}</span>${s.note ? `<span class="note">${esc(s.note)}</span>` : ""}</li>`).join("");
+}
+
+function render(p) {
+  last = p;
+  if (p.title) { $("title").textContent = p.title; document.title = p.title; }
+  if (p.labels) Object.assign(NAMES, p.labels);
+  if (p.order) { ORDER.length = 0; ORDER.push(...p.order); p.order.forEach((k, i) => COLOR[k] = COLOR[k] || `--s${(i % 7) + 1}`); }
+  if (p.main) MAIN = p.main;
+  $("mainLabel").textContent = `${NAMES[MAIN] || MAIN}: right word in top 3`;
+  renderSteps(p);
+  const c = p.config || {}, n = p.now || {};
+  const age = (Date.now() / 1000) - (p.updated || 0);
+  const st = $("status");
+  st.className = "pill";
+  if (p.status === "done") { st.textContent = "Finished"; }
+  else if (age > 180) { st.textContent = "No update for " + Math.round(age / 60) + " min"; st.classList.add("warn"); }
+  else if (p.status_text) { st.textContent = p.status_text; st.classList.add("live"); }
+  else if (p.status === "measuring") { st.textContent = "Measuring on test sets"; st.classList.add("live"); }
+  else { st.textContent = "Training"; st.classList.add("live"); }
+
+  if (!p.config) { $("subtitle").textContent = p.note || "Getting the data ready"; return; }
+  $("subtitle").textContent = `LSTM ${c.hidden} cells, ${c.dim}-number word vectors, ${(c.vocab || 0).toLocaleString()} words · ${((c.params || 0) / 1e6).toFixed(1)} M numbers · ${((c.tokens_per_pass || 0) / 1e6).toFixed(1)} M words per pass · on ${c.device === "mps" ? "the Mac's GPU" : c.device}`;
+  const planned = c.planned_passes || 1;
+  const frac = Math.min(1, (n.passes || 0) / planned);
+  const byTime = c.minutes_budget ? Math.min(1, (n.elapsed_min || 0) / c.minutes_budget) : 0;
+  const pct = p.status === "done" ? 1 : Math.max(frac, 0);
+  $("bar").style.width = (pct * 100).toFixed(1) + "%";
+  $("pct").textContent = Math.round(pct * 100) + "%";
+  $("passes").textContent = `${(n.passes || 0).toFixed(2)} of ${planned}`;
+  $("elapsed").textContent = fmtMin(n.elapsed_min);
+  $("eta").textContent = p.status === "done" ? "done" : fmtMin(n.eta_min);
+  $("speed").textContent = n.tokens_per_s ? `${Math.round(n.tokens_per_s).toLocaleString()} words/s` : "–";
+  $("updated").textContent = p.updated ? ago(age) : "–";
+  $("lr").textContent = n.lr ? n.lr.toExponential(1) : "–";
+
+  const evals = p.evals || [];
+  const lastE = evals[evals.length - 1];
+  $("bestPpl").textContent = p.best ? Math.round(p.best.everyday_ppl) : "–";
+  $("bestNote").textContent = p.best ? `lower is better · saved at ${fmtMin(p.best.min)}` : "lower is better";
+  const ch = lastE && lastE.sets && lastE.sets[MAIN];
+  $("chatTop3").textContent = ch ? ch.top3.toFixed(1) + "%" : "–";
+  if (ch && evals.length > 1) {
+    const first = evals[0].sets[MAIN];
+    $("chatNote").textContent = first ? `was ${first.top3.toFixed(1)}% at the first measurement` : "on held-out sentences";
+  }
+  const tr = p.train || [];
+  $("trainPpl").textContent = tr.length ? Math.round(tr[tr.length - 1][1]) : "–";
+
+  const keys = ORDER.filter(k => evals.some(e => e.sets && e.sets[k])).concat(
+    Object.keys((lastE && lastE.sets) || {}).filter(k => !ORDER.includes(k)));
+  const mk = metric => keys.map(k => ({
+    key: k, color: css(COLOR[k] || "--s7"), width: k === MAIN ? 3 : 1.75, dim: k === "wikipedia",
+    pts: evals.filter(e => e.sets && e.sets[k]).map(e => [e.min, e.sets[k][metric]]),
+  }));
+  lineChart($("pplChart"), mk("ppl"), { log: true, label: "Held-out perplexity over time" });
+  lineChart($("accChart"), mk("top3"), { fmt: v => v.toFixed(0) + "%", label: "Top-3 accuracy over time" });
+  legend($("pplLegend"), keys); legend($("accLegend"), keys);
+  // Training perplexity: drop the first noisy minutes so the scale stays readable.
+  const trPts = tr.length > 6 ? tr.slice(Math.min(4, tr.length - 2)) : tr;
+  lineChart($("trainChart"), [{ key: "train", color: css("--accent"), width: 2, pts: trPts }], { log: true, h: 170, label: "Training perplexity" });
+
+  const samples = p.samples || [];
+  if (samples.length) {
+    $("samplesNote").textContent = lastE ? `From the measurement at ${fmtMin(lastE.min)}, ${lastE.passes.toFixed(2)} passes in.` : "";
+    $("samples").innerHTML = samples.map(s => {
+      const max = Math.max(...s.top.map(t => t[1]), 0.0001);
+      return `<div class="sample"><div class="q bn">${esc(s.text)} …</div>` + s.top.map(t =>
+        `<div class="guess"><span class="bn">${esc(t[0] === "</s>" ? "(sentence ends)" : t[0])}</span><div class="g" style="width:${(t[1] / max * 100).toFixed(0)}%"></div><span class="p">${(t[1] * 100).toFixed(1)}%</span></div>`
+      ).join("") + "</div>";
+    }).join("");
+  }
+
+  if (lastE) {
+    const first = evals[0];
+    $("table").innerHTML = `<table><thead><tr><th>Test set</th><th class="num">Perplexity</th><th class="num">Top 3</th><th class="num">Top 3 at start</th></tr></thead><tbody>` +
+      keys.map(k => {
+        const s = lastE.sets[k]; if (!s) return "";
+        const f = first.sets[k];
+        return `<tr><td>${esc(NAMES[k] || k)}</td><td class="num">${Math.round(s.ppl)}</td><td class="num">${s.top3.toFixed(1)}%</td><td class="num">${f ? f.top3.toFixed(1) + "%" : "–"}</td></tr>`;
+      }).join("") + `</tbody></table>`;
+  }
+  $("footer").textContent = `${(c.sentences || 0).toLocaleString()} training sentences · measured every ${c.eval_minutes} min · page refreshes every 15 s`;
+}
+
+// meta.json (optional, written by whoever runs the job): title, test-set names, steps, a note
+// while the data is prepared. progress.json is written by the trainer.
+async function getJson(name) {
+  const r = await fetch(name + "?t=" + Date.now(), { cache: "no-store" });
+  return r.ok ? r.json() : null;
+}
+async function poll() {
+  try {
+    const [meta, prog] = await Promise.all([getJson("meta.json").catch(() => null), getJson("progress.json").catch(() => null)]);
+    if (prog || meta) {
+      const m = Object.assign({}, meta || {});
+      if (prog) { delete m.status; delete m.status_text; delete m.updated; } // the trainer's own state wins
+      const p = Object.assign({}, prog || {}, m);
+      if (!prog && p.status !== "done") p.status = p.status || "preparing";
+      render(p);
+    } else $("subtitle").textContent = "Waiting for the trainer to write its first update…";
+  } catch (e) {
+    $("status").textContent = "Can't reach the Mac"; $("status").className = "pill warn";
+  }
+}
+poll();
+setInterval(poll, 15000);
+let resizeTimer;
+addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => last && render(last), 150); });
+setInterval(() => { if (last) $("updated").textContent = ago(Date.now() / 1000 - last.updated); }, 5000);
+</script>
+</body>
+</html>

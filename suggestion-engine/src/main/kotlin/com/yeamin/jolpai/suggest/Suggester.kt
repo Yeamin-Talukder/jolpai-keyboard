@@ -28,6 +28,8 @@ data class SuggestOptions(
     val context: List<String> = emptyList(),
     /** Rank by context with the on-device next-word model (when it is loaded). */
     val useModel: Boolean = false,
+    /** Offer Banglish words (Bangla in English letters) on the English layout. */
+    val banglish: Boolean = true,
 )
 
 /**
@@ -53,6 +55,10 @@ class Suggester(
     banglaModel: () -> NextWordModel? = { null },
     /** Bangla next words: how much the model's choice counts against the list and history. */
     internal val banglaNextWeight: Float = BANGLA_NEXT_MODEL,
+    /** Banglish spellings (Bangla in English letters), offered on the English layout; null until loaded. */
+    private val banglish: () -> BanglishWords? = { null },
+    /** The Banglish next-word model (trained on real Banglish; null until loaded or if missing). */
+    banglishModel: () -> NextWordModel? = { null },
 ) {
     /** The next-word model with its caches, shared by suggestions, touch and the checker. */
     val lm = LanguageModel(model)
@@ -60,11 +66,14 @@ class Suggester(
     /** The Bangla next-word model with its caches (Avro, জাতীয়, প্রভাত). */
     val lmBangla = LanguageModel(banglaModel)
 
+    /** The Banglish next-word model with its caches (Banglish on the English layout). */
+    val lmBanglish = LanguageModel(banglishModel)
+
     /** Next-character probabilities for predictive touch targets. */
     val nextChars = NextCharPredictor(english, bangla, avro, history, lm)
 
     /** Recognises Bangla typed in English letters (kept away from English autocorrect and the checker). */
-    val romanBangla = RomanBangla(english, bangla, avro)
+    val romanBangla = RomanBangla(english, bangla, avro, banglish)
 
     /** Offline spelling, punctuation and grammar checking (the ✓ Check tool). */
     val checker = TextChecker(english, bangla, history, costs, lm, romanBangla)
@@ -77,7 +86,16 @@ class Suggester(
 
         val lower = typed.lowercase()
         val entry = dict.lookup(typed)
-        val known = entry != null || history.isKnown(Language.ENGLISH, typed)
+        // Banglish: words that sound like [typed] in the Banglish list, and whether the sentence is Banglish.
+        val bw = if (options.banglish) banglish() else null
+        val banglishHere = bw != null && isBanglishSentence(options.context)
+        // In a Banglish sentence the Bangla model reads it (as Bangla) and ranks more Banglish words.
+        val pBanglish = if (bw != null && banglishHere) banglishGuess(bw, options.context, options.useModel) else null
+        val banglishFound = if (bw != null && lower.all { it in 'a'..'z' }) {
+            bw.completions(lower, if (pBanglish != null) BANGLISH_COMPLETIONS * 3 else BANGLISH_COMPLETIONS, allowOffensive = !options.blockOffensive)
+        } else emptyList()
+        val banglishWord = bw?.lookup(lower)?.takeIf { (entry == null || entry.frequency < RomanBangla.RARE_ENGLISH) && (banglishHere || typed.length >= RomanBangla.MIN_LONE_LENGTH && it.frequency >= LONE_BANGLISH) }
+        val known = entry != null || banglishWord != null || history.isKnown(Language.ENGLISH, typed)
         // What the sentence so far makes likely (null without the model).
         val p = if (options.useModel) lm.predict(options.context) else null
         val scored = LinkedHashMap<String, Float>()
@@ -98,7 +116,31 @@ class Suggester(
             // With the model, more candidates are fetched and the sentence picks among them.
             if (p != null) corrections = corrections.sortedByDescending { rank(it, p) }.take(4)
             correction = corrections.firstOrNull()
-            corrections.forEachIndexed { i, c -> add(c.word, 600f - i + rank(c, p) / 1000f) }
+            // In a Banglish sentence a word that may be Banglish isn't treated as an English typo:
+            // English fixes rank by frequency with everything else instead of first.
+            val fixesFirst = !(banglishHere && banglishFound.isNotEmpty())
+            corrections.forEachIndexed { i, c -> add(c.word, if (fixesFirst) 600f - i + rank(c, p) / 1000f else rank(c, p) - BANGLISH_FIX_PENALTY) }
+        }
+
+        // Banglish words, in the spelling the user writes them (valo or bhalo). Ranked with English
+        // words in a Banglish sentence, below them in an English one.
+        if (bw != null && banglishFound.isNotEmpty()) {
+            val penalty = when {
+                banglishHere -> -BANGLISH_SENTENCE_BONUS
+                options.context.isEmpty() -> BANGLISH_NEUTRAL_PENALTY
+                else -> BANGLISH_ENGLISH_PENALTY
+            }
+            // The user's own Banglish words that sound like this (typed "valob", writes bhalobashi),
+            // by their folded form: they replace the list's spelling of the same word.
+            val key = BanglishFold.fold(lower)
+            val mine = HashMap<String, String>()
+            history.wordsMatching(Language.ENGLISH, BANGLISH_COMPLETIONS * 2) { w ->
+                BanglishFold.fold(w).startsWith(key) && dict.lookup(w).let { it == null || it.frequency < RomanBangla.RARE_ENGLISH }
+            }.forEach { (w, _) -> mine.putIfAbsent(BanglishFold.fold(w), w) }
+            banglishFound.forEach { e ->
+                val shown = mine[BanglishFold.fold(e.spelling)] ?: bw.bestSpelling(e) { history.count(Language.ENGLISH, it) }
+                add(shown, blendBanglish(e, pBanglish) - penalty + 25f * ln(1f + history.count(Language.ENGLISH, shown)))
+            }
         }
 
         // The user's own words (personal dictionary, or typed before) outrank dictionary guesses.
@@ -123,6 +165,9 @@ class Suggester(
             shortcut != null -> applyCase(typed, shortcut)
             // Bangla in English letters ("tumi kemon acho"): never turned into English words.
             isRomanBanglaHere(typed, options.context) -> null
+            banglishWord != null -> null
+            // Possibly a Banglish word still being typed, in a Banglish sentence.
+            banglishHere && banglishFound.isNotEmpty() -> null
             // Known word in the wrong case, e.g. "i" → "I".
             entry != null -> applyCase(typed, entry.word).takeIf { it != typed && typed == lower && entry.word != lower }
             known -> null
@@ -140,6 +185,16 @@ class Suggester(
         if (!romanBangla.isRomanBangla(typed)) return false
         return typed.length >= RomanBangla.MIN_LONE_LENGTH || context.takeLast(4).any { romanBangla.isRomanBangla(it) }
     }
+
+    /**
+     * The last few words of the sentence include Banglish: a word the Avro search reads as common
+     * Bangla ([RomanBangla]) or a common Banglish spelling that isn't a common English word
+     * (kmn, tmr, valo).
+     */
+    private fun isBanglishSentence(context: List<String>): Boolean = context.takeLast(4).any(romanBangla::isRomanBangla)
+
+    /** [word] is Banglish (for callers outside suggestions, e.g. next words): see [RomanBangla.isRomanBangla]. */
+    fun isBanglish(word: String): Boolean = romanBangla.isRomanBangla(word)
 
     /**
      * A word's frequency (0–255, the word list's log scale) blended with how likely the model
@@ -275,7 +330,13 @@ class Suggester(
         }
         val learned = learnedScores.map { it.first }
         val dict = english()
-        val p = if (language == Language.ENGLISH && options.useModel) lm.predict(options.context) else null
+        // After a Banglish word the English model only guesses English: the Bangla model reads the
+        // sentence as Bangla instead, and its guesses are offered in Banglish.
+        val afterBanglish = options.banglish && previous != null && isBanglish(previous)
+        if (afterBanglish && language == Language.ENGLISH) {
+            banglish()?.let { bw -> return banglishNextWords(bw, learnedScores, options, limit, capitalize) }
+        }
+        val p = if (language == Language.ENGLISH && options.useModel && !afterBanglish) lm.predict(options.context) else null
         if (p == null || dict == null) return learned.take(limit)
         val scores = LinkedHashMap<String, Float>()
         val accept = { w: String -> dict.contains(w) && (!options.blockOffensive || !dict.isOffensive(w)) }
@@ -331,6 +392,128 @@ class Suggester(
         return scores.entries.sortedByDescending { it.value }.take(limit).map { forms[it.key] ?: it.key }
     }
 
+    // ------------------------------------------------------------------ Banglish with a model
+
+    /**
+     * What a model expects next in a Banglish sentence, in Banglish words: [logProb] of a Banglish
+     * spelling, and the [top] guesses as Banglish spellings with their log-probabilities.
+     */
+    private class BanglishGuess(
+        val logProb: (String) -> Float?,
+        val top: (Int, (String) -> Boolean) -> List<Pair<String, Float>>,
+    )
+
+    /**
+     * The Banglish model when it is loaded (it reads Banglish as written, English words and
+     * shorthand included), else the Bangla model reading the sentence turned into Bangla. Null
+     * without either, or with predictions off.
+     */
+    private fun banglishGuess(bw: BanglishWords, context: List<String>, useModel: Boolean): BanglishGuess? {
+        if (!useModel) return null
+        val direct = lmBanglish.loaded
+        if (direct != null && banglishSource != BanglishSource.VIA_BANGLA) {
+            val p = lmBanglish.predict(context.map { banglishToken(direct, it) }) ?: return null
+            return BanglishGuess(
+                logProb = { w -> p.logProb(banglishToken(direct, w)) },
+                top = { k, accept -> p.top(k, accept = accept) },
+            )
+        }
+        val p = lmBangla.predict(banglishContext(bw, context)) ?: return null
+        return BanglishGuess(
+            logProb = { w -> banglaFor(bw, w)?.let { p.logProb(it) } },
+            top = { k, accept ->
+                p.top(k) { b -> bw.forBangla(b)?.let { accept(it.spelling) } == true }.map { (b, lp) -> bw.forBangla(b)!!.spelling to lp }
+            },
+        )
+    }
+
+    /** Which model reads Banglish (a setting only for measuring). */
+    internal enum class BanglishSource { AUTO, VIA_BANGLA }
+    internal var banglishSource = BanglishSource.AUTO
+
+    /** The Banglish model's word for [word]: the model's spelling of the word that sounds the same (bhalo → valo). */
+    private fun banglishToken(m: NextWordModel, word: String): String {
+        val l = word.lowercase()
+        val map = synchronized(this) {
+            if (spellingModel !== m) {
+                val byFold = HashMap<String, String>(m.words.size * 2)
+                for (i in NextWordModel.FIRST_WORD until m.words.size) byFold.putIfAbsent(BanglishFold.fold(m.words[i]).ifEmpty { m.words[i] }, m.words[i])
+                spellingByFold = byFold
+                spellingModel = m
+            }
+            spellingByFold
+        }
+        return map[BanglishFold.fold(l).ifEmpty { l }] ?: l
+    }
+    private var spellingModel: NextWordModel? = null
+    private var spellingByFold: Map<String, String> = emptyMap()
+
+    /**
+     * The sentence as the Bangla model reads it: each Banglish word as its Bangla word (ami → আমি,
+     * from the list, else the Avro search's most common reading), other words as typed (the model
+     * reads them as unknown).
+     */
+    private fun banglishContext(bw: BanglishWords, context: List<String>): List<String> = context.map { banglaFor(bw, it) ?: it }
+
+    private fun banglaFor(bw: BanglishWords, word: String): String? {
+        val l = word.lowercase()
+        if (l.isEmpty() || !l.all { it in 'a'..'z' }) return null
+        bw.banglaOf(l)?.let { return BanglaNextWords.normalize(it) }
+        if (!romanBangla.isRomanBangla(l)) return null
+        val dict = bangla() ?: return null
+        return avro()?.matches(l)?.maxByOrNull { dict.frequency(it) }?.let(BanglaNextWords::normalize)
+    }
+
+    /** A Banglish word's frequency blended with how likely the model finds it here (as [blend]). */
+    private fun blendBanglish(e: BanglishWords.Entry, g: BanglishGuess?): Float {
+        val lp = g?.logProb?.invoke(e.spelling) ?: return e.frequency.toFloat()
+        return (1 - modelWeight) * e.frequency + modelWeight * (FREQ_AT_CERTAIN + FREQ_PER_NAT * lp)
+    }
+
+    /** A swear word by the Banglish list (any spelling of it). */
+    private fun isOffensiveBanglish(bw: BanglishWords, w: String): Boolean =
+        bw.lookup(w)?.offensive == true || bw.variants(w).any { bw.lookup(it)?.offensive == true }
+
+    /** How the user writes [spelling]: their most-typed spelling of the same word (valo or bhalo), else [spelling]. */
+    private fun usersSpelling(bw: BanglishWords, spelling: String): String {
+        var best = spelling
+        var bestCount = history.count(Language.ENGLISH, spelling)
+        for (v in bw.variants(spelling)) {
+            val c = history.count(Language.ENGLISH, v)
+            if (c > bestCount) { best = v; bestCount = c }
+        }
+        return best
+    }
+
+    /**
+     * Next words after a Banglish word: the model's guesses (see [banglishGuess]) in the user's
+     * spelling, with what the user typed there before boosted as for English. Without a model,
+     * only what the user typed there.
+     */
+    private fun banglishNextWords(
+        bw: BanglishWords,
+        learned: List<Pair<String, Float>>,
+        options: SuggestOptions,
+        limit: Int,
+        capitalize: Boolean,
+    ): List<String> {
+        val g = banglishGuess(bw, options.context, options.useModel)
+        val scores = HashMap<String, Float>() // by sound, so valo and bhalo count once
+        val forms = LinkedHashMap<String, String>()
+        fun put(spelling: String, score: Float) {
+            val k = BanglishFold.fold(spelling).ifEmpty { spelling }
+            forms.putIfAbsent(k, spelling) // learned words come first: the user's spelling stays
+            if (score > (scores[k] ?: Float.NEGATIVE_INFINITY)) scores[k] = score
+        }
+        learned.forEach { (w, s) -> put(w, (g?.logProb?.invoke(w) ?: LEARNED_FLOOR) + PAIR_BOOST * ln(1f + s)) }
+        g?.top?.invoke(MODEL_NEXT_WORDS * 2) { w -> !options.blockOffensive || !isOffensiveBanglish(bw, w) }
+            ?.forEach { (w, lp) -> put(usersSpelling(bw, w), lp) }
+        return scores.entries.sortedByDescending { it.value }.take(limit).map { (k, _) ->
+            val form = forms.getValue(k)
+            if (capitalize) form.replaceFirstChar { it.uppercaseChar() } else form
+        }
+    }
+
     /** The word before [previous] in the sentence, when [context] ends with [previous]. */
     private fun secondPrevious(previous: String?, context: List<String>): String? {
         if (previous.isNullOrBlank() || context.size < 2 || !context.last().equals(previous, ignoreCase = true)) return null
@@ -338,6 +521,20 @@ class Suggester(
     }
 
     companion object {
+        /** Banglish words fetched per typed word (variants of one word count once). */
+        private const val BANGLISH_COMPLETIONS = 4
+
+        /** A Banglish word typed alone (no other in the sentence) is left alone from this frequency (onek, kintu, valo). */
+        private const val LONE_BANGLISH = 140
+
+        /** Banglish words' score against English ones: in a Banglish sentence, at its start, in an English one. */
+        private const val BANGLISH_SENTENCE_BONUS = 20f
+        private const val BANGLISH_NEUTRAL_PENALTY = 25f
+        private const val BANGLISH_ENGLISH_PENALTY = 60f
+
+        /** In a Banglish sentence, English fixes for a possibly Banglish word rank this far below their frequency. */
+        private const val BANGLISH_FIX_PENALTY = 30f
+
         /** See [banglaNextWeight]: the model's best next word counts like a strong list match. */
         internal const val BANGLA_NEXT_MODEL = 1.5f
 

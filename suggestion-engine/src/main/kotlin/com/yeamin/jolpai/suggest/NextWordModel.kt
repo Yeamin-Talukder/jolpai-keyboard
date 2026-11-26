@@ -103,6 +103,9 @@ class NextWordModel private constructor(
         /** Loads the bundled Bangla model (trained for Jolpai with lm-trainer), or null. */
         fun loadBangla(): NextWordModel? = load("/lm/bn.nwp.bin")
 
+        /** The Banglish model (Bangla in English letters, trained on real Banglish); null if missing. */
+        fun loadBanglish(): NextWordModel? = load("/lm/banglish.nwp.bin")
+
         fun load(resource: String): NextWordModel? =
             NextWordModel::class.java.getResourceAsStream(resource)?.use { runCatching { read(it) }.getOrNull() }
 

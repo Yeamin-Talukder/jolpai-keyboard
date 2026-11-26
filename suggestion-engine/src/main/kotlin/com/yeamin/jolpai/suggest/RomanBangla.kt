@@ -18,6 +18,8 @@ class RomanBangla(
     private val english: () -> EnglishDictionary?,
     private val bangla: () -> BanglaDictionary?,
     private val avro: () -> AvroSuggester?,
+    /** Banglish spellings people use (kmn, tmr, valo), which also count when Avro reads them as nothing. */
+    private val banglish: () -> BanglishWords? = { null },
 ) {
     private val cache = object : LinkedHashMap<String, Int>(64, 0.75f, true) {
         override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Int>?) = size > 512
@@ -52,6 +54,7 @@ class RomanBangla(
         val dict = english() ?: return false
         val entry = dict.lookup(word)
         if (entry != null && entry.frequency >= RARE_ENGLISH) return false
+        if ((banglish()?.lookup(word)?.frequency ?: 0) >= LISTED) return true
         if (banglaFrequency(word) < STRONG) return false
         return entry != null || apostropheForm(dict, word) == null
     }
@@ -70,6 +73,9 @@ class RomanBangla(
     companion object {
         /** A Bangla word this common (seen about 180 times in the subtitle counts behind the list) counts as meant. */
         const val STRONG = 90
+
+        /** A Banglish list spelling this common (English list scale) counts as Banglish whatever Avro makes of it. */
+        const val LISTED = 120
 
         /** English words at least this common are English, whatever they spell in Avro. */
         const val RARE_ENGLISH = 100

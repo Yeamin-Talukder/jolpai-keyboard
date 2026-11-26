@@ -1,3 +1,57 @@
+Banglish next-word model (banglish.nwp.bin)
+
+Trained for Jolpai, 2026-11-26, with lm-trainer/scripts/train_torch.py (PyTorch) on text prepared by
+lm-trainer/scripts/banglish_prepare.py: Bangla written in English letters, as people really write it.
+One LSTM layer (512 cells, 128-number word vectors, projection, shared input and output vectors),
+15,000 words (spellings that sound alike merged, each written in its most common spelling), 8-bit
+weights, 2.8 MB.
+SHA-256: 9d5389d7583c357582fef84022b19c574c522c4ff1daf48bf9c6849a4784c22e
+The file holds learned weights and the 15,000-word vocabulary, never sentences.
+
+Trained on 4.1 million words (swear words and repeated sentences left out; some held out for testing):
+- BanglaTLit (https://github.com/farhanishmam/BanglaTLit; data https://huggingface.co/datasets/
+  aplycaebous/BanglaTLit): BanglaTLit-PT.txt, without its val and test sentences. Copyright (c) 2024
+  Aplycaebous, MIT License (see bn/LICENSE-MIT-BanglaTLit.txt). M. F. Fahim et al., Findings of
+  EMNLP 2024.
+- YouTube news comments and replies, Mendeley Data 3c3j3bkxvn v4: the comments written in Banglish.
+- BANTEN: A Parallel Banglish-English Dataset, Mendeley Data j3y2y9nfck v2: the Banglish side.
+- Code-mixed Chaos: Multi-labeled Banglish & Bangla Corpus for Toxicity analysis, Mendeley Data
+  23dp3t88vk v1: Banglish comments labelled Non-Toxic.
+- MixTox-SA, Mendeley Data bsdcd7zkyz v1: Banglish rows labelled NonToxic or Neutral.
+- Positive, Negative and Neutral transliterated Bengali corpus, Mendeley Data s6mtp2zzpc v1.
+The Mendeley datasets are shared under Creative Commons Attribution 4.0 (CC BY 4.0,
+https://creativecommons.org/licenses/by/4.0/); banglish.nwp.bin is shared under CC BY 4.0, with
+the attributions above.
+
+============================================================================================
+
+Bangla next-word model (bn.nwp.bin)
+
+Trained for Jolpai, 2026-11-26, with lm-trainer/scripts/train_torch.py (PyTorch) on vocabulary and
+sentences prepared by lm-trainer (see docs/ROADMAP.md). One LSTM layer (1,024 cells, 128-number word
+vectors, projection, shared input and output vectors), 30,000 words, 8-bit weights, 5.9 MB.
+SHA-256: 7bd1e33f8422b31c546d06a0c01c3a3ad6986c880a8c38341dee01ed946ae5ac
+The file holds learned weights and the 30,000-word vocabulary, never sentences.
+
+Trained on (about 50 million words; every 200th sentence held out for testing):
+- HPLT 2.0 cleaned, Bengali (ben_Beng), https://hplt-project.org (CC0 1.0 for the packaging; the
+  web text keeps its authors' rights). Only chat-style sentences were kept (filter in
+  lm-trainer/scripts/hplt_chat.py), up to 15 million words.
+- YouTube news comments and replies, Mendeley Data 3c3j3bkxvn v4, CC BY 4.0
+  (https://creativecommons.org/licenses/by/4.0/).
+- Bengali Online Comments, Zenodo 11295622, CC BY 4.0 (comments labelled "not bully" only).
+- Common Voice Bangla sentence collection (Mozilla), CC0 1.0.
+- OpenSubtitles 2024, Bangla (OPUS, https://opus.nlpl.eu/OpenSubtitles/; P. Lison and
+  J. Tiedemann, OpenSubtitles2016, LREC 2016; subtitles from http://www.opensubtitles.org).
+- Tatoeba (https://tatoeba.org) Bengali sentences, CC BY 2.0 FR (TATOEBA-CC-BY-2.0-FR.txt).
+- Bangla Wikipedia, dump of 2026-11-01, up to 10 million words, by the Wikipedia contributors,
+  CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/). As it is partly derived from
+  Wikipedia, bn.nwp.bin is shared under CC BY-SA 4.0, with the attributions above.
+Changes: Bangla normalised as the keyboard writes it, repeated sentences dropped, comments with
+words from an abuse block list left out.
+
+============================================================================================
+
 English next-word model (en.nwp.bin)
 
 Models trained and released by Destin Moss via youcoded.ai, 2026.

@@ -145,6 +145,10 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch { repository.setSmartPredictions(v) }
     }
 
+    fun setBanglishSuggestions(v: Boolean) {
+        viewModelScope.launch { repository.setBanglishSuggestions(v) }
+    }
+
     fun setGiphyApiKey(key: String) {
         viewModelScope.launch { repository.setGiphyApiKey(key) }
     }

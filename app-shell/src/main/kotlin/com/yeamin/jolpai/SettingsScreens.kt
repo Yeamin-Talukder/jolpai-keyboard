@@ -327,8 +327,13 @@ fun SuggestionsScreen(vm: MainViewModel, settings: KeyboardSettings, personalWor
             SettingsSwitch("Emoji suggestions", "pizza → 🍕, হাসি → 😄", settings.emojiSuggestions, vm::setEmojiSuggestions, UiR.drawable.ms_mood, enabled = settings.showSuggestions)
             SettingsSwitch(
                 "On-device AI predictions",
-                "English: a small neural model reads your sentence to rank words, predict the next one, pick emoji by meaning (so tired → 😴) and catch their/there in Check. Runs only on this phone.",
+                "Small neural models read your sentence to rank words and predict the next one, in English and in Bangla (Avro, জাতীয়, প্রভাত); in English they also pick emoji by meaning (so tired → 😴) and catch their/there in Check. Runs only on this phone.",
                 settings.smartPredictions, vm::setSmartPredictions, UiR.drawable.ms_auto_awesome, enabled = settings.showSuggestions,
+            )
+            SettingsSwitch(
+                "Banglish suggestions",
+                "Bangla in English letters on the English keyboard: valob → valobashi, in the spelling you use (valo or bhalo). Banglish words such as kmn and tmr aren't autocorrected into English.",
+                settings.banglishSuggestions, vm::setBanglishSuggestions, UiR.drawable.ms_spellcheck, enabled = settings.showSuggestions,
             )
             SettingsSwitch("Block offensive words", "Never suggested (you can still type them)", settings.blockOffensiveWords, vm::setBlockOffensiveWords, UiR.drawable.ms_block, enabled = settings.showSuggestions)
         }

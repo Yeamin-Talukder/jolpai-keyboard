@@ -1228,6 +1228,7 @@ class KeyboardController(
         context = ctx.sentence,
         // Each language uses its own model (English, or Bangla for Avro, জাতীয় and প্রভাত).
         useModel = settings.smartPredictions,
+        banglish = settings.banglishSuggestions,
     )
 
     /** The next-word model is used for English typing (it knows English only). */
