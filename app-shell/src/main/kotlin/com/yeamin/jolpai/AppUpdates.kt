@@ -39,6 +39,8 @@ object Changelog {
         ChangelogRelease(
             "0.15.0", "26 Nov 2026",
             listOf(
+                "Jolpai's own on-device AI for Bangla: better next words, and Avro picks the right word more often",
+                "Banglish on the English keyboard: valob → valobashi in your own spelling, no autocorrect into English, Banglish next words",
                 "The app speaks Bangla: tap বাংলা at the top of the home page (English | বাংলা)",
                 "Simpler settings: big tiles for what you change most, shorter descriptions, quick choice chips",
                 "Try the keyboard from any page with the floating keyboard button",

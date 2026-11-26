@@ -58,6 +58,7 @@ English↔Bangla translation run **offline**.
 
 ## 🆕 What's new in 0.15.0
 
+- 🧠 **Jolpai's own on-device AI models for Bangla and Banglish:** a Bangla next-word model (next word in the top 3: 7.7% → 22.7%) that also helps Avro pick the right word (57.5% → 61.5%), and **Banglish on the English keyboard**: *valob → valobashi* in your own spelling, Banglish words no longer autocorrected into English, plus a Banglish next-word model. All offline, on your phone.
 - 🌐 **The app speaks Bangla:** tap **বাংলা** at the top of the home page (English | বাংলা) and every settings page switches at once.
 - 🏠 **Simpler settings:** big tiles for what you change most, shorter descriptions, quick choice chips, and a **Themes** grid with the filters pinned on top. A floating **Try keyboard** button on every page.
 - 🎞️ **GIFs built in, no key needed** (powered by KLIPY): trending, quick topics (Haha, Love, Eid Mubarak …), your recent GIFs, moving previews.
