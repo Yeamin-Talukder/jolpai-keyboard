@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/images/banner.png" alt="Jolpai Keyboard (জলপাই কিবোর্ড): free AI-powered Bangla keyboard for Android with a clean design, Avro phonetic, National (Jatiya) and Probhat layouts" width="100%">
+<img src="docs/images/banner.png" alt="Jolpai Keyboard (জলপাই কিবোর্ড): free AI-powered Bangla keyboard for Android with its own Bangla, Banglish and English AI models, Avro phonetic, National (Jatiya) and Probhat layouts, Banglish typing, built-in GIFs and gestures" width="100%">
 
 # Jolpai Keyboard (জলপাই কিবোর্ড): AI-Powered Bangla Keyboard for Android
 
